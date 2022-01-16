@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Invasion</title>
+    <link rel="stylesheet" href="./Invasion.css">
+
+</head>
+
+<body>
+    <!-- body -->
+    <div id="preload" class="hidden"></div>
+    <div class="win" id="setup">
+        <div id="load">
+        </div>
+        <div id="SC"></div>
+        <h1 id="title"></h1>
+        <p>...game text ...</p>
+
+        <div id="debug">
+            <div class="setup_container smallsection" id="selector">
+                <fieldset>
+                    <legend>
+                        Version:
+                    </legend>
+                    ENGINE: <span id="engine_version"></span><br>
+                    GRID: <span id="grid_version"></span><br>
+                    MAZE: <span id="maze_version"></span><br>
+                    AI: <span id="ai_version"></span><br>
+                    Prototype LIB: <span id="lib_version"></span><br>
+
+                </fieldset>
+            </div>
+            <div>
+                <div class="setup_container smallsection">
+                    <fieldset>
+                        <legend>
+                            Walls:
+                        </legend>
+                        <select id="walltexture">
+                        </select>
+                        <br />
+                        <br />
+                        <div class="bordered"><canvas id="wallcanvas" width="240" height="60"></canvas></div>
+                    </fieldset>
+                </div>
+                <div class="setup_container smallsection">
+                    <fieldset>
+                        <legend>
+                            Floor:
+                        </legend>
+                        <select id="floortexture">
+                        </select>
+                        <br />
+                        <br />
+                        <div class="bordered"><canvas id="floorcanvas" width="240" height="60"></canvas></div>
+                    </fieldset>
+                </div>
+            </div>
+        </div>
+
+        <p class="cb" id="buttons">
+            <input type='button' id='pause' value='Pause Game [F4]' disabled="disabled">
+            <input type='button' id='toggleHelp' value='Show/Hide Instructions'>
+            <input type='button' id='toggleAbout' value='About'>
+        </p>
+        <div id="help" class="section">
+            <fieldset>
+                <legend>
+                    Instructions:
+                </legend>
+                <p>...legend</p>
+            </fieldset>
+        </div>
+        <div id="about" class="section">
+            <fieldset>
+                <legend>
+                    About:
+                </legend>
+                <image src="" alt=""
+                    class="fl pic" title="">
+                    <p>...about...</p>
+            </fieldset>
+        </div>
+
+
+        <p class="version cb" id="version"></p>
+    </div>
+
+    <div id="game" class="winTrans"></div>
+    <div id="bottom" class="cb" style="margin-top: 720px"></div>
+    <div id="temp" class="hidden"></div>
+    <div id="temp2" class="hidden"></div>
+    <!-- JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+        integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src='./Prototype_3_01.js'></script>
+    <script src='./ENGINE_3_03.js'></script>
+    <script src='./score_1_04.js'></script>
+    <script src='./assets_Invasion.js'></script>
+
+    <script src="./Invasion.js"></script>
+
+</body>
+
+</html>
