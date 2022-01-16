@@ -29,7 +29,7 @@ var INI = {
 
 };
 var PRG = {
-    VERSION: "0.00.00",
+    VERSION: "0.00.01",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -156,14 +156,17 @@ var GAME = {
         //AI.initialize(HERO);
         GAME.fps = new FPS_measurement();
         //ENGINE.GAME.ANIMATION.waitThen(GAME.levelStart, 2);
+        GAME.levelStart();
     },
     levelStart() {
+        console.log("starting level", GAME.level);
         //MAP.createNewLevel(GAME.level);
         //HERO.energy = MAP[GAME.level].energy;
         GAME.initLevel(GAME.level);
-        GAME.continueLevel(GAME.level);
+        //GAME.continueLevel(GAME.level);
     },
     initLevel(level) {
+        console.log("init level", level);
         //let randomDungeon = RAT_ARENA.create(MAP[level].width, MAP[level].height);
         //MAP[level].DUNGEON = randomDungeon;
         //GRID_SOLO_FLOOR_OBJECT.init(MAP[level].DUNGEON);
