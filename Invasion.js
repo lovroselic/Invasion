@@ -29,7 +29,7 @@ var INI = {
 
 };
 var PRG = {
-    VERSION: "0.00.02",
+    VERSION: "0.00.03",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -81,33 +81,33 @@ var PRG = {
         });
 
         //boxes
-        ENGINE.gameWIDTH = 768;
-        ENGINE.sideWIDTH = 960 - ENGINE.gameWIDTH;
-        ENGINE.gameHEIGHT = 768;
-        ENGINE.titleHEIGHT = 80;
-        ENGINE.titleWIDTH = 960;
-        ENGINE.bottomHEIGHT = 40;
-        ENGINE.bottomWIDTH = 960;
+        ENGINE.gameWIDTH = 1280;
+        //ENGINE.sideWIDTH = 960 - ENGINE.gameWIDTH;
+        ENGINE.gameHEIGHT = 720;
+        ENGINE.titleHEIGHT = 60;
+        ENGINE.titleWIDTH = ENGINE.gameWIDTH;
+        ENGINE.bottomHEIGHT = 32;
+        ENGINE.bottomWIDTH = ENGINE.gameWIDTH;
+        ENGINE.scoreWIDTH = ENGINE.gameWIDTH;
+        ENGINE.scoreHEIGHT = 64;
         ENGINE.checkProximity = false;
         ENGINE.checkIntersection = false;
         ENGINE.setCollisionsafe(49);
+
         $("#bottom").css(
             "margin-top",
-            ENGINE.gameHEIGHT + ENGINE.titleHEIGHT + ENGINE.bottomHEIGHT
+            ENGINE.gameHEIGHT + ENGINE.titleHEIGHT + ENGINE.bottomHEIGHT + ENGINE.scoreHEIGHT
         );
-        $(ENGINE.gameWindowId).width(ENGINE.gameWIDTH + ENGINE.sideWIDTH + 4);
-        ENGINE.addBOX("TITLE", ENGINE.titleWIDTH, ENGINE.titleHEIGHT, ["title"], null);
-        ENGINE.addBOX("ROOM", ENGINE.gameWIDTH, ENGINE.gameHEIGHT,
-            ["background", "splash", "actors", "explosion", "text", "animation", "FPS", "button", "click"],
-            "side");
-        ENGINE.addBOX("SIDE", ENGINE.sideWIDTH, ENGINE.gameHEIGHT,
-            ["sideback", "score", "energy", "lives", "stage", "radar"],
-            "fside");
+
+        $(ENGINE.gameWindowId).width(ENGINE.gameWIDTH + 4);
+        ENGINE.addBOX("TITLE", ENGINE.titleWIDTH, ENGINE.titleHEIGHT, ["title", "hiscore"], null);
+        ENGINE.addBOX("SCORE", ENGINE.scoreWIDTH, ENGINE.scoreHEIGHT, ["score"], null);
+        ENGINE.addBOX("ROOM", ENGINE.gameWIDTH, ENGINE.gameHEIGHT, ["background", "backplane", "midplane", "actors", "explosion", "foreplane",
+            "text", "FPS", "button", "click"], null);
         ENGINE.addBOX("DOWN", ENGINE.bottomWIDTH, ENGINE.bottomHEIGHT, ["bottom", "bottomText"], null);
 
-        ENGINE.addBOX("LEVEL", ENGINE.gameWIDTH, ENGINE.gameHEIGHT, ["floor", "wall", "gold", "grid", "coord", "player", "debug",], null);
+        //ENGINE.addBOX("LEVEL", ENGINE.gameWIDTH, ENGINE.gameHEIGHT, ["debug",], null);
 
-        if (!DEBUG.PAINT_TRAIL) $("#LEVEL").addClass("hidden");
     },
     start() {
         console.log(PRG.NAME + " started.");
@@ -163,7 +163,7 @@ var GAME = {
         //MAP.createNewLevel(GAME.level);
         //HERO.energy = MAP[GAME.level].energy;
         GAME.initLevel(GAME.level);
-        //GAME.continueLevel(GAME.level);
+        GAME.continueLevel(GAME.level);
     },
     initLevel(level) {
         console.log("init level", level);
@@ -177,21 +177,22 @@ var GAME = {
         //ENGINE.VIEWPORT.setMax({ x: MAP[level].pw, y: MAP[level].ph });
     },
     continueLevel(level) {
+        console.log("game continues on level", level);
         //ENEMY_TG.init(MAP[level].DUNGEON);
         //VANISHING.init(MAP[level].DUNGEON);
         //SPAWN.monsters(level);
         //HERO.init();
         //HERO.energy = Math.max(Math.round(GRID_SOLO_FLOOR_OBJECT.size / INI.GOLD * MAP[GAME.level].energy), HERO.energy);
-        GAME.levelExecute();
+        GAME.levelExecute(level);
     },
-    levelExecute() {
+    levelExecute(level) {
+        console.log("level", level, "executes");
         //GAME.CI.reset();
         //ENGINE.VIEWPORT.reset();
         //ENGINE.VIEWPORT.check(HERO.actor);
         //ENGINE.VIEWPORT.alignTo(HERO.actor);
-        GAME.drawFirstFrame(GAME.level);
-        //GAME.ENEMY.started = false;
-        ENGINE.GAME.ANIMATION.next(GAME.countIn);
+        GAME.drawFirstFrame(level);
+
     },
     levelEnd() {
         //SPEECH.speak("Good job!");
@@ -235,7 +236,8 @@ var GAME = {
         }
     },
     drawFirstFrame(level) {
-
+        TITLE.firstFrame();
+        GAME.PAINT.sky();
     },
     blockGrid(level) {
         GRID.grid();
@@ -359,7 +361,7 @@ var GAME = {
             return;
         }
         if (map[ENGINE.KEY.map.down]) {
- 
+
             return;
         }
         return;
@@ -394,52 +396,28 @@ var GAME = {
         TITLE.startTitle();
     },
     PAINT: {
-        gold() {
-            ENGINE.clearLayer("gold");
-            GRID_SOLO_FLOOR_OBJECT.draw();
-        },
-        splash() {
-            ENGINE.clearLayer("splash");
-            VANISHING.draw();
+        sky() {
+            let CTX = LAYER.background;
+            let grad = CTX.createLinearGradient(0, 0, 0, ENGINE.gameHEIGHT);
+            grad.addColorStop("0", "#C7E7FB");
+            grad.addColorStop("0.1", "#BAE2FB");
+            grad.addColorStop("0.2", "#B3DFFB");
+            grad.addColorStop("0.6", "#ABDCFB");
+            grad.addColorStop("1.0", "#4CC4EC");
+            CTX.fillStyle = grad;
+            CTX.fillRect(0, 0, ENGINE.gameWIDTH, ENGINE.gameHEIGHT);
         }
     },
-    CI: {
-        text: ["READY", "SET?", "GO!"],
-        reset() {
-            GAME.CI.start = null;
-            GAME.CI.now = null;
-        }
-    },
-    ENEMY: {
-        started: false,
-        move(lapsedTime) {
-  
-        },
-        draw() {
-
-        },
-        
-    },
-    EXP: {
-        draw(lapsedTime) {
-            ENGINE.clearLayer("explosion");
-            DESTRUCTION_ANIMATION.draw(lapsedTime);
-        }
-    }
 };
 var TITLE = {
     firstFrame() {
         TITLE.clearAllLayers();
-        TITLE.sideBackground();
         TITLE.topBackground();
+        TITLE.bottomBackground();
+        TITLE.scoreBackground();
         TITLE.titlePlot();
         TITLE.bottom();
         TITLE.hiScore();
-        TITLE.score();
-        TITLE.energy();
-        TITLE.lives();
-        TITLE.stage();
-        TITLE.radar();
     },
     startTitle() {
         /*
@@ -457,18 +435,20 @@ var TITLE = {
         ENGINE.GAME.start(16);
         ENGINE.GAME.ANIMATION.next(GAME.runTitle);
         */
-       GAME.start();
+        GAME.start();
     },
     clearAllLayers() {
-        ENGINE.layersToClear = new Set(["text", "animation", "actors", "explosion", "sideback", "button", "score",
-            "energy", "lives", "stage", "radar", "title", "splash"]);
+        ENGINE.layersToClear = new Set(["text", "actors", "explosion", "button", "title"]);
         ENGINE.clearLayerStack();
     },
     blackBackgrounds() {
         this.topBackground();
         this.bottomBackground();
-        this.sideBackground();
         ENGINE.fillLayer("background", "#000");
+        TITLE.scoreBackground();
+    },
+    scoreBackground() {
+        ENGINE.fillLayer("score", "#222");
     },
     topBackground() {
         var CTX = LAYER.title;
@@ -497,7 +477,7 @@ var TITLE = {
         var x = ENGINE.bottomWIDTH / 2;
         var y = ENGINE.bottomHEIGHT / 2;
         CTX.font = "13px Consolas";
-        CTX.fillStyle = "#888";
+        CTX.fillStyle = "#88F";
         CTX.shadowOffsetX = 0;
         CTX.shadowOffsetY = 0;
         CTX.shadowBlur = 0;
@@ -507,10 +487,10 @@ var TITLE = {
     titlePlot() {
         let CTX = LAYER.title;
         var fs = 42;
-        CTX.font = fs + "px Arcade";
-        CTX.textAlign = "center";
+        CTX.font = fs + "px Alien";
+        CTX.textAlign = "left";
         let txt = CTX.measureText(PRG.NAME);
-        let x = ENGINE.titleWIDTH / 2;
+        let x = 24;
         let y = fs + 10;
         let gx = x - txt.width / 2;
         let gy = y - fs;
@@ -556,17 +536,17 @@ var TITLE = {
         AUDIO.Title.play();
     },
     hiScore() {
-        var CTX = LAYER.title;
+        var CTX = LAYER.hiscore;
         var fs = 16;
-        CTX.font = fs + "px Garamond";
+        CTX.font = fs + "px Alien";
         CTX.fillStyle = GAME.grad;
         CTX.shadowColor = "#cec967";
         CTX.shadowOffsetX = 1;
         CTX.shadowOffsetY = 1;
         CTX.shadowBlur = 1;
         CTX.textAlign = "left";
-        var x = 700;
-        var y = 32 + fs;
+        var x = ENGINE.scoreWIDTH - 420;
+        var y = ENGINE.scoreHEIGHT - fs;
         var index = SCORE.SCORE.name[0].indexOf("&nbsp");
         var HS;
         if (index > 0) {
@@ -604,54 +584,7 @@ var TITLE = {
             TITLE.lives();
         }
     },
- 
-    lives() {
-        ENGINE.clearLayer("lives");
-        var CTX = LAYER.lives;
-        var fs = 16;
-        CTX.font = fs + "px Emulogic";
-        CTX.fillStyle = GAME.grad;
-        CTX.shadowColor = "#cec967";
-        CTX.shadowOffsetX = 1;
-        CTX.shadowOffsetY = 1;
-        CTX.shadowBlur = 2;
-        CTX.textAlign = "center";
-        var x = ENGINE.sideWIDTH / 2;
-        var y = 220;
-        CTX.fillText("LIVES", x, y);
-        y += fs + 32;
-        CTX.shadowColor = "transparent";
-        CTX.shadowOffsetX = 0;
-        CTX.shadowOffsetY = 0;
-        CTX.shadowBlur = 0;
-        var spread = ENGINE.spreadAroundCenter(GAME.lives, x, 32);
-        for (let q = 0; q < GAME.lives; q++) {
-            ENGINE.spriteDraw("lives", spread[q], y, SPRITE.Wizard_front_0);
-        }
-    },
-    stage() {
-        ENGINE.clearLayer("stage");
-        var CTX = LAYER.stage;
-        var fs = 16;
-        CTX.font = fs + "px Emulogic";
-        CTX.fillStyle = GAME.grad;
-        CTX.shadowColor = "#cec967";
-        CTX.shadowOffsetX = 1;
-        CTX.shadowOffsetY = 1;
-        CTX.shadowBlur = 2;
-        CTX.textAlign = "center";
-        var x = ENGINE.sideWIDTH / 2;
-        var y = 344;
-        CTX.fillText("STAGE", x, y);
-        CTX.fillStyle = "#FFF";
-        CTX.shadowColor = "#DDD";
-        CTX.shadowOffsetX = 1;
-        CTX.shadowOffsetY = 1;
-        CTX.shadowBlur = 1;
-        y += fs + 4;
-        CTX.fillText(GAME.level.toString().padStart(2, "0"), x, y);
-    },
- 
+
     gameOver() {
         ENGINE.clearLayer("text");
         var CTX = LAYER.text;

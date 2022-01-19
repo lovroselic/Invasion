@@ -178,7 +178,12 @@ var ENGINE = {
     }
   },
   addBOX(id, width, height, alias, type) {
-    //types null, side, fside
+    /** 
+     * types null, side, fside
+     * gw class: side by side windows
+     * gh class: windows below
+     */   
+
     if (id === null) return;
     if (width === null) return;
     if (height === null) return;
@@ -187,9 +192,9 @@ var ENGINE = {
       `<div id ='${id}' style='position: relative'></div>`
     );
     if (type === "side" || type === "fside") {
-      $(`#${id}`).addClass("gw"); //adds gw class: side by side windows
+      $(`#${id}`).addClass("gw"); 
     } else {
-      $(`#${id}`).addClass("gh"); //adds gh class: windows below
+      $(`#${id}`).addClass("gh"); 
     }
     let prop;
     let canvasElement;

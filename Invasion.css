@@ -1,7 +1,12 @@
 @font-face {
-  font-family: "DeepDown";
-  src: url("https://www.c00lsch00l.eu//Fonts/DeepDown.ttf");
+  font-family: "C64";
+  src: url("https://www.c00lsch00l.eu//Fonts/C64_Pro-STYLE.ttf");
 }
+@font-face {
+  font-family: "Alien";
+  src: url("https://www.c00lsch00l.eu//Fonts/CosmicAlien.ttf");
+}
+
 :root {
   background-color: orange;
   background: -webkit-linear-gradient(90deg, orange, #ffc04d);
@@ -17,12 +22,13 @@ h2 {
   text-align: left;
   font-size: 25px;
   text-shadow: 1px 1px #666;
-  font-family: "DeepDown";
+  font-family: "Alien";
 }
 
 p {
   color: #000;
   font-size: 18px;
+  font-family: "Alien";
 }
 
 hr {
@@ -227,8 +233,11 @@ input[type="button"] {
   float: right;
 }
 .gw {
-  /*display: inline-block;*/
   float: left;
+}
+.gh {
+  float: none;
+  clear: both;
 }
 
 .bordered {
