@@ -29,7 +29,7 @@ var INI = {
 
 };
 var PRG = {
-    VERSION: "0.00.03",
+    VERSION: "0.00.04",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
