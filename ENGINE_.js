@@ -182,7 +182,7 @@ var ENGINE = {
      * types null, side, fside
      * gw class: side by side windows
      * gh class: windows below
-     */   
+     */
 
     if (id === null) return;
     if (width === null) return;
@@ -192,14 +192,16 @@ var ENGINE = {
       `<div id ='${id}' style='position: relative'></div>`
     );
     if (type === "side" || type === "fside") {
-      $(`#${id}`).addClass("gw"); 
+      $(`#${id}`).addClass("gw");
     } else {
-      $(`#${id}`).addClass("gh"); 
+      $(`#${id}`).addClass("gh");
     }
     let prop;
     let canvasElement;
     for (let x = 0; x < layers; x++) {
-      canvasElement = `<canvas class='layer' id='${id}_canvas_${x}' width='${width}' height='${height}' style='z-index:${x}; top:${ENGINE.currentTOP}px; left:${ENGINE.currentLEFT}px'></canvas>`;
+      canvasElement = `<canvas class='layer' 
+      id='${id}_canvas_${x}' width='${width}' height='${height}' 
+      style='z-index:${x}; top:${ENGINE.currentTOP}px; left:${ENGINE.currentLEFT}px'></canvas>`;
 
       $(`#${id}`).append(canvasElement);
       prop = alias.shift();
@@ -2214,7 +2216,7 @@ class ACTOR {
   }
   animateMove(orientation = this.orientation) {
     this[orientation + "_index"]++;
-    if (this[orientation + "_index"] >= this.asset[orientation].length){
+    if (this[orientation + "_index"] >= this.asset[orientation].length) {
       this[orientation + "_index"] = 0;
       this.animationThrough = true;
     }
