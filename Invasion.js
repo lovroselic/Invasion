@@ -29,7 +29,7 @@ var INI = {
 
 };
 var PRG = {
-    VERSION: "0.00.05",
+    VERSION: "0.00.06",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -82,7 +82,6 @@ var PRG = {
 
         //boxes
         ENGINE.gameWIDTH = 1280;
-        //ENGINE.sideWIDTH = 960 - ENGINE.gameWIDTH;
         ENGINE.gameHEIGHT = 720;
         ENGINE.titleHEIGHT = 60;
         ENGINE.titleWIDTH = ENGINE.gameWIDTH;
@@ -94,15 +93,12 @@ var PRG = {
         ENGINE.checkIntersection = false;
         ENGINE.setCollisionsafe(49);
 
-        $("#bottom").css(
-            "margin-top",
-            ENGINE.gameHEIGHT + ENGINE.titleHEIGHT + ENGINE.bottomHEIGHT + ENGINE.scoreHEIGHT
-        );
+        $("#bottom").css("margin-top", ENGINE.gameHEIGHT + ENGINE.titleHEIGHT + ENGINE.bottomHEIGHT + ENGINE.scoreHEIGHT);
 
         $(ENGINE.gameWindowId).width(ENGINE.gameWIDTH + 4);
         ENGINE.addBOX("TITLE", ENGINE.titleWIDTH, ENGINE.titleHEIGHT, ["title", "hiscore"], null);
         ENGINE.addBOX("SCORE", ENGINE.scoreWIDTH, ENGINE.scoreHEIGHT, ["score"], null);
-        ENGINE.addBOX("ROOM", ENGINE.gameWIDTH, ENGINE.gameHEIGHT, ["background", "backplane", "midplane", "actors", "explosion", "foreplane",
+        ENGINE.addBOX("ROOM", ENGINE.gameWIDTH, ENGINE.gameHEIGHT, ["background", "backplane1", "backplane2", "foreplane", "actors", "explosion",
             "text", "FPS", "button", "click"], null);
         ENGINE.addBOX("DOWN", ENGINE.bottomWIDTH, ENGINE.bottomHEIGHT, ["bottom", "bottomText"], null);
 
@@ -167,14 +163,8 @@ var GAME = {
     },
     initLevel(level) {
         console.log("init level", level);
-        //let randomDungeon = RAT_ARENA.create(MAP[level].width, MAP[level].height);
-        //MAP[level].DUNGEON = randomDungeon;
-        //GRID_SOLO_FLOOR_OBJECT.init(MAP[level].DUNGEON);
-        //DESTRUCTION_ANIMATION.init(MAP[level].DUNGEON);
-        //SPAWN.gold(level);
-        //MAP[level].pw = MAP[level].width * ENGINE.INI.GRIDPIX;
-        //MAP[level].ph = MAP[level].height * ENGINE.INI.GRIDPIX;
-        //ENGINE.VIEWPORT.setMax({ x: MAP[level].pw, y: MAP[level].ph });
+        MAP.create(level, ["foreplane","backplane2", "backplane1"]);
+
     },
     continueLevel(level) {
         console.log("game continues on level", level);
