@@ -29,7 +29,7 @@ var INI = {
 
 };
 var PRG = {
-    VERSION: "0.00.06",
+    VERSION: "0.00.07",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -98,11 +98,11 @@ var PRG = {
         $(ENGINE.gameWindowId).width(ENGINE.gameWIDTH + 4);
         ENGINE.addBOX("TITLE", ENGINE.titleWIDTH, ENGINE.titleHEIGHT, ["title", "hiscore"], null);
         ENGINE.addBOX("SCORE", ENGINE.scoreWIDTH, ENGINE.scoreHEIGHT, ["score"], null);
-        ENGINE.addBOX("ROOM", ENGINE.gameWIDTH, ENGINE.gameHEIGHT, ["background", "backplane1", "backplane2", "foreplane", "actors", "explosion",
+        ENGINE.addBOX("ROOM", ENGINE.gameWIDTH, ENGINE.gameHEIGHT, ["background", "backplane1_projection", "backplane2_projection", "foreplane_projection", "actors", "explosion",
             "text", "FPS", "button", "click"], null);
         ENGINE.addBOX("DOWN", ENGINE.bottomWIDTH, ENGINE.bottomHEIGHT, ["bottom", "bottomText"], null);
 
-        //ENGINE.addBOX("LEVEL", ENGINE.gameWIDTH, ENGINE.gameHEIGHT, ["debug",], null);
+        ENGINE.addBOX("LEVEL", ENGINE.gameWIDTH, ENGINE.gameHEIGHT, ["background2","backplane1", "backplane2", "foreplane"], null);
 
     },
     start() {
@@ -227,7 +227,7 @@ var GAME = {
     },
     drawFirstFrame(level) {
         TITLE.firstFrame();
-        GAME.PAINT.sky();
+        //GAME.PAINT.sky();
     },
     blockGrid(level) {
         GRID.grid();
@@ -394,6 +394,11 @@ var GAME = {
             grad.addColorStop("0.2", "#B3DFFB");
             grad.addColorStop("0.6", "#ABDCFB");
             grad.addColorStop("1.0", "#4CC4EC");
+            CTX.fillStyle = grad;
+            CTX.fillRect(0, 0, ENGINE.gameWIDTH, ENGINE.gameHEIGHT);
+
+            //debug
+            CTX = LAYER.background2;
             CTX.fillStyle = grad;
             CTX.fillRect(0, 0, ENGINE.gameWIDTH, ENGINE.gameHEIGHT);
         }
