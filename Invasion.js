@@ -29,7 +29,7 @@ var INI = {
 
 };
 var PRG = {
-    VERSION: "0.00.07",
+    VERSION: "0.01.00",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -102,7 +102,7 @@ var PRG = {
             "text", "FPS", "button", "click"], null);
         ENGINE.addBOX("DOWN", ENGINE.bottomWIDTH, ENGINE.bottomHEIGHT, ["bottom", "bottomText"], null);
 
-        ENGINE.addBOX("LEVEL", ENGINE.gameWIDTH, ENGINE.gameHEIGHT, ["background2","backplane1", "backplane2", "foreplane"], null);
+        ENGINE.addBOX("LEVEL", ENGINE.gameWIDTH, ENGINE.gameHEIGHT, ["background2","backplane2", "backplane1", "foreplane"], null);
 
     },
     start() {
@@ -163,7 +163,7 @@ var GAME = {
     },
     initLevel(level) {
         console.log("init level", level);
-        MAP.create(level, ["foreplane","backplane2", "backplane1"]);
+        MAP.create(level, ["foreplane","backplane1", "backplane2"]);
 
     },
     continueLevel(level) {
@@ -227,7 +227,7 @@ var GAME = {
     },
     drawFirstFrame(level) {
         TITLE.firstFrame();
-        //GAME.PAINT.sky();
+        GAME.PAINT.sky();
     },
     blockGrid(level) {
         GRID.grid();

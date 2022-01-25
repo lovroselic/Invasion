@@ -1,14 +1,16 @@
 console.log("%cMAP for Invasion loaded.", "color: #888");
 var MAP = {
     1: {
-        width: 4,
+        width: 6,
         textures: ["Grass", "Mountain4", "Mountain1"],
+        colors: ["#0E0", '#444', '#888'],
     },
     create(level, plane_layers) {
         console.log("MAP creating level", level, arguments);
         let W = ENGINE.gameWIDTH * MAP[level].width;
         let H = ENGINE.gameHEIGHT;
-
+        TERRAIN.createClassic(W, H, plane_layers, MAP[GAME.level].textures, MAP[GAME.level].colors);
+        /*
         //back2
         let BackPlane2 = new PlaneLimits(W, 64, 0.5 * H, 0.15 * H);
         let Back2PN = PERLIN.getNoise(BackPlane2, 3);
@@ -21,8 +23,14 @@ var MAP = {
         let ForePlane = new PlaneLimits(W, 256, 0.95 * H, 0.5 * H, true);
         let ForePerlinNoise = PERLIN.getNoise(ForePlane, 1);
 
-        PERLIN.drawShape(LAYER.background2, Back2PN, '#888');
-        PERLIN.drawShape(LAYER.background2, Back1PN, '#444');
-        PERLIN.drawShape(LAYER.background2, ForePerlinNoise, "#0E0");
+        PERLIN.drawShape(LAYER.backplane2, Back2PN, '#888');
+        PERLIN.drawShape(LAYER.backplane1, Back1PN, '#444');
+        PERLIN.drawShape(LAYER.foreplane, ForePerlinNoise, "#0E0");
+
+        PERLIN.drawLine(LAYER.foreplane, ForePerlinNoise, "#0E0");
+        PERLIN.drawLine(LAYER.foreplane, Back1PN, '#444');
+        PERLIN.drawLine(LAYER.foreplane, Back2PN, '#888');
+        */
+
     }
 };

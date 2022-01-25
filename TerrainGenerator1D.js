@@ -8,7 +8,7 @@ class PlaneLimits {
     constructor(width = null, wawelength = 64, drawMaxHeight = null, drawMinHeight = null, open = false, leftStop = 0, rightStop = null) {
 
         if (width === null || drawMaxHeight === null || drawMinHeight === null) {
-            throw "ConstructionLimits: Required arguments not provided!";
+            throw "PlaneLimits: Required arguments not provided!";
         }
         this.width = width;
         this.leftStop = leftStop;
@@ -23,33 +23,19 @@ class PlaneLimits {
 }
 
 class Plane {
-    constructor(layer = null, texture = null, complex = false, limits = null, constLimits = null, speedFactor = null) {
-        /**
-         * complex: has multiple arrays
-         * not complex. only heightMap
-         */
-        if (layer === null || texture === null || limits === null || constLimits === null || speedFactor === null) {
+    constructor(map = null, planeLimits = null, layer = null, texture = null, speedFactor = null, color = "#000") {
+        if (map === null || layer === null || texture === null || speedFactor === null) {
             console.log(arguments);
             throw "Plane constructor: Required arguments not provided!";
         }
+        this.DATA = {};
+        this.DATA.map = map;
         this.layer = layer;
         this.CTX = LAYER[this.layer];
-        //this.speed = speed;
-        this.PlaneLimits = limits;
-        this.ConstuctionLimits = constLimits;
-        this.complex = complex;
+        this.planeLimits = planeLimits;
         this.texture = texture;
         this.speedFactor = speedFactor;
-        this.DATA = {};
-        this.DATA.heightMap = new Uint16Array(this.PlaneLimits.width);
-        if (this.complex) {
-            //this.DATA.featureMap = new Uint8Array(this.PlaneLimits.width);
-            //this.DATA.featureDepth = new Uint8Array(this.PlaneLimits.width);
-            //this.DATA.featureAbove = new Uint8Array(this.PlaneLimits.width);
-            //this.DATA.decorationMap = new Uint8Array(this.PlaneLimits.width);
-            //this.DATA.decorationDepth = new Uint8Array(this.PlaneLimits.width);
-            //this.DATA.decorationAbove = new Uint8Array(this.PlaneLimits.width);
-        }
+        this.color = color;
     }
 }
 class Parallax {
@@ -115,13 +101,13 @@ class PerlinNoise {
 }
 
 var PERLIN = {
-    CSS: "color: #2ACBE8",
     INI: {
         divisor_base: 2,
         divisor_exponent: 2.1,
     },
-    drawLine(CTX, data, color = "#000") {
-        CTX.strokeStyle = color;
+    drawLine(CTX, plane) {
+        CTX.strokeStyle = plane.color;
+        let data = plane.DATA.map;
         CTX.beginPath();
         CTX.moveTo(0, data[0]);
         for (let i = 1; i < data.length; i++) {
@@ -129,9 +115,10 @@ var PERLIN = {
         }
         CTX.stroke();
     },
-    drawShape(CTX, data, color) {
-        CTX.fillStyle = color;
-        CTX.strokeStyle = color;
+    drawShape(plane) {
+        let CTX = plane.CTX;
+        CTX.fillStyle = plane.color;
+        let data = plane.DATA.map;
         CTX.beginPath();
         CTX.moveTo(0, data[0]);
         for (let i = 1; i < data.length; i++) {
@@ -141,7 +128,6 @@ var PERLIN = {
         CTX.lineTo(0, CTX.canvas.height - 1);
         CTX.lineTo(0, data[0]);
         CTX.closePath();
-        CTX.stroke();
         CTX.fill();
     },
     generateNoise(planeLimits, octaves) {
@@ -173,47 +159,39 @@ var PERLIN = {
 
 var TERRAIN = {
     VERSION: "0.01.00 DEV",
-    CSS: "color: #8A2BE2",
+    CSS: "color: #2ACBE8",
     NAME: "TerrainGenerator1d",
     INI: {
-        back_planes: 2,
-        all_planes: 3,
-        complexity: [true, false, false],
-        back_slope_limit: 80,
-        fore_slope_limit: 45,
-        fore_plane_max: 0.50,
-        fore_plane_min: 0.05,
-        back_planes_max: [0.8, 0.99],
-        back_planes_min: [0.25, 0.5],
+        planes: 3,
+        planes_max: [0.95, 0.7, 0.5],
+        planes_min: [0.5, 0.3, 0.15],
         speed_factor: [1.0, 0.5, 0.25],
+        WL: [256, 96, 64],
+        open: [true, false, false],
+        octaves: [1, 3, 3]
     },
-    createClassic(width, height, plane_layers, textures) {
+    createClassic(W, H, plane_layers, textures, colors) {
         console.log("TERRAIN createClassic", arguments);
-        let PL = new PlaneLimits(width);
-        console.log(PL);
-        let foreCL = new ConstructionLimits(TERRAIN.INI.fore_slope_limit,
-            Math.floor(height - height * TERRAIN.INI.fore_plane_max),
-            Math.floor(height - height * TERRAIN.INI.fore_plane_min));
-        console.log(foreCL);
-        let CL = [foreCL];
-        for (let i = 0; i < TERRAIN.INI.back_planes; i++) {
-            let BCL = new ConstructionLimits(TERRAIN.INI.back_slope_limit,
-                Math.floor(height - height * TERRAIN.INI.back_planes_max[i]),
-                Math.floor(height - height * TERRAIN.INI.back_planes_min[i]));
-            CL.push(BCL);
-        }
-        console.log(CL);
+
         let planes = [];
-        for (let i = 0; i < TERRAIN.INI.all_planes; i++) {
-            let plane = new Plane(plane_layers[i], TEXTURE[textures[i]], TERRAIN.INI.complexity[i], PL, CL[i], TERRAIN.INI.speed_factor[i]);
+        for (let i = 0; i < TERRAIN.INI.planes; i++) {
+            let PL = new PlaneLimits(W, TERRAIN.INI.WL[i], TERRAIN.INI.planes_max[i] * H, TERRAIN.INI.planes_min[i] * H, TERRAIN.INI.open[0]);
+            let Noise = PERLIN.getNoise(PL, TERRAIN.INI.octaves[i]);
+            let plane = new Plane(Noise, PL, plane_layers[i], textures[i], TERRAIN.INI.speed_factor[i], colors[i]);
             planes.push(plane);
         }
-        console.log("Planes", planes);
+        let px = new Parallax(planes);
 
-        let parralax = new Parallax(planes);
-        console.log('parralax', parralax);
+        /*for (let pl of px.planes) {
+            PERLIN.drawShape(pl);
+        }*/
+        TERRAIN.drawParallax(px);
     },
-    renderPlane(plane) { }
+    drawParallax(px){
+        for (let pl of px.planes) {
+            PERLIN.drawShape(pl);
+        }
+    }
 };
 
 //END
