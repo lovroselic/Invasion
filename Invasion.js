@@ -26,10 +26,10 @@ var DEBUG = {
 
 };
 var INI = {
-    base_speed: 16.0,
+    base_speed: 128.0,
 };
 var PRG = {
-    VERSION: "0.01.02",
+    VERSION: "0.02.00",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -52,11 +52,8 @@ var PRG = {
         if (DEBUG.SETTING) {
             $('#debug').show();
         } else $('#debug').hide();
-        //$("#gridsize").val(INI.GRIDSIZE);
-        //$("#gridsize").change(GAME.resizeGrid);
         $("#engine_version").html(ENGINE.VERSION);
         //$("#grid_version").html(GRID.VERSION);
-        //$("#maze_version").html(DUNGEON.VERSION);
         //$("#ai_version").html(AI.VERSION);
         $("#lib_version").html(LIB.VERSION);
 
@@ -87,11 +84,12 @@ var PRG = {
         $(ENGINE.gameWindowId).width(ENGINE.gameWIDTH + 4);
         ENGINE.addBOX("TITLE", ENGINE.titleWIDTH, ENGINE.titleHEIGHT, ["title", "hiscore"], null);
         ENGINE.addBOX("SCORE", ENGINE.scoreWIDTH, ENGINE.scoreHEIGHT, ["score"], null);
-        ENGINE.addBOX("ROOM", ENGINE.gameWIDTH, ENGINE.gameHEIGHT, ["background", "dr_backplane2", "dr_backplane1","dr_foreplane", 
-        "actors", "explosion", "text", "FPS", "button", "click"], null);
+        ENGINE.addBOX("ROOM", ENGINE.gameWIDTH, ENGINE.gameHEIGHT, ["background", "dr_backplane2", "dr_backplane1", "dr_foreplane",
+            "actors", "explosion", "text", "FPS", "button", "click"], null);
         ENGINE.addBOX("DOWN", ENGINE.bottomWIDTH, ENGINE.bottomHEIGHT, ["bottom", "bottomText"], null);
 
         ENGINE.addBOX("LEVEL", ENGINE.gameWIDTH, ENGINE.gameHEIGHT, ["background2", "backplane2", "backplane1", "foreplane"], null);
+        $("#LEVEL").addClass("hidden");
 
     },
     start() {
@@ -192,6 +190,8 @@ var GAME = {
         if (ENGINE.GAME.stopAnimation) return;
         //GAME.respond();
 
+        MAP[GAME.level].map.movePlanes(lapsedTime, INI.base_speed);
+
         GAME.frameDraw(lapsedTime);
     },
     updateVieport() {
@@ -212,7 +212,7 @@ var GAME = {
         ENGINE.clearLayerStack();
 
         TERRAIN.drawParallaxSlice(MAP[GAME.level].map, ENGINE.gameWIDTH);
-        ["dr_backplane2", "dr_backplane1","dr_foreplane"].forEach(ENGINE.layersToClear.add, ENGINE.layersToClear);
+        ["dr_backplane2", "dr_backplane1", "dr_foreplane"].forEach(ENGINE.layersToClear.add, ENGINE.layersToClear);
         //ENGINE.layersToClear.add('dr_backplane2');
         //ENGINE.layersToClear.add('dr_backplane1');
         //ENGINE.layersToClear.add('dr_foreplane');
@@ -227,11 +227,11 @@ var GAME = {
         TERRAIN.drawParallaxSlice(MAP[level].map, ENGINE.gameWIDTH);
         //["dr_backplane2", "dr_backplane1","dr_foreplane"]
         //array.forEach(mySet.add, mySet)
-        ["dr_backplane2", "dr_backplane1","dr_foreplane"].forEach(ENGINE.layersToClear.add, ENGINE.layersToClear);
+        ["dr_backplane2", "dr_backplane1", "dr_foreplane"].forEach(ENGINE.layersToClear.add, ENGINE.layersToClear);
         //ENGINE.layersToClear.add('dr_backplane2');
         //ENGINE.layersToClear.add('dr_backplane1');
         //ENGINE.layersToClear.add('dr_foreplane');
-    
+
     },
     blockGrid(level) {
         GRID.grid();

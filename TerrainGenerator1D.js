@@ -32,22 +32,29 @@ class Plane {
         this.DATA.map = map;
         this.layer = layer;
         this.CTX = LAYER[this.layer];
-        this.DCTX =  LAYER[`dr_${this.layer}`];
+        this.DCTX = LAYER[`dr_${this.layer}`];
         this.planeLimits = planeLimits;
         this.texture = texture;
         this.speedFactor = speedFactor;
         this.color = color;
         this.position = 0.0;
     }
-    getPosition(){
+    getPosition() {
         return Math.round(this.position);
+    }
+    move(timeLapse, speed, dir) {
+        this.position += dir * (timeLapse * speed * this.speedFactor / 1000);
     }
 }
 class Parallax {
     constructor(planes) {
         this.planes = planes;
     }
-    movePlanes(timeLapse) { }
+    movePlanes(timeLapse, speed, dir = 1) {
+        for (let pl of this.planes) {
+            pl.move(timeLapse, speed, dir);
+        }
+    }
 }
 
 class PSNG {
@@ -182,7 +189,8 @@ var TERRAIN = {
         planes: 3,
         planes_max: [0.95, 0.7, 0.5],
         planes_min: [0.5, 0.3, 0.15],
-        speed_factor: [1.0, 0.5, 0.25],
+        //speed_factor: [1.0, 0.5, 0.25],
+        speed_factor: [1.0, 0.25, 0.125],
         WL: [256, 96, 64],
         open: [true, false, false],
         octaves: [1, 4, 3]
@@ -204,7 +212,7 @@ var TERRAIN = {
             PERLIN.drawPattern(pl);
         }
     },
-    drawParallaxSlice(px, W){
+    drawParallaxSlice(px, W) {
         for (let pl of px.planes.reverse()) {
             PERLIN.drawPattern(pl, pl.DCTX, pl.getPosition(), W);
         }

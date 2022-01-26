@@ -2,8 +2,8 @@ console.log("%cMAP for Invasion loaded.", "color: #888");
 var MAP = {
     1: {
         width: 6,
-        //textures: ["Grass", "DarkGreyRock", "GreyRock"],
-        textures: ["Grass", "GreyRock","DarkGreyRock"],
+        textures: ["Grass", "DarkGreyRock", "GreyRock"],
+        //textures: ["Grass", "GreyRock","DarkGreyRock"],
         colors: ["#0E0", '#444', '#888'],
     },
     create(level, plane_layers) {
