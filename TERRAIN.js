@@ -6,8 +6,8 @@
 
 class PlaneLimits {
     constructor(width = null, wawelength = 64, drawMaxHeight = null, drawMinHeight = null, open = false, leftStop = 0, rightStop = null) {
-
         if (width === null || drawMaxHeight === null || drawMinHeight === null) {
+            console.log(arguments);
             throw "PlaneLimits: Required arguments not provided!";
         }
         this.width = width;
@@ -21,7 +21,6 @@ class PlaneLimits {
         this.amp = this.drawMaxHeight - this.drawMinHeight;
     }
 }
-
 class Plane {
     constructor(map = null, planeLimits = null, layer = null, texture = null, speedFactor = null, color = "#000") {
         if (map === null || layer === null || texture === null || speedFactor === null) {
@@ -32,7 +31,6 @@ class Plane {
         this.DATA.map = map;
         this.layer = layer;
         this.CTX = LAYER[this.layer];
-        this.DCTX = LAYER[`dr_${this.layer}`];
         this.planeLimits = planeLimits;
         this.texture = texture;
         this.speedFactor = speedFactor;
@@ -56,7 +54,6 @@ class Parallax {
         }
     }
 }
-
 class PSNG {
     constructor() {
         this.M = 4294967296;
@@ -112,7 +109,6 @@ class PerlinNoise {
         return Uint16Array.from(this.pos.map(x => Math.round(x + this.planeLimits.mid)));
     }
 }
-
 var PERLIN = {
     INI: {
         divisor_base: 2,
@@ -129,12 +125,12 @@ var PERLIN = {
         }
         CTX.stroke();
     },
-    drawShape(plane, CTX = null, from = 0, length = null) {
+    drawShape(plane, from = 0, length = null, CTX = null) {
         CTX = CTX || plane.CTX;
         CTX.fillStyle = plane.color;
         this.draw(plane, CTX, from, length);
     },
-    drawPattern(plane, CTX = null, from = 0, length = null) {
+    drawPattern(plane, from = 0, length = null, CTX = null) {
         CTX = CTX || plane.CTX;
         let pattern = CTX.createPattern(TEXTURE[plane.texture], 'repeat');
         CTX.fillStyle = pattern;
@@ -180,16 +176,14 @@ var PERLIN = {
         return Uint16Array.from(noise.map(x => x + planeLimits.mid));
     }
 };
-
 var TERRAIN = {
-    VERSION: "0.01.00 DEV",
+    VERSION: "0.90.DEV",
     CSS: "color: #2ACBE8",
     NAME: "TerrainGenerator1d",
     INI: {
         planes: 3,
         planes_max: [0.95, 0.7, 0.5],
         planes_min: [0.5, 0.3, 0.15],
-        //speed_factor: [1.0, 0.5, 0.25],
         speed_factor: [1.0, 0.25, 0.125],
         WL: [256, 96, 64],
         open: [true, false, false],
@@ -208,13 +202,13 @@ var TERRAIN = {
     },
     drawParallax(px) {
         for (let pl of px.planes) {
-            //PERLIN.drawShape(pl);
-            PERLIN.drawPattern(pl);
+            PERLIN.drawShape(pl);
+            //PERLIN.drawPattern(pl);
         }
     },
     drawParallaxSlice(px, W) {
         for (let pl of px.planes.reverse()) {
-            PERLIN.drawPattern(pl, pl.DCTX, pl.getPosition(), W);
+            PERLIN.drawPattern(pl, pl.getPosition(), W);
         }
     }
 };

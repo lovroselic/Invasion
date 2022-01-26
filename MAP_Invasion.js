@@ -7,12 +7,9 @@ var MAP = {
         colors: ["#0E0", '#444', '#888'],
     },
     create(level, plane_layers) {
-        console.log("MAP creating level", level, arguments);
         let W = ENGINE.gameWIDTH * MAP[level].width;
         let H = ENGINE.gameHEIGHT;
         let map = TERRAIN.createClassic(W, H, plane_layers, MAP[GAME.level].textures, MAP[GAME.level].colors);
         MAP[level].map = map;
-        console.log("MAP", MAP[level]);
-        TERRAIN.drawParallax(map);
     }
 };

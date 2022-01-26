@@ -18,7 +18,7 @@ known bugs:
 var DEBUG = {
     FPS: true,
     BUTTONS: false,
-    SETTING: false,
+    SETTING: true,
     VERBOSE: false,
     PAINT_TRAIL: false,
     invincible: false,
@@ -29,7 +29,7 @@ var INI = {
     base_speed: 128.0,
 };
 var PRG = {
-    VERSION: "0.02.00",
+    VERSION: "0.03.00",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -53,11 +53,8 @@ var PRG = {
             $('#debug').show();
         } else $('#debug').hide();
         $("#engine_version").html(ENGINE.VERSION);
-        //$("#grid_version").html(GRID.VERSION);
-        //$("#ai_version").html(AI.VERSION);
+        $("#terrain_version").html(TERRAIN.VERSION);
         $("#lib_version").html(LIB.VERSION);
-
-
 
         $("#toggleHelp").click(function () {
             $("#help").toggle(400);
@@ -84,13 +81,9 @@ var PRG = {
         $(ENGINE.gameWindowId).width(ENGINE.gameWIDTH + 4);
         ENGINE.addBOX("TITLE", ENGINE.titleWIDTH, ENGINE.titleHEIGHT, ["title", "hiscore"], null);
         ENGINE.addBOX("SCORE", ENGINE.scoreWIDTH, ENGINE.scoreHEIGHT, ["score"], null);
-        ENGINE.addBOX("ROOM", ENGINE.gameWIDTH, ENGINE.gameHEIGHT, ["background", "dr_backplane2", "dr_backplane1", "dr_foreplane",
+        ENGINE.addBOX("ROOM", ENGINE.gameWIDTH, ENGINE.gameHEIGHT, ["background", "backplane2", "backplane1", "foreplane",
             "actors", "explosion", "text", "FPS", "button", "click"], null);
         ENGINE.addBOX("DOWN", ENGINE.bottomWIDTH, ENGINE.bottomHEIGHT, ["bottom", "bottomText"], null);
-
-        ENGINE.addBOX("LEVEL", ENGINE.gameWIDTH, ENGINE.gameHEIGHT, ["background2", "backplane2", "backplane1", "foreplane"], null);
-        $("#LEVEL").addClass("hidden");
-
     },
     start() {
         console.log(PRG.NAME + " started.");
@@ -125,11 +118,10 @@ var GAME = {
         $("#pause").off();
         GAME.paused = false;
 
-        let GameRD = new RenderData("Arcade", 60, "#DDD", "text", "#FFF", 2, 2, 2);
+        let GameRD = new RenderData("Alien", 60, "#DDD", "text", "#000", 2, 2, 2);
         ENGINE.TEXT.setRD(GameRD);
         ENGINE.watchVisibility(GAME.lostFocus);
         ENGINE.GAME.start(16);
-        //ENGINE.GAME.start(30);
         GAME.prepareForRestart();
         GAME.completed = false;
         GAME.won = false;
@@ -137,41 +129,26 @@ var GAME = {
         GAME.score = 0;
         GAME.lives = 3;
         //HERO.startInit();
-        //AI.initialize(HERO);
         GAME.fps = new FPS_measurement();
-        //ENGINE.GAME.ANIMATION.waitThen(GAME.levelStart, 2);
         GAME.levelStart();
     },
     levelStart() {
         console.log("starting level", GAME.level);
-        //MAP.createNewLevel(GAME.level);
-        //HERO.energy = MAP[GAME.level].energy;
         GAME.initLevel(GAME.level);
         GAME.continueLevel(GAME.level);
     },
     initLevel(level) {
         console.log("init level", level);
-        MAP.create(level, ["foreplane", "backplane1", "backplane2"]);
-
+        MAP.create(level, GAME.planes);
     },
     continueLevel(level) {
         console.log("game continues on level", level);
-        //ENEMY_TG.init(MAP[level].DUNGEON);
-        //VANISHING.init(MAP[level].DUNGEON);
-        //SPAWN.monsters(level);
-        //HERO.init();
-        //HERO.energy = Math.max(Math.round(GRID_SOLO_FLOOR_OBJECT.size / INI.GOLD * MAP[GAME.level].energy), HERO.energy);
         GAME.levelExecute(level);
     },
     levelExecute(level) {
         console.log("level", level, "executes");
-        //GAME.CI.reset();
-        //ENGINE.VIEWPORT.reset();
-        //ENGINE.VIEWPORT.check(HERO.actor);
-        //ENGINE.VIEWPORT.alignTo(HERO.actor);
         GAME.drawFirstFrame(level);
-        ENGINE.GAME.ANIMATION.next(GAME.run);
-
+        GAME.resume();
     },
     levelEnd() {
         //SPEECH.speak("Good job!");
@@ -188,34 +165,23 @@ var GAME = {
 
     run(lapsedTime) {
         if (ENGINE.GAME.stopAnimation) return;
-        //GAME.respond();
-
+        GAME.respond();
         MAP[GAME.level].map.movePlanes(lapsedTime, INI.base_speed);
 
         GAME.frameDraw(lapsedTime);
     },
-    updateVieport() {
-        if (!ENGINE.VIEWPORT.changed) return;
-        ENGINE.VIEWPORT.change("floor", "background");
-        ENGINE.VIEWPORT.change("gold", "background");
-        ENGINE.VIEWPORT.changed = false;
-    },
+
     deadRun(lapsedTime) {
-        DESTRUCTION_ANIMATION.manage(lapsedTime);
+        //DESTRUCTION_ANIMATION.manage(lapsedTime);
         GAME.deadFrameDraw(lapsedTime);
     },
     deadFrameDraw(lapsedTime) {
         ENGINE.clearLayerStack();
-
     },
     frameDraw(lapsedTime) {
         ENGINE.clearLayerStack();
-
         TERRAIN.drawParallaxSlice(MAP[GAME.level].map, ENGINE.gameWIDTH);
-        ["dr_backplane2", "dr_backplane1", "dr_foreplane"].forEach(ENGINE.layersToClear.add, ENGINE.layersToClear);
-        //ENGINE.layersToClear.add('dr_backplane2');
-        //ENGINE.layersToClear.add('dr_backplane1');
-        //ENGINE.layersToClear.add('dr_foreplane');
+        GAME.planes.forEach(ENGINE.layersToClear.add, ENGINE.layersToClear);
 
         if (DEBUG.FPS) {
             GAME.FPS(lapsedTime);
@@ -225,51 +191,16 @@ var GAME = {
         TITLE.firstFrame();
         GAME.PAINT.sky();
         TERRAIN.drawParallaxSlice(MAP[level].map, ENGINE.gameWIDTH);
-        //["dr_backplane2", "dr_backplane1","dr_foreplane"]
-        //array.forEach(mySet.add, mySet)
-        ["dr_backplane2", "dr_backplane1", "dr_foreplane"].forEach(ENGINE.layersToClear.add, ENGINE.layersToClear);
-        //ENGINE.layersToClear.add('dr_backplane2');
-        //ENGINE.layersToClear.add('dr_backplane1');
-        //ENGINE.layersToClear.add('dr_foreplane');
-
-    },
-    blockGrid(level) {
-        GRID.grid();
-        GRID.paintCoord("coord", MAP[level].DUNGEON);
+        GAME.planes.forEach(ENGINE.layersToClear.add, ENGINE.layersToClear);
     },
     prepareForRestart() {
         ENGINE.TIMERS.clear();
     },
     setup() {
         console.log("GAME SETUP started");
-
-        /*
-        for (var prop in TEXTURE) {
-            $("#walltexture").append(
-                "<option value='" + prop + "'>" + prop + "</option>"
-            );
-            $("#floortexture").append(
-                "<option value='" + prop + "'>" + prop + "</option>"
-            );
-            $("#ceilingtexture").append(
-                "<option value='" + prop + "'>" + prop + "</option>"
-            );
-        }
-        $("#walltexture").val("CastleWall");
-        $("#floortexture").val("RockFloor");
-        $("#ceilingtexture").val("MorgueFloor");
-        LAYER.wallcanvas = $("#wallcanvas")[0].getContext("2d");
-        LAYER.floorcanvas = $("#floorcanvas")[0].getContext("2d");
-        ENGINE.fill(LAYER.wallcanvas, TEXTURE[$("#walltexture")[0].value]);
-        ENGINE.fill(LAYER.floorcanvas, TEXTURE[$("#floortexture")[0].value]);
-
-        
-
-        MAZE.bias = 2;
-        MAZE.useBias = true;
-        */
         $("#buttons").prepend("<input type='button' id='startGame' value='Start Game'>");
         $("#startGame").prop("disabled", true);
+        GAME.planes = ["foreplane", "backplane1", "backplane2"];
     },
     setTitle() {
         const text = GAME.generateTitleText();
@@ -336,7 +267,7 @@ var GAME = {
             ENGINE.GAME.keymap[ENGINE.KEY.map.F4] = false;
         }
         if (map[ENGINE.KEY.map.F9]) {
-            if (DEBUG.BUTTONS) DEBUG.finishLevel();
+            //if (DEBUG.BUTTONS) DEBUG.finishLevel();
         }
         if (map[ENGINE.KEY.map.ctrl]) {
 
@@ -398,11 +329,6 @@ var GAME = {
             grad.addColorStop("0.2", "#B3DFFB");
             grad.addColorStop("0.6", "#ABDCFB");
             grad.addColorStop("1.0", "#4CC4EC");
-            CTX.fillStyle = grad;
-            CTX.fillRect(0, 0, ENGINE.gameWIDTH, ENGINE.gameHEIGHT);
-
-            //debug
-            CTX = LAYER.background2;
             CTX.fillStyle = grad;
             CTX.fillRect(0, 0, ENGINE.gameWIDTH, ENGINE.gameHEIGHT);
         }
