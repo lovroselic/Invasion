@@ -16,7 +16,7 @@ known bugs:
 ////////////////////////////////////////////////////
 
 var DEBUG = {
-    FPS: false,
+    FPS: true,
     BUTTONS: false,
     SETTING: false,
     VERBOSE: false,
@@ -26,10 +26,10 @@ var DEBUG = {
 
 };
 var INI = {
-
+    base_speed: 16.0,
 };
 var PRG = {
-    VERSION: "0.01.01",
+    VERSION: "0.01.02",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -60,17 +60,6 @@ var PRG = {
         //$("#ai_version").html(AI.VERSION);
         $("#lib_version").html(LIB.VERSION);
 
-        /*
-        $("#walltexture").change(function () {
-            ENGINE.fill(LAYER.wallcanvas, TEXTURE[$("#walltexture")[0].value]);
-        });
-        $("#floortexture").change(function () {
-            ENGINE.fill(LAYER.floorcanvas, TEXTURE[$("#floortexture")[0].value]);
-        });
-        $("#ceilingtexture").change(function () {
-            ENGINE.fill(LAYER.ceilingcanvas, TEXTURE[$("#ceilingtexture")[0].value]);
-        });
-        */
 
 
         $("#toggleHelp").click(function () {
@@ -98,11 +87,11 @@ var PRG = {
         $(ENGINE.gameWindowId).width(ENGINE.gameWIDTH + 4);
         ENGINE.addBOX("TITLE", ENGINE.titleWIDTH, ENGINE.titleHEIGHT, ["title", "hiscore"], null);
         ENGINE.addBOX("SCORE", ENGINE.scoreWIDTH, ENGINE.scoreHEIGHT, ["score"], null);
-        ENGINE.addBOX("ROOM", ENGINE.gameWIDTH, ENGINE.gameHEIGHT, ["background", "backplane1_projection", "backplane2_projection", "foreplane_projection", "actors", "explosion",
-            "text", "FPS", "button", "click"], null);
+        ENGINE.addBOX("ROOM", ENGINE.gameWIDTH, ENGINE.gameHEIGHT, ["background", "dr_backplane2", "dr_backplane1","dr_foreplane", 
+        "actors", "explosion", "text", "FPS", "button", "click"], null);
         ENGINE.addBOX("DOWN", ENGINE.bottomWIDTH, ENGINE.bottomHEIGHT, ["bottom", "bottomText"], null);
 
-        ENGINE.addBOX("LEVEL", ENGINE.gameWIDTH, ENGINE.gameHEIGHT, ["background2","backplane2", "backplane1", "foreplane"], null);
+        ENGINE.addBOX("LEVEL", ENGINE.gameWIDTH, ENGINE.gameHEIGHT, ["background2", "backplane2", "backplane1", "foreplane"], null);
 
     },
     start() {
@@ -142,6 +131,7 @@ var GAME = {
         ENGINE.TEXT.setRD(GameRD);
         ENGINE.watchVisibility(GAME.lostFocus);
         ENGINE.GAME.start(16);
+        //ENGINE.GAME.start(30);
         GAME.prepareForRestart();
         GAME.completed = false;
         GAME.won = false;
@@ -163,7 +153,7 @@ var GAME = {
     },
     initLevel(level) {
         console.log("init level", level);
-        MAP.create(level, ["foreplane","backplane1", "backplane2"]);
+        MAP.create(level, ["foreplane", "backplane1", "backplane2"]);
 
     },
     continueLevel(level) {
@@ -182,6 +172,7 @@ var GAME = {
         //ENGINE.VIEWPORT.check(HERO.actor);
         //ENGINE.VIEWPORT.alignTo(HERO.actor);
         GAME.drawFirstFrame(level);
+        ENGINE.GAME.ANIMATION.next(GAME.run);
 
     },
     levelEnd() {
@@ -199,7 +190,7 @@ var GAME = {
 
     run(lapsedTime) {
         if (ENGINE.GAME.stopAnimation) return;
-        GAME.respond();
+        //GAME.respond();
 
         GAME.frameDraw(lapsedTime);
     },
@@ -220,6 +211,11 @@ var GAME = {
     frameDraw(lapsedTime) {
         ENGINE.clearLayerStack();
 
+        TERRAIN.drawParallaxSlice(MAP[GAME.level].map, ENGINE.gameWIDTH);
+        ["dr_backplane2", "dr_backplane1","dr_foreplane"].forEach(ENGINE.layersToClear.add, ENGINE.layersToClear);
+        //ENGINE.layersToClear.add('dr_backplane2');
+        //ENGINE.layersToClear.add('dr_backplane1');
+        //ENGINE.layersToClear.add('dr_foreplane');
 
         if (DEBUG.FPS) {
             GAME.FPS(lapsedTime);
@@ -228,6 +224,14 @@ var GAME = {
     drawFirstFrame(level) {
         TITLE.firstFrame();
         GAME.PAINT.sky();
+        TERRAIN.drawParallaxSlice(MAP[level].map, ENGINE.gameWIDTH);
+        //["dr_backplane2", "dr_backplane1","dr_foreplane"]
+        //array.forEach(mySet.add, mySet)
+        ["dr_backplane2", "dr_backplane1","dr_foreplane"].forEach(ENGINE.layersToClear.add, ENGINE.layersToClear);
+        //ENGINE.layersToClear.add('dr_backplane2');
+        //ENGINE.layersToClear.add('dr_backplane1');
+        //ENGINE.layersToClear.add('dr_foreplane');
+    
     },
     blockGrid(level) {
         GRID.grid();
@@ -358,7 +362,7 @@ var GAME = {
     },
     FPS(lapsedTime) {
         let CTX = LAYER.FPS;
-        CTX.fillStyle = "white";
+        CTX.fillStyle = "black";
         ENGINE.clearLayer("FPS");
         let fps = 1000 / lapsedTime || 0;
         GAME.fps.update(fps);

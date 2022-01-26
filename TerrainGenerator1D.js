@@ -32,16 +32,22 @@ class Plane {
         this.DATA.map = map;
         this.layer = layer;
         this.CTX = LAYER[this.layer];
+        this.DCTX =  LAYER[`dr_${this.layer}`];
         this.planeLimits = planeLimits;
         this.texture = texture;
         this.speedFactor = speedFactor;
         this.color = color;
+        this.position = 0.0;
+    }
+    getPosition(){
+        return Math.round(this.position);
     }
 }
 class Parallax {
     constructor(planes) {
         this.planes = planes;
     }
+    movePlanes(timeLapse) { }
 }
 
 class PSNG {
@@ -105,7 +111,8 @@ var PERLIN = {
         divisor_base: 2,
         divisor_exponent: 2.1,
     },
-    drawLine(CTX, plane) {
+    drawLine(plane, CTX = null) {
+        CTX = CTX || plane.CTX;
         CTX.strokeStyle = plane.color;
         let data = plane.DATA.map;
         CTX.beginPath();
@@ -115,18 +122,28 @@ var PERLIN = {
         }
         CTX.stroke();
     },
-    drawShape(plane) {
-        let CTX = plane.CTX;
+    drawShape(plane, CTX = null, from = 0, length = null) {
+        CTX = CTX || plane.CTX;
         CTX.fillStyle = plane.color;
+        this.draw(plane, CTX, from, length);
+    },
+    drawPattern(plane, CTX = null, from = 0, length = null) {
+        CTX = CTX || plane.CTX;
+        let pattern = CTX.createPattern(TEXTURE[plane.texture], 'repeat');
+        CTX.fillStyle = pattern;
+        this.draw(plane, CTX, from, length);
+    },
+    draw(plane, CTX, from, length) {
         let data = plane.DATA.map;
+        length = length || data.length;
         CTX.beginPath();
-        CTX.moveTo(0, data[0]);
-        for (let i = 1; i < data.length; i++) {
-            CTX.lineTo(i, data[i]);
+        CTX.moveTo(0, data[from]);
+        for (let i = 1; i < length; i++) {
+            CTX.lineTo(i, data[from + i]);
         }
-        CTX.lineTo(CTX.canvas.width - 1, CTX.canvas.height - 1);
-        CTX.lineTo(0, CTX.canvas.height - 1);
-        CTX.lineTo(0, data[0]);
+        CTX.lineTo(CTX.canvas.width, CTX.canvas.height);
+        CTX.lineTo(0, CTX.canvas.height);
+        CTX.lineTo(0, data[from]);
         CTX.closePath();
         CTX.fill();
     },
@@ -180,11 +197,16 @@ var TERRAIN = {
         }
         let px = new Parallax(planes);
         return px;
-        //TERRAIN.drawParallax(px);
     },
     drawParallax(px) {
         for (let pl of px.planes) {
-            PERLIN.drawShape(pl);
+            //PERLIN.drawShape(pl);
+            PERLIN.drawPattern(pl);
+        }
+    },
+    drawParallaxSlice(px, W){
+        for (let pl of px.planes.reverse()) {
+            PERLIN.drawPattern(pl, pl.DCTX, pl.getPosition(), W);
         }
     }
 };
