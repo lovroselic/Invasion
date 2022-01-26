@@ -168,11 +168,9 @@ var TERRAIN = {
         speed_factor: [1.0, 0.5, 0.25],
         WL: [256, 96, 64],
         open: [true, false, false],
-        octaves: [1, 3, 3]
+        octaves: [1, 4, 3]
     },
     createClassic(W, H, plane_layers, textures, colors) {
-        console.log("TERRAIN createClassic", arguments);
-
         let planes = [];
         for (let i = 0; i < TERRAIN.INI.planes; i++) {
             let PL = new PlaneLimits(W, TERRAIN.INI.WL[i], TERRAIN.INI.planes_max[i] * H, TERRAIN.INI.planes_min[i] * H, TERRAIN.INI.open[0]);
@@ -181,13 +179,10 @@ var TERRAIN = {
             planes.push(plane);
         }
         let px = new Parallax(planes);
-
-        /*for (let pl of px.planes) {
-            PERLIN.drawShape(pl);
-        }*/
-        TERRAIN.drawParallax(px);
+        return px;
+        //TERRAIN.drawParallax(px);
     },
-    drawParallax(px){
+    drawParallax(px) {
         for (let pl of px.planes) {
             PERLIN.drawShape(pl);
         }
