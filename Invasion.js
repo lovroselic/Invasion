@@ -29,7 +29,7 @@ var INI = {
     base_speed: 128.0,
 };
 var PRG = {
-    VERSION: "0.03.01",
+    VERSION: "0.03.02",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -120,9 +120,10 @@ var HERO = {
         let left_axis_y = forePlane.DATA.map[this.LEFT + this.LEFT_AXIS + forePlane.getPosition()];
         let right_axis_y = forePlane.DATA.map[this.LEFT + this.width - this.LEFT_AXIS + forePlane.getPosition()];
         let tan = (right_axis_y - left_axis_y) / this.width;
-        let angle = Math.degrees(Math.atan(tan));
-        HERO.angle = angle;
+        let angle = round5(Math.degrees(Math.atan(tan)));
         console.log(angle);
+        HERO.angle = angle;
+        
         this.actor.setPosition(HERO.LEFT, left_axis_y);
     }
 };

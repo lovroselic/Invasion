@@ -2246,8 +2246,10 @@ class Rotating_ACTOR extends ACTOR {
   sprite(deg) {
     /**
      * to be changed
+     * rotateImage(image, degree, newName)
      */
-    return SPRITE[this.name];
+    return ENGINE.rotateImage(SPRITE[this.name], deg, "tankTemp");
+    //return SPRITE[this.name];
   }
 }
 class Flat_ACTOR {

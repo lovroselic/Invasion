@@ -43,6 +43,9 @@ changelog:
   function round10(x) {
     return Math.round(x / 10) * 10;
   }
+  function round5(x) {
+    return Math.round(x / 5) * 5;
+  }
   function weightedRnd(_json) {
     let json = $.extend(true, {}, _json);
     normalize(json);
@@ -69,6 +72,7 @@ changelog:
   window.coinFlip = coinFlip;
   window.probable = probable;
   window.round10 = round10;
+  window.round5 = round5;
   window.randomSign = randomSign;
   window.weightedRnd = weightedRnd;
 })();
