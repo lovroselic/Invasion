@@ -11,5 +11,6 @@ var MAP = {
         let H = ENGINE.gameHEIGHT;
         let map = TERRAIN.createClassic(W, H, plane_layers, MAP[GAME.level].textures, MAP[GAME.level].colors);
         MAP[level].map = map;
+        console.log('MAP[level].map', MAP[level].map);
     }
 };

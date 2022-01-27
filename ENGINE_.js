@@ -30,7 +30,7 @@ var DownRight = new Vector(1, 1);
 var DownLeft = new Vector(-1, 1);
 
 var ENGINE = {
-  VERSION: "3.04.DEV",
+  VERSION: "3.05.DEV",
   CSS: "color: #0FA",
   INI: {
     ANIMATION_INTERVAL: 16,
@@ -250,6 +250,10 @@ var ENGINE = {
     let CTX = LAYER[layer];
     CTX.drawImage(image, X, Y);
   },
+  drawBottomLeft(layer, X, Y, image) {
+    let CTX = LAYER[layer];
+    CTX.drawImage(image, X, Y - image.height);
+  },
   drawPart(layer, X, Y, image, line) {
     let CTX = LAYER[layer];
     CTX.drawImage(
@@ -326,6 +330,7 @@ var ENGINE = {
     CTX.putImageData(trimmed, 0, 0);
     const sprite = ENGINE.contextToSprite(newName, CTX);
     sprite.onload = ENGINE.creationSpriteCount;
+    return sprite;
   },
   setCollisionsafe(safe) {
     if (safe !== undefined) {
@@ -2160,16 +2165,13 @@ class ACTOR {
     }
     switch (this.asset.type) {
       case "4D":
-        this.name = `${this.class}_${this.orientation}_${this[this.orientation + "_index"]
-          }`;
+        this.name = `${this.class}_${this.orientation}_${this[this.orientation + "_index"]}`;
         break;
       case "1D":
-        this.name = `${this.class}_${this.linear_index
-          .toString()
-          .padStart(2, "0")}`;
+        this.name = `${this.class}_${this.linear_index.toString().padStart(2, "0")}`;
         break;
       default:
-        throw "actor.refresh asset type ERRoR";
+        throw "actor.refresh asset type ERROR";
     }
 
     this.width = SPRITE[this.name].width;
@@ -2231,6 +2233,21 @@ class ACTOR {
     this.class = spriteClass;
     this.resetIndexes();
     this.animateMove(this.orientation);
+  }
+}
+class Rotating_ACTOR extends ACTOR {
+  constructor(sprite_class, x, y, fps) {
+    super(sprite_class, x, y, 'linear', ASSET[sprite_class], fps);
+  }
+  setPosition(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+  sprite(deg) {
+    /**
+     * to be changed
+     */
+    return SPRITE[this.name];
   }
 }
 class Flat_ACTOR {

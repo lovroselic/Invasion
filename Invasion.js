@@ -29,7 +29,7 @@ var INI = {
     base_speed: 128.0,
 };
 var PRG = {
-    VERSION: "0.03.00",
+    VERSION: "0.03.01",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -101,6 +101,32 @@ var PRG = {
     }
 };
 
+var HERO = {
+    startInit() {
+        this.LEFT = 32;
+        this.LEFT_AXIS = 8;
+        this.width = 48;
+        let y = Math.floor(0.95 * ENGINE.gameHEIGHT);
+        this.actor = new Rotating_ACTOR("Tank", this.LEFT, y, 30);
+        console.log("HERO", HERO);
+    },
+    draw() {
+        ENGINE.drawBottomLeft('actors', HERO.actor.x, HERO.actor.y, HERO.actor.sprite(HERO.angle));
+        ENGINE.layersToClear.add("actors");
+    },
+    move(time) {
+        HERO.actor.updateAnimation(time);
+        let forePlane = MAP[GAME.level].map.planes[0];
+        let left_axis_y = forePlane.DATA.map[this.LEFT + this.LEFT_AXIS + forePlane.getPosition()];
+        let right_axis_y = forePlane.DATA.map[this.LEFT + this.width - this.LEFT_AXIS + forePlane.getPosition()];
+        let tan = (right_axis_y - left_axis_y) / this.width;
+        let angle = Math.degrees(Math.atan(tan));
+        HERO.angle = angle;
+        console.log(angle);
+        this.actor.setPosition(HERO.LEFT, left_axis_y);
+    }
+};
+
 var GAME = {
     start() {
         console.log("GAME started");
@@ -128,7 +154,7 @@ var GAME = {
         GAME.level = 1;
         GAME.score = 0;
         GAME.lives = 3;
-        //HERO.startInit();
+        HERO.startInit();
         GAME.fps = new FPS_measurement();
         GAME.levelStart();
     },
@@ -167,6 +193,7 @@ var GAME = {
         if (ENGINE.GAME.stopAnimation) return;
         GAME.respond();
         MAP[GAME.level].map.movePlanes(lapsedTime, INI.base_speed);
+        HERO.move(lapsedTime);
 
         GAME.frameDraw(lapsedTime);
     },
@@ -182,6 +209,8 @@ var GAME = {
         ENGINE.clearLayerStack();
         TERRAIN.drawParallaxSlice(MAP[GAME.level].map, ENGINE.gameWIDTH);
         GAME.planes.forEach(ENGINE.layersToClear.add, ENGINE.layersToClear);
+
+        HERO.draw();
 
         if (DEBUG.FPS) {
             GAME.FPS(lapsedTime);

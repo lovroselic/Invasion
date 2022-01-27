@@ -21,7 +21,7 @@ var LoadAudio = [
 ];
 var ExtendSheetTag = [];
 var LoadSheetSequences = [
-
+    { srcName: "tank.png", count: 3, name: "Tank" },
 ];
 var LoadFonts = [
     { srcName: "C64_Pro-STYLE.ttf", name: "C64" },

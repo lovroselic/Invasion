@@ -207,7 +207,7 @@ var TERRAIN = {
         }
     },
     drawParallaxSlice(px, W) {
-        for (let pl of px.planes.reverse()) {
+        for (let pl of px.planes) {
             PERLIN.drawPattern(pl, pl.getPosition(), W);
         }
     }
