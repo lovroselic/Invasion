@@ -6,7 +6,7 @@
 console.clear();
 
 var LIB = {
-  VERSION: "3.01",
+  VERSION: "3.02",
   CSS: "color: #EFE",
   log: function () {
     console.log(`%cPrototype LIB ${LIB.VERSION} loaded`, LIB.CSS);

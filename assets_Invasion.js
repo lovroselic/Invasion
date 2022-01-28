@@ -27,3 +27,6 @@ var LoadFonts = [
     { srcName: "C64_Pro-STYLE.ttf", name: "C64" },
     { srcName: "CosmicAlien.ttf", name: "Alien" },
 ];
+
+//////////////////Preprocess data ////////////////////////////
+var AssetNamesToRotate = ["Tank"];

@@ -879,6 +879,16 @@ var ENGINE = {
   spriteToAsset(obj) {
     ASSET[obj.asset].linear.push(SPRITE[obj.name]);
   },
+  rotateAsset(assetName, startAngle, endAngle, step = 1) {
+    console.log(ASSET[assetName]);
+    let sprites = ASSET[assetName].linear;
+    for (let angle = startAngle; angle <= endAngle; angle += step) {
+      for (let i = 0; i < sprites.length; i++) {
+        let name = `${assetName}_${i.toString().padStart(2, "0")}_${angle}`;
+        ENGINE.rotateImage(sprites[i], angle, name);
+      }
+    }
+  },
   KEY: {
     on() {
       $(document).keydown(ENGINE.GAME.checkKey);
@@ -1239,12 +1249,7 @@ var ENGINE = {
           ASSET[el.name] = new LiveSPRITE("1D", []);
           for (let i = 1; i <= el.count; i++) {
             toLoad.push({
-              srcName:
-                el.srcName +
-                "_" +
-                i.toString().padStart(2, "0") +
-                "." +
-                el.type,
+              srcName: el.srcName + "_" + i.toString().padStart(2, "0") + "." + el.type,
               name: el.name + (i - 1).toString().padStart(2, "0"),
               asset: el.name
             });
@@ -2238,18 +2243,22 @@ class ACTOR {
 class Rotating_ACTOR extends ACTOR {
   constructor(sprite_class, x, y, fps) {
     super(sprite_class, x, y, 'linear', ASSET[sprite_class], fps);
+    this.drawX = this.x;
+    this.drawY = this.y;
   }
   setPosition(x, y) {
     this.x = x;
     this.y = y;
   }
-  sprite(deg) {
-    /**
-     * to be changed
-     * rotateImage(image, degree, newName)
-     */
-    return ENGINE.rotateImage(SPRITE[this.name], deg, "tankTemp");
-    //return SPRITE[this.name];
+  setDraw(x, y) {
+    this.drawX = x;
+    this.drawY = y;
+  }
+  setAngle(angle) {
+    this.angle = angle;
+  }
+  sprite() {
+    return SPRITE[`${this.name}_${this.angle}`];
   }
 }
 class Flat_ACTOR {

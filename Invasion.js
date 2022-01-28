@@ -29,7 +29,7 @@ var INI = {
     base_speed: 128.0,
 };
 var PRG = {
-    VERSION: "0.03.02",
+    VERSION: "0.04.00",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -105,26 +105,33 @@ var HERO = {
     startInit() {
         this.LEFT = 32;
         this.LEFT_AXIS = 8;
-        this.width = 48;
+        //this.width = 48;
         let y = Math.floor(0.95 * ENGINE.gameHEIGHT);
         this.actor = new Rotating_ACTOR("Tank", this.LEFT, y, 30);
+        this.width = SPRITE[this.actor.name].width;
+        this.height = SPRITE[this.actor.name].height;
         console.log("HERO", HERO);
     },
     draw() {
-        ENGINE.drawBottomLeft('actors', HERO.actor.x, HERO.actor.y, HERO.actor.sprite(HERO.angle));
+        ENGINE.drawBottomLeft('actors', HERO.actor.drawX, HERO.actor.drawY + 2, HERO.actor.sprite());
         ENGINE.layersToClear.add("actors");
     },
     move(time) {
         HERO.actor.updateAnimation(time);
         let forePlane = MAP[GAME.level].map.planes[0];
         let left_axis_y = forePlane.DATA.map[this.LEFT + this.LEFT_AXIS + forePlane.getPosition()];
-        let right_axis_y = forePlane.DATA.map[this.LEFT + this.width - this.LEFT_AXIS + forePlane.getPosition()];
-        let tan = (right_axis_y - left_axis_y) / this.width;
-        let angle = round5(Math.degrees(Math.atan(tan)));
-        console.log(angle);
-        HERO.angle = angle;
-        
+        let right_axis_y = forePlane.DATA.map[this.LEFT + this.width + forePlane.getPosition()];
+        let tan = (right_axis_y - left_axis_y) / (this.width - this.LEFT_AXIS);
+        let angle = Math.round(Math.degrees(Math.atan(tan)));
+        HERO.actor.setAngle(angle);
         this.actor.setPosition(HERO.LEFT, left_axis_y);
+        // adjust draw
+        let shiftX = 0;
+        let shiftY = 0;
+        if (angle > 0) {
+            shiftY = Math.sin(Math.radians(angle)) * HERO.height;
+        }
+        this.actor.setDraw(HERO.LEFT + shiftX, left_axis_y + shiftY);
     }
 };
 
@@ -227,10 +234,19 @@ var GAME = {
         ENGINE.TIMERS.clear();
     },
     setup() {
+        console.time("gameSetup");
+        console.group("setup");
         console.log("GAME SETUP started");
         $("#buttons").prepend("<input type='button' id='startGame' value='Start Game'>");
         $("#startGame").prop("disabled", true);
         GAME.planes = ["foreplane", "backplane1", "backplane2"];
+
+        for (let asset of AssetNamesToRotate) {
+            ENGINE.rotateAsset(asset, -90, 90, 1);
+        }
+
+        console.timeEnd("gameSetup");
+        console.groupEnd("setup");
     },
     setTitle() {
         const text = GAME.generateTitleText();
