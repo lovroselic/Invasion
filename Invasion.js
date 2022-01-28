@@ -29,7 +29,7 @@ var INI = {
     base_speed: 128.0,
 };
 var PRG = {
-    VERSION: "0.04.00",
+    VERSION: "0.04.01",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -245,6 +245,7 @@ var GAME = {
             ENGINE.rotateAsset(asset, -90, 90, 1);
         }
 
+        $("#conv").remove();
         console.timeEnd("gameSetup");
         console.groupEnd("setup");
     },
