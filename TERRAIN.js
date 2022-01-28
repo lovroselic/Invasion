@@ -12,7 +12,7 @@ class PlaneLimits {
         }
         this.width = width;
         this.leftStop = leftStop;
-        this.rightStop = rightStop || this.width;
+        this.rightStop = rightStop || this.width - 16;
         this.open = open;
         this.WL = wawelength;
         this.drawMaxHeight = Math.floor(drawMaxHeight);

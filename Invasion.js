@@ -29,7 +29,7 @@ var INI = {
     base_speed: 128.0,
 };
 var PRG = {
-    VERSION: "0.04.01",
+    VERSION: "0.04.02",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -125,13 +125,17 @@ var HERO = {
         let angle = Math.round(Math.degrees(Math.atan(tan)));
         HERO.actor.setAngle(angle);
         this.actor.setPosition(HERO.LEFT, left_axis_y);
-        // adjust draw
         let shiftX = 0;
         let shiftY = 0;
         if (angle > 0) {
             shiftY = Math.sin(Math.radians(angle)) * HERO.height;
         }
         this.actor.setDraw(HERO.LEFT + shiftX, left_axis_y + shiftY);
+        HERO.positionRight = this.LEFT + this.width + forePlane.getPosition();
+        console.log(HERO.positionRight, HERO.positionRight >= forePlane.planeLimits.rightStop);
+        if (HERO.positionRight >= forePlane.planeLimits.rightStop){
+            GAME.levelEnd();
+        }
     }
 };
 
@@ -186,8 +190,9 @@ var GAME = {
     },
     levelEnd() {
         //SPEECH.speak("Good job!");
-        //GAME.levelCompleted = true;
-        //ENGINE.TEXT.centeredText("LEVEL COMPLETED", ENGINE.gameWIDTH, ENGINE.gameHEIGHT / 4);
+        GAME.levelCompleted = true;
+        ENGINE.TEXT.centeredText("LEVEL COMPLETED", ENGINE.gameWIDTH, ENGINE.gameHEIGHT / 4);
+        ENGINE.GAME.ANIMATION.stop();
         //TITLE.endLevel();
         //ENGINE.GAME.ANIMATION.next(ENGINE.KEY.waitFor.bind(null, GAME.nextLevel, "enter"));
     },
