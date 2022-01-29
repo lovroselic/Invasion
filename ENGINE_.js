@@ -1356,11 +1356,7 @@ var ENGINE = {
           arrPath.map((img) => loadImage(img, "Rotated"))
         ).then(function (obj) {
           obj.forEach(function (el) {
-            for (
-              let q = el.rotate.first;
-              q <= el.rotate.last;
-              q += el.rotate.step
-            ) {
+            for (let q = el.rotate.first; q <= el.rotate.last; q += el.rotate.step) {
               ENGINE.rotateImage(el.img, q, el.name + "_" + q);
             }
           });

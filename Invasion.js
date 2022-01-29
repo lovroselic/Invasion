@@ -29,7 +29,7 @@ var INI = {
     base_speed: 128.0,
 };
 var PRG = {
-    VERSION: "0.04.02",
+    VERSION: "0.04.03",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -105,14 +105,27 @@ var HERO = {
     startInit() {
         this.LEFT = 32;
         this.LEFT_AXIS = 8;
-        //this.width = 48;
         let y = Math.floor(0.95 * ENGINE.gameHEIGHT);
         this.actor = new Rotating_ACTOR("Tank", this.LEFT, y, 30);
         this.width = SPRITE[this.actor.name].width;
         this.height = SPRITE[this.actor.name].height;
+        this.canonAngle = 0;
+        this.canonOffX = 24;
+        this.canonOffY = 20;
         console.log("HERO", HERO);
     },
     draw() {
+        let canonY = HERO.actor.drawY + 2 - HERO.canonOffY;
+        let canonX = HERO.actor.drawX + HERO.canonOffX;
+        if (HERO.actor.angle < 0) {
+            canonY += Math.sin((Math.radians(HERO.actor.angle))) * HERO.height / 2;
+            canonX += Math.sin((Math.radians(HERO.actor.angle))) * HERO.height / 2 * 0.75;
+        }
+        if (HERO.actor.angle > 0) {
+            canonY += Math.sin((Math.radians(HERO.actor.angle))) * HERO.height / 2 * 0.75;
+            canonX += Math.sin((Math.radians(HERO.actor.angle))) * HERO.height / 2 * 0.75;
+        }
+        ENGINE.drawBottomLeft('actors', canonX, canonY, SPRITE[`Cev_${HERO.canonAngle + HERO.actor.angle}`]);
         ENGINE.drawBottomLeft('actors', HERO.actor.drawX, HERO.actor.drawY + 2, HERO.actor.sprite());
         ENGINE.layersToClear.add("actors");
     },
@@ -125,15 +138,13 @@ var HERO = {
         let angle = Math.round(Math.degrees(Math.atan(tan)));
         HERO.actor.setAngle(angle);
         this.actor.setPosition(HERO.LEFT, left_axis_y);
-        let shiftX = 0;
         let shiftY = 0;
         if (angle > 0) {
             shiftY = Math.sin(Math.radians(angle)) * HERO.height;
         }
-        this.actor.setDraw(HERO.LEFT + shiftX, left_axis_y + shiftY);
+        this.actor.setDraw(HERO.LEFT, left_axis_y + shiftY);
         HERO.positionRight = this.LEFT + this.width + forePlane.getPosition();
-        console.log(HERO.positionRight, HERO.positionRight >= forePlane.planeLimits.rightStop);
-        if (HERO.positionRight >= forePlane.planeLimits.rightStop){
+        if (HERO.positionRight >= forePlane.planeLimits.rightStop) {
             GAME.levelEnd();
         }
     }
