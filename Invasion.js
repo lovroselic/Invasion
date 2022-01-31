@@ -27,10 +27,13 @@ var DEBUG = {
 };
 var INI = {
     base_speed: 128.0,
+    max_speed: 160.0,
+    min_speed: 0.0,
+    acceleration: 100.0,
     canon_step: 5,
 };
 var PRG = {
-    VERSION: "0.04.05",
+    VERSION: "0.05.00",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -101,12 +104,11 @@ var PRG = {
         TITLE.startTitle();
     }
 };
-
 var HERO = {
     startInit() {
         this.LEFT = 32;
         this.LEFT_AXIS = 8;
-        let y = Math.floor(0.95 * ENGINE.gameHEIGHT);
+        let y = Math.floor(TERRAIN.INI.planes_max[0] * ENGINE.gameHEIGHT);
         this.actor = new Rotating_ACTOR("Tank", this.LEFT, y, 30);
         this.width = SPRITE[this.actor.name].width;
         this.height = SPRITE[this.actor.name].height;
@@ -116,6 +118,8 @@ var HERO = {
         this.canonX = null;
         this.canonY = null;
         console.log("HERO", HERO);
+        HERO.speed = 0;
+        //HERO.speed = INI.base_speed;
     },
     draw() {
         //ENGINE.drawBottomLeft('actors', HERO.actor.drawX, HERO.actor.drawY + 2, HERO.actor.sprite());
@@ -124,7 +128,7 @@ var HERO = {
         ENGINE.layersToClear.add("actors");
     },
     move(time) {
-        HERO.actor.updateAnimation(time);
+        HERO.actor.updateAnimation(time * HERO.speed / INI.base_speed);
         let forePlane = MAP[GAME.level].map.planes[0];
         let left_axis_y = forePlane.DATA.map[this.LEFT + this.LEFT_AXIS + forePlane.getPosition()];
         let right_axis_y = forePlane.DATA.map[this.LEFT + this.width + forePlane.getPosition()];
@@ -141,7 +145,7 @@ var HERO = {
         if (HERO.positionRight >= forePlane.planeLimits.rightStop) {
             GAME.levelEnd();
         }
-        /////////////////////
+
         let canonY = HERO.actor.drawY + 2 - HERO.canonOffY;
         let canonX = HERO.actor.drawX + HERO.canonOffX;
         let F = HERO.height / HERO.width;
@@ -152,7 +156,7 @@ var HERO = {
         if (HERO.actor.angle > 0) {
             canonY += Math.sin(Math.radians(HERO.actor.angle)) * HERO.height / 2;
             canonX += Math.sin(Math.radians(HERO.actor.angle)) * HERO.height / 2 * F;
-            canonY += Math.sin(Math.radians(HERO.actor.angle)) * Math.sin(Math.radians(HERO.canonAngle)) * HERO.height; 
+            canonY += Math.sin(Math.radians(HERO.actor.angle)) * Math.sin(Math.radians(HERO.canonAngle)) * HERO.height;
         }
         if (HERO.actor.angle + HERO.canonAngle < -90) {
             canonX += Math.sin(Math.radians(HERO.actor.angle + HERO.canonAngle + 90)) * HERO.height;
@@ -161,13 +165,14 @@ var HERO = {
 
         HERO.canonX = Math.round(canonX);
         HERO.canonY = Math.round(canonY);
-        /*console.log(HERO.canonY, "tank:", HERO.actor.angle, "canon:", HERO.canonAngle, "sum:", HERO.actor.angle + HERO.canonAngle,
-            "*", Math.sin(Math.radians(HERO.actor.angle)) * Math.sin(Math.radians(HERO.canonAngle)) * HERO.height / 2,
-            );*/
-
+    },
+    accelerate(dir, time) {
+        let dv = INI.acceleration * time / 1000;
+        HERO.speed += dir * dv;
+        HERO.speed = Math.min(HERO.speed, INI.max_speed);
+        HERO.speed = Math.max(HERO.speed, INI.min_speed);
     }
 };
-
 var GAME = {
     start() {
         console.log("GAME started");
@@ -230,16 +235,15 @@ var GAME = {
         GAME.levelCompleted = false;
         ENGINE.GAME.ANIMATION.waitThen(GAME.levelStart, 2);
     },
-
     run(lapsedTime) {
         if (ENGINE.GAME.stopAnimation) return;
-        GAME.respond();
-        MAP[GAME.level].map.movePlanes(lapsedTime, INI.base_speed);
+        GAME.respond(lapsedTime);
+        //MAP[GAME.level].map.movePlanes(lapsedTime, INI.base_speed);
+        MAP[GAME.level].map.movePlanes(lapsedTime, HERO.speed);
         HERO.move(lapsedTime);
 
         GAME.frameDraw(lapsedTime);
     },
-
     deadRun(lapsedTime) {
         //DESTRUCTION_ANIMATION.manage(lapsedTime);
         GAME.deadFrameDraw(lapsedTime);
@@ -338,7 +342,7 @@ var GAME = {
         ENGINE.GAME.ANIMATION.next(GAME.run);
         GAME.paused = false;
     },
-    respond() {
+    respond(lapsedTime) {
         if (false) return;
         var map = ENGINE.GAME.keymap;
 
@@ -355,11 +359,11 @@ var GAME = {
             ENGINE.GAME.keymap[ENGINE.KEY.map.ctrl] = false;
         }
         if (map[ENGINE.KEY.map.left]) {
-
+            HERO.accelerate(-1, lapsedTime);
             return;
         }
         if (map[ENGINE.KEY.map.right]) {
-
+            HERO.accelerate(1, lapsedTime);
             return;
         }
         if (map[ENGINE.KEY.map.up]) {
