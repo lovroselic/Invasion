@@ -13,7 +13,7 @@ var LoadSprites = [
 var LoadSequences = [];
 var LoadSheets = [];
 var LoadRotated = [
-    { srcName: "cevGrey.png", name: "Cev", rotate: { first: -150, last: 90, step: 1 } },
+    { srcName: "cevSilver.png", name: "Cev", rotate: { first: -150, last: 90, step: 1 } },
     //{ srcName: "cev.png", name: "Cev", rotate: { first: -150, last: 90, step: 1 } },
 ];
 var LoadPacks = [];
