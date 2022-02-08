@@ -8,7 +8,8 @@ var LoadTextures = [
     { srcName: "DarkGreyRock.jpg", name: "DarkGreyRock" },
 ];
 var LoadSprites = [
-
+    { srcName: "Cannonball12-2.png", name: "Cannonball" },
+    //{ srcName: "Cannonball12.png", name: "Cannonball" },
 ];
 var LoadSequences = [];
 var LoadSheets = [];

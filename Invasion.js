@@ -33,7 +33,7 @@ var INI = {
     canon_step: 5,
 };
 var PRG = {
-    VERSION: "0.05.00",
+    VERSION: "0.05.01",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -122,10 +122,18 @@ var HERO = {
         //HERO.speed = INI.base_speed;
     },
     draw() {
-        //ENGINE.drawBottomLeft('actors', HERO.actor.drawX, HERO.actor.drawY + 2, HERO.actor.sprite());
         ENGINE.drawBottomLeft('actors', HERO.canonX, HERO.canonY, SPRITE[`Cev_${HERO.canonAngle + HERO.actor.angle}`]);
         ENGINE.drawBottomLeft('actors', HERO.actor.drawX, HERO.actor.drawY + 2, HERO.actor.sprite());
         ENGINE.layersToClear.add("actors");
+        //DEBUG
+        /*
+        let CTX = LAYER.actors;
+        CTX.fillStyle = "white";
+        CTX.pixelAt(HERO.canonRootX, HERO.canonRootY);
+        CTX.pixelAt(HERO.bulletX, HERO.bulletY);
+        */
+        ENGINE.spriteDraw("actors", HERO.bulletX, HERO.bulletY, SPRITE.Cannonball);
+
     },
     move(time) {
         HERO.actor.updateAnimation(time * HERO.speed / INI.base_speed);
@@ -146,17 +154,24 @@ var HERO = {
             GAME.levelEnd();
         }
 
-        let canonY = HERO.actor.drawY + 2 - HERO.canonOffY;
+        let canonY = HERO.actor.drawY + 4 - HERO.canonOffY;
         let canonX = HERO.actor.drawX + HERO.canonOffX;
+        HERO.canonRootX = canonX;
+        HERO.canonRootY = canonY;
         let F = HERO.height / HERO.width;
         if (HERO.actor.angle < 0) {
             canonY += Math.sin((Math.radians(HERO.actor.angle))) * HERO.height / 2;
             canonX += Math.sin((Math.radians(HERO.actor.angle))) * HERO.height / 2 * F;
+            HERO.canonRootX = canonX;
+            HERO.canonRootY = canonY;
         }
         if (HERO.actor.angle > 0) {
             canonY += Math.sin(Math.radians(HERO.actor.angle)) * HERO.height / 2;
             canonX += Math.sin(Math.radians(HERO.actor.angle)) * HERO.height / 2 * F;
+            HERO.canonRootX = canonX;
+            HERO.canonRootY -= Math.sin(Math.radians(HERO.actor.angle)) * HERO.height / 2 * F;
             canonY += Math.sin(Math.radians(HERO.actor.angle)) * Math.sin(Math.radians(HERO.canonAngle)) * HERO.height;
+
         }
         if (HERO.actor.angle + HERO.canonAngle < -90) {
             canonX += Math.sin(Math.radians(HERO.actor.angle + HERO.canonAngle + 90)) * HERO.height;
@@ -165,12 +180,20 @@ var HERO = {
 
         HERO.canonX = Math.round(canonX);
         HERO.canonY = Math.round(canonY);
+        HERO.canonRootX = Math.round(HERO.canonRootX);
+        HERO.canonRootY = Math.round(HERO.canonRootY);
     },
     accelerate(dir, time) {
         let dv = INI.acceleration * time / 1000;
         HERO.speed += dir * dv;
         HERO.speed = Math.min(HERO.speed, INI.max_speed);
         HERO.speed = Math.max(HERO.speed, INI.min_speed);
+    },
+    shoot() {
+        let dist = HERO.width / 2 + HERO.width / 4;
+        HERO.bulletX = Math.round(HERO.canonRootX + dist * Math.cos(Math.radians(HERO.actor.angle + HERO.canonAngle)));
+        HERO.bulletY = Math.round(HERO.canonRootY + dist * Math.sin(Math.radians(HERO.actor.angle + HERO.canonAngle)));
+        console.log("HERo shoots ...", HERO.bulletX, HERO.bulletY);
     }
 };
 var GAME = {
@@ -355,7 +378,7 @@ var GAME = {
             //if (DEBUG.BUTTONS) DEBUG.finishLevel();
         }
         if (map[ENGINE.KEY.map.ctrl]) {
-
+            HERO.shoot();
             ENGINE.GAME.keymap[ENGINE.KEY.map.ctrl] = false;
         }
         if (map[ENGINE.KEY.map.left]) {
