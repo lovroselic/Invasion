@@ -31,10 +31,11 @@ var INI = {
     min_speed: 0.0,
     acceleration: 100.0,
     canon_step: 5,
-    start_speed: 500.0,
+    start_speed: 750.0,
+    G: 1000,
 };
 var PRG = {
-    VERSION: "0.05.02",
+    VERSION: "0.05.03",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -107,6 +108,36 @@ var PRG = {
         TITLE.startTitle();
     }
 };
+
+class Ballistic {
+    constructor(position, dir, speed) {
+        this.position = position;
+        this.dir = dir;
+        this.speed = speed;
+    }
+    move(lapsedTime) {
+        let timeDelta = lapsedTime / 1000;
+        let x = this.speed.x * this.dir.x * timeDelta;
+        let y = this.speed.y * this.dir.y * timeDelta - 0.5 * INI.G * timeDelta ** 2;
+        this.speed.y = this.speed.y + (Math.sign(this.dir.y) || 1) * INI.G * timeDelta;
+        this.position = this.position.add(new FP_Vector(x, y));
+    }
+    collisionBackground(map){
+        let planePosition = map.getPosition();
+        let backgroundHeight = map.DATA.map[planePosition + Math.round(this.position.x)];
+        if (Math.round(this.position.y) > backgroundHeight){
+            PROFILE_BALLISTIC.remove(this.id);
+            console.log(this.id, 'removed');
+        }
+        
+    }
+    explode(){}
+    draw() {
+        ENGINE.spriteDraw('actors', this.position.x, this.position.y, SPRITE.Cannonball);
+        ENGINE.layersToClear.add("actors");
+    }
+}
+
 var HERO = {
     startInit() {
         this.LEFT = 32;
@@ -128,15 +159,6 @@ var HERO = {
         ENGINE.drawBottomLeft('actors', HERO.canonX, HERO.canonY, SPRITE[`Cev_${HERO.canonAngle + HERO.actor.angle}`]);
         ENGINE.drawBottomLeft('actors', HERO.actor.drawX, HERO.actor.drawY + 2, HERO.actor.sprite());
         ENGINE.layersToClear.add("actors");
-        //DEBUG
-        /*
-        let CTX = LAYER.actors;
-        CTX.fillStyle = "white";
-        CTX.pixelAt(HERO.canonRootX, HERO.canonRootY);
-        CTX.pixelAt(HERO.bulletX, HERO.bulletY);
-        */
-        ENGINE.spriteDraw("actors", HERO.bulletX, HERO.bulletY, SPRITE.Cannonball);
-
     },
     move(time) {
         HERO.actor.updateAnimation(time * HERO.speed / INI.base_speed);
@@ -196,11 +218,11 @@ var HERO = {
         let dist = HERO.width / 2 + HERO.width / 4;
         HERO.bulletX = Math.round(HERO.canonRootX + dist * Math.cos(Math.radians(HERO.actor.angle + HERO.canonAngle)));
         HERO.bulletY = Math.round(HERO.canonRootY + dist * Math.sin(Math.radians(HERO.actor.angle + HERO.canonAngle)));
-        // get dir vector
-        let origin = new FP_Grid(HERO.canonRootX,HERO.canonRootY);
+        let origin = new FP_Grid(HERO.canonRootX, HERO.canonRootY);
         let bullet = new FP_Grid(HERO.bulletX, HERO.bulletY);
-        let dir =  origin.direction(bullet);
-        console.log("HERo shoots ...", bullet, dir);
+        let dir = origin.direction(bullet);
+        let speed = new FP_Vector(INI.start_speed, INI.start_speed);
+        PROFILE_BALLISTIC.add(new Ballistic(bullet,dir,speed)); 
     }
 };
 var GAME = {
@@ -242,6 +264,8 @@ var GAME = {
     initLevel(level) {
         console.log("init level", level);
         MAP.create(level, GAME.planes);
+        PROFILE_BALLISTIC.init(MAP[level].map.planes[0]);
+        console.log(PROFILE_BALLISTIC);
     },
     continueLevel(level) {
         console.log("game continues on level", level);
@@ -271,6 +295,7 @@ var GAME = {
         //MAP[GAME.level].map.movePlanes(lapsedTime, INI.base_speed);
         MAP[GAME.level].map.movePlanes(lapsedTime, HERO.speed);
         HERO.move(lapsedTime);
+        PROFILE_BALLISTIC.manage(lapsedTime);
 
         GAME.frameDraw(lapsedTime);
     },
@@ -287,6 +312,7 @@ var GAME = {
         GAME.planes.forEach(ENGINE.layersToClear.add, ENGINE.layersToClear);
 
         HERO.draw();
+        PROFILE_BALLISTIC.draw();
 
         if (DEBUG.FPS) {
             GAME.FPS(lapsedTime);
@@ -316,6 +342,7 @@ var GAME = {
                 ENGINE.rotateAsset(asset, -90, 90, 1);
             } catch (error) {
                 console.log("was not yet loaded?", error);
+                location.reload();
             }
         }
 
