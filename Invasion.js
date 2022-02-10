@@ -35,7 +35,7 @@ var INI = {
     G: 1000,
 };
 var PRG = {
-    VERSION: "0.05.03",
+    VERSION: "0.06.00",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -60,6 +60,7 @@ var PRG = {
             $('#debug').show();
         } else $('#debug').hide();
         $("#engine_version").html(ENGINE.VERSION);
+        $("#grid_version").html(GRID.VERSION);
         $("#terrain_version").html(TERRAIN.VERSION);
         $("#lib_version").html(LIB.VERSION);
         $("#IA_version").html(IAM.version);
@@ -108,7 +109,19 @@ var PRG = {
         TITLE.startTitle();
     }
 };
-
+class Explosion {
+    constructor(grid, planePosition) {
+        this.grid = grid;
+        this.layer = 'explosion';
+        this.moveState = new MoveState(grid, NOWAY);
+        this.actor = new ACTOR("Explosion", grid.x, grid.y, "linear", ASSET.Explosion);
+        this.planePosition = planePosition;
+    }
+    draw(map) {
+        ENGINE.spriteDraw(this.layer, this.actor.x - (map.getPosition() - this.planePosition), this.actor.y, this.actor.sprite());
+        ENGINE.layersToClear.add("explosion");
+    }
+}
 class Ballistic {
     constructor(position, dir, speed) {
         this.position = position;
@@ -122,16 +135,22 @@ class Ballistic {
         this.speed.y = this.speed.y + (Math.sign(this.dir.y) || 1) * INI.G * timeDelta;
         this.position = this.position.add(new FP_Vector(x, y));
     }
-    collisionBackground(map){
-        let planePosition = map.getPosition();
-        let backgroundHeight = map.DATA.map[planePosition + Math.round(this.position.x)];
-        if (Math.round(this.position.y) > backgroundHeight){
+    collisionBackground(map) {
+        let X = Math.round(this.position.x);
+        if (X < 0 || X > ENGINE.gameWIDTH) {
             PROFILE_BALLISTIC.remove(this.id);
-            console.log(this.id, 'removed');
         }
-        
+        let planePosition = map.getPosition();
+        let backgroundHeight = map.DATA.map[planePosition + X];
+        if (Math.round(this.position.y) > backgroundHeight) {
+            PROFILE_BALLISTIC.remove(this.id);
+            this.explode(planePosition);
+        }
+
     }
-    explode(){}
+    explode(planePosition) {
+        DESTRUCTION_ANIMATION.add(new Explosion(this.position, planePosition));
+    }
     draw() {
         ENGINE.spriteDraw('actors', this.position.x, this.position.y, SPRITE.Cannonball);
         ENGINE.layersToClear.add("actors");
@@ -222,7 +241,7 @@ var HERO = {
         let bullet = new FP_Grid(HERO.bulletX, HERO.bulletY);
         let dir = origin.direction(bullet);
         let speed = new FP_Vector(INI.start_speed, INI.start_speed);
-        PROFILE_BALLISTIC.add(new Ballistic(bullet,dir,speed)); 
+        PROFILE_BALLISTIC.add(new Ballistic(bullet, dir, speed));
     }
 };
 var GAME = {
@@ -265,7 +284,7 @@ var GAME = {
         console.log("init level", level);
         MAP.create(level, GAME.planes);
         PROFILE_BALLISTIC.init(MAP[level].map.planes[0]);
-        console.log(PROFILE_BALLISTIC);
+        DESTRUCTION_ANIMATION.init(MAP[level].map.planes[0]);
     },
     continueLevel(level) {
         console.log("game continues on level", level);
@@ -296,6 +315,7 @@ var GAME = {
         MAP[GAME.level].map.movePlanes(lapsedTime, HERO.speed);
         HERO.move(lapsedTime);
         PROFILE_BALLISTIC.manage(lapsedTime);
+        DESTRUCTION_ANIMATION.manage(lapsedTime);
 
         GAME.frameDraw(lapsedTime);
     },
@@ -313,6 +333,8 @@ var GAME = {
 
         HERO.draw();
         PROFILE_BALLISTIC.draw();
+        DESTRUCTION_ANIMATION.draw(lapsedTime);
+        //ENGINE.clearLayer("explosion");
 
         if (DEBUG.FPS) {
             GAME.FPS(lapsedTime);

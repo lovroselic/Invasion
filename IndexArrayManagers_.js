@@ -5,10 +5,10 @@
 "use strict";
 
 var IAM = {
-    version: "1.02.DEV",
+    version: "1.03.DEV",
     draw() {
         for (let obj of this.POOL) {
-            if (obj) obj.draw();
+            if (obj) obj.draw(this.map);
         }
     },
     update(lapsedTime) {
@@ -72,6 +72,7 @@ var PROFILE_BALLISTIC = {
     reIndex: IAM.reIndex,
     poolToIA(IA){},
     manage(lapsedTime){
+        this.reIndex();
         for (let obj of this.POOL){
             if (obj) {
                 obj.move(lapsedTime);
