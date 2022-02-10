@@ -31,15 +31,17 @@ var INI = {
     min_speed: 0.0,
     acceleration: 100.0,
     canon_step: 5,
+    start_speed: 500.0,
 };
 var PRG = {
-    VERSION: "0.05.01",
+    VERSION: "0.05.02",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
     INIT() {
-        console.log("%c****************************", PRG.CSS);
+        console.log("%c****************************************************************************************************************", PRG.CSS);
         console.log(`${PRG.NAME} ${PRG.VERSION} by Lovro Selic, (c) C00lSch00l ${PRG.YEAR} on ${navigator.userAgent}`);
+        console.log("%c****************************************************************************************************************", PRG.CSS);
         $("#title").html(PRG.NAME);
         $("#version").html(`${PRG.NAME} V${PRG.VERSION} <span style='font-size:14px'>&copy</span> C00lSch00l ${PRG.YEAR}`);
         $("input#toggleAbout").val("About " + PRG.NAME);
@@ -59,6 +61,7 @@ var PRG = {
         $("#engine_version").html(ENGINE.VERSION);
         $("#terrain_version").html(TERRAIN.VERSION);
         $("#lib_version").html(LIB.VERSION);
+        $("#IA_version").html(IAM.version);
 
         $("#toggleHelp").click(function () {
             $("#help").toggle(400);
@@ -193,7 +196,11 @@ var HERO = {
         let dist = HERO.width / 2 + HERO.width / 4;
         HERO.bulletX = Math.round(HERO.canonRootX + dist * Math.cos(Math.radians(HERO.actor.angle + HERO.canonAngle)));
         HERO.bulletY = Math.round(HERO.canonRootY + dist * Math.sin(Math.radians(HERO.actor.angle + HERO.canonAngle)));
-        console.log("HERo shoots ...", HERO.bulletX, HERO.bulletY);
+        // get dir vector
+        let origin = new FP_Grid(HERO.canonRootX,HERO.canonRootY);
+        let bullet = new FP_Grid(HERO.bulletX, HERO.bulletY);
+        let dir =  origin.direction(bullet);
+        console.log("HERo shoots ...", bullet, dir);
     }
 };
 var GAME = {
@@ -303,7 +310,13 @@ var GAME = {
         GAME.planes = ["foreplane", "backplane1", "backplane2"];
 
         for (let asset of AssetNamesToRotate) {
-            ENGINE.rotateAsset(asset, -90, 90, 1);
+            console.log("sheets loaded:", ENGINE.LOAD.SheetSequences);
+            console.log("asset to be rotated:", ASSET[asset]);
+            try {
+                ENGINE.rotateAsset(asset, -90, 90, 1);
+            } catch (error) {
+                console.log("was not yet loaded?", error);
+            }
         }
 
         $("#conv").remove();

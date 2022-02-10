@@ -880,7 +880,6 @@ var ENGINE = {
     ASSET[obj.asset].linear.push(SPRITE[obj.name]);
   },
   rotateAsset(assetName, startAngle, endAngle, step = 1) {
-    console.log(ASSET[assetName]);
     let sprites = ASSET[assetName].linear;
     for (let angle = startAngle; angle <= endAngle; angle += step) {
       for (let i = 0; i < sprites.length; i++) {
