@@ -75,8 +75,8 @@ var PROFILE_BALLISTIC = {
         this.reIndex();
         for (let obj of this.POOL){
             if (obj) {
-                obj.move(lapsedTime);
                 obj.collisionBackground(this.map);
+                obj.move(lapsedTime);
             }
         }
     }

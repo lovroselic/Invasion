@@ -32,10 +32,13 @@ var INI = {
     acceleration: 100.0,
     canon_step: 5,
     start_speed: 750.0,
+    max_bullet_speed: 1000.0,
+    min_bullet_speed: 500.0,
+    bullet_speed_step: 50.0,
     G: 1000,
 };
 var PRG = {
-    VERSION: "0.06.00",
+    VERSION: "0.06.01",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -89,7 +92,7 @@ var PRG = {
 
         $(ENGINE.gameWindowId).width(ENGINE.gameWIDTH + 4);
         ENGINE.addBOX("TITLE", ENGINE.titleWIDTH, ENGINE.titleHEIGHT, ["title", "hiscore"], null);
-        ENGINE.addBOX("SCORE", ENGINE.scoreWIDTH, ENGINE.scoreHEIGHT, ["score"], null);
+        ENGINE.addBOX("SCORE", ENGINE.scoreWIDTH, ENGINE.scoreHEIGHT, ["score_background", "canon_load"], null);
         ENGINE.addBOX("ROOM", ENGINE.gameWIDTH, ENGINE.gameHEIGHT, ["background", "backplane2", "backplane1", "foreplane",
             "actors", "explosion", "text", "FPS", "button", "click"], null);
         ENGINE.addBOX("DOWN", ENGINE.bottomWIDTH, ENGINE.bottomHEIGHT, ["bottom", "bottomText"], null);
@@ -137,10 +140,10 @@ class Ballistic {
     }
     collisionBackground(map) {
         let X = Math.round(this.position.x);
-        if (X < 0 || X > ENGINE.gameWIDTH) {
+        let planePosition = map.getPosition();
+        if (X < 0 || X > ENGINE.gameWIDTH || X + planePosition >= map.DATA.map.length) {
             PROFILE_BALLISTIC.remove(this.id);
         }
-        let planePosition = map.getPosition();
         let backgroundHeight = map.DATA.map[planePosition + X];
         if (Math.round(this.position.y) > backgroundHeight) {
             PROFILE_BALLISTIC.remove(this.id);
@@ -172,7 +175,7 @@ var HERO = {
         this.canonY = null;
         console.log("HERO", HERO);
         HERO.speed = 0;
-        //HERO.speed = INI.base_speed;
+        HERO.bulletSpeed = INI.start_speed;
     },
     draw() {
         ENGINE.drawBottomLeft('actors', HERO.canonX, HERO.canonY, SPRITE[`Cev_${HERO.canonAngle + HERO.actor.angle}`]);
@@ -240,7 +243,7 @@ var HERO = {
         let origin = new FP_Grid(HERO.canonRootX, HERO.canonRootY);
         let bullet = new FP_Grid(HERO.bulletX, HERO.bulletY);
         let dir = origin.direction(bullet);
-        let speed = new FP_Vector(INI.start_speed, INI.start_speed);
+        let speed = new FP_Vector(HERO.bulletSpeed, HERO.bulletSpeed);
         PROFILE_BALLISTIC.add(new Ballistic(bullet, dir, speed));
     }
 };
@@ -463,6 +466,20 @@ var GAME = {
             ENGINE.GAME.keymap[ENGINE.KEY.map.down] = false;
             return;
         }
+        if (map[ENGINE.KEY.map.Q]) {
+            HERO.bulletSpeed += INI.bullet_speed_step;
+            HERO.bulletSpeed = Math.min(HERO.bulletSpeed, INI.max_bullet_speed);
+            TITLE.canon_load();
+            ENGINE.GAME.keymap[ENGINE.KEY.map.Q] = false;
+            return;
+        }
+        if (map[ENGINE.KEY.map.A]) {
+            HERO.bulletSpeed -= INI.bullet_speed_step;
+            HERO.bulletSpeed = Math.max(HERO.bulletSpeed, INI.min_bullet_speed);
+            TITLE.canon_load();
+            ENGINE.GAME.keymap[ENGINE.KEY.map.A] = false;
+            return;
+        }
         return;
     },
     FPS(lapsedTime) {
@@ -517,6 +534,7 @@ var TITLE = {
         TITLE.titlePlot();
         TITLE.bottom();
         TITLE.hiScore();
+        TITLE.canon_load();
     },
     startTitle() {
         /*
@@ -547,7 +565,7 @@ var TITLE = {
         TITLE.scoreBackground();
     },
     scoreBackground() {
-        ENGINE.fillLayer("score", "#222");
+        ENGINE.fillLayer("score_background", "#222");
     },
     topBackground() {
         var CTX = LAYER.title;
@@ -585,7 +603,7 @@ var TITLE = {
     },
     titlePlot() {
         let CTX = LAYER.title;
-        var fs = 42;
+        let fs = 42;
         CTX.font = fs + "px Alien";
         CTX.textAlign = "left";
         let txt = CTX.measureText(PRG.NAME);
@@ -683,7 +701,24 @@ var TITLE = {
             TITLE.lives();
         }
     },
-
+    canon_load() {
+        ENGINE.clearLayer("canon_load");
+        let CTX = LAYER.canon_load;
+        CTX.fillStyle = "#DEA";
+        let x = 24;
+        let fs = 14;
+        let y = 1.5 * fs;
+        CTX.font = fs + "px Alien";
+        CTX.textAlign = "left";
+        CTX.fillText("Load:", x, y);
+        const w = 100;
+        const h = 24;
+        y += 5;
+        CTX.fillStyle = "#CEA";
+        CTX.fillRect(x, y, w * HERO.bulletSpeed / INI.max_bullet_speed, h);
+        CTX.strokeStyle = "#DEA";
+        CTX.strokeRect(x, y, w, h);
+    },
     gameOver() {
         ENGINE.clearLayer("text");
         var CTX = LAYER.text;
