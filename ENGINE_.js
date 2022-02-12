@@ -30,7 +30,7 @@ var DownRight = new Vector(1, 1);
 var DownLeft = new Vector(-1, 1);
 
 var ENGINE = {
-  VERSION: "3.05.DEV",
+  VERSION: "3.06.DEV",
   CSS: "color: #0FA",
   INI: {
     ANIMATION_INTERVAL: 16,
@@ -1187,6 +1187,7 @@ var ENGINE = {
         loadPacks(),
         loadSheetSequences(),
         loadRotated(),
+        loadRotatedSheetSequences(),
         loadingSounds(),
         loadWASM(),
         loadAllFonts()
@@ -1319,10 +1320,7 @@ var ENGINE = {
         return temp;
       }
       function loadSheetSequences(arrPath = LoadSheetSequences) {
-        console.log(
-          `%c ...loading ${arrPath.length} sheet sequences`,
-          ENGINE.CSS
-        );
+        console.log(`%c ...loading ${arrPath.length} sheet sequences`, ENGINE.CSS);
         var toLoad = [];
         arrPath.forEach(function (el) {
           ASSET[el.name] = new LiveSPRITE("1D", []);
@@ -1344,10 +1342,7 @@ var ENGINE = {
         return temp;
       }
       function loadRotated(arrPath = LoadRotated) {
-        console.log(
-          `%c ...loading ${arrPath.length} rotated sprites`,
-          ENGINE.CSS
-        );
+        console.log(`%c ...loading ${arrPath.length} rotated sprites`, ENGINE.CSS);
         ENGINE.LOAD.HMRotated = arrPath.length;
         if (ENGINE.LOAD.HMRotated) appendCanvas("Rotated");
 
@@ -1358,6 +1353,25 @@ var ENGINE = {
             for (let q = el.rotate.first; q <= el.rotate.last; q += el.rotate.step) {
               ENGINE.rotateImage(el.img, q, el.name + "_" + q);
             }
+          });
+        });
+        return temp;
+      }
+      function loadRotatedSheetSequences(arrPath = LoadRotatedSheetSequences) {
+        console.log(`%c ...loading ${arrPath.length} rotated sheet sequences`, ENGINE.CSS);
+        var toLoad = [];
+        arrPath.forEach(function (el) {
+          ASSET[el.name] = new LiveSPRITE("1D", []);
+          toLoad.push({ srcName: el.srcName, name: el.name, count: el.count, rotate: el.rotate });
+        });
+        ENGINE.LOAD.HMSheetSequences = toLoad.length;
+        if (ENGINE.LOAD.HMSheetSequences) appendCanvas("RotatedSheetSequences");
+        const temp = Promise.all(
+          toLoad.map((img) => loadImage(img, "RotatedSheetSequences"))
+        ).then(function (obj) {
+          obj.forEach(function (el) {
+            ENGINE.seqToSprite(el);
+            ENGINE.rotateAsset(el.name, el.rotate.first, el.rotate.last, el.rotate.step);
           });
         });
         return temp;

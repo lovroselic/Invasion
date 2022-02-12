@@ -23,8 +23,10 @@ var LoadAudio = [
 ];
 var ExtendSheetTag = [];
 var LoadSheetSequences = [
-    { srcName: "tank.png", count: 3, name: "Tank" },
     { srcName: "Explosion2.png", name: "Explosion", type: "png", count: 23 },
+];
+var LoadRotatedSheetSequences = [
+    { srcName: "tank.png", count: 3, name: "Tank", rotate: { first: -90, last: 90, step: 1 } },
 ];
 var LoadFonts = [
     { srcName: "C64_Pro-STYLE.ttf", name: "C64" },

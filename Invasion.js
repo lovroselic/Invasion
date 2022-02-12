@@ -38,7 +38,7 @@ var INI = {
     G: 1000,
 };
 var PRG = {
-    VERSION: "0.06.01",
+    VERSION: "0.06.02",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -359,18 +359,6 @@ var GAME = {
         $("#buttons").prepend("<input type='button' id='startGame' value='Start Game'>");
         $("#startGame").prop("disabled", true);
         GAME.planes = ["foreplane", "backplane1", "backplane2"];
-
-        for (let asset of AssetNamesToRotate) {
-            console.log("sheets loaded:", ENGINE.LOAD.SheetSequences);
-            console.log("asset to be rotated:", ASSET[asset]);
-            try {
-                ENGINE.rotateAsset(asset, -90, 90, 1);
-            } catch (error) {
-                console.log("was not yet loaded?", error);
-                location.reload();
-            }
-        }
-
         $("#conv").remove();
         console.timeEnd("gameSetup");
         console.groupEnd("setup");
