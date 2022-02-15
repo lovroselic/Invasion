@@ -16,7 +16,7 @@ known bugs:
 */
 
 var GRID = {
-  VERSION: "3.03",
+  VERSION: "3.04",
   CSS: "color: #0AA",
   SETTING: {
     ALLOW_CROSS: false,
@@ -1110,7 +1110,7 @@ class GridArray {
     while (directions.length <= 1) {
       if (directions.length === 0) return null; //dead end!
       start = start.add(directions[0]);
-      lastDir =  directions[0];
+      lastDir = directions[0];
       directions = this.getDirectionsIfNot(
         start,
         MAPDICT.WALL,
@@ -1163,7 +1163,7 @@ class GridArray {
   }
 }
 class IndexArray {
-  constructor(sizeX, sizeY, byte = 1, banks = 1) {
+  constructor(sizeX = 1, sizeY = 1, byte = 1, banks = 1) {
     if (byte !== 1 && byte !== 2 && byte !== 4) {
       console.error(
         "IndexArray set up with wrong size. Reset to default 8 bit!"

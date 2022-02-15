@@ -9,6 +9,7 @@ var LoadTextures = [
 ];
 var LoadSprites = [
     { srcName: "Cannonball12-2.png", name: "Cannonball" },
+    { srcName: "Hut.png", name: "Hut" },
     //{ srcName: "Cannonball12.png", name: "Cannonball" },
 ];
 var LoadSequences = [];
@@ -27,6 +28,7 @@ var LoadSheetSequences = [
 ];
 var LoadRotatedSheetSequences = [
     { srcName: "tank.png", count: 3, name: "Tank", rotate: { first: -90, last: 90, step: 1 } },
+    { srcName: "BlueTank.png", count: 3, name: "BlueTank", rotate: { first: -90, last: 90, step: 1 } },
 ];
 var LoadFonts = [
     { srcName: "C64_Pro-STYLE.ttf", name: "C64" },

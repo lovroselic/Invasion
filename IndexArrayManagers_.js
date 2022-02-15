@@ -55,7 +55,6 @@ var IAM = {
     },
 };
 
-
 /** Profile IA Managers */
 var PROFILE_BALLISTIC = {
     POOL: null,
@@ -70,13 +69,43 @@ var PROFILE_BALLISTIC = {
     show: IAM.show,
     get: IAM.show,
     reIndex: IAM.reIndex,
-    poolToIA(IA){},
-    manage(lapsedTime){
+    poolToIA(IA) { },
+    manage(lapsedTime) {
         this.reIndex();
-        for (let obj of this.POOL){
+        for (let obj of this.POOL) {
             if (obj) {
                 obj.collisionBackground(this.map);
                 obj.move(lapsedTime);
+            }
+        }
+    }
+};
+var PROFILE_ACTORS = {
+    POOL: null,
+    map: null,
+    IA: "profile_actor_IA",
+    draw: IAM.draw,
+    linkMap: IAM.linkMap,
+    add: IAM.add,
+    remove: IAM.remove,
+    init: IAM.init,
+    clearAll: IAM.clearAll,
+    show: IAM.show,
+    get: IAM.show,
+    reIndex: IAM.reIndex,
+    poolToIA(IA) {
+        for (const obj of this.POOL) {
+            IA.next(obj.moveState.homeGrid, obj.id);
+        }
+    },
+    manage(lapsedTime) {
+        let map = this.map;
+        map[this.IA] = new IndexArray(map.planeLimits.width, 1, 4, 4);
+        this.reIndex();
+        for (let obj of this.POOL) {
+            if (obj) {
+                //obj.collisionBackground(this.map);
+                //obj.move(lapsedTime);
             }
         }
     }
@@ -140,7 +169,6 @@ var VANISHING = {
         this.update(lapsedTime);
     },
 };
-
 var GRID_SOLO_FLOOR_OBJECT = {
     /*
     expects simple static objects withouot moveState 
@@ -219,9 +247,11 @@ var DESTRUCTION_ANIMATION = {
     poolToIA: IAM.poolToIA,
     reIndex: IAM.reIndex,
     manage(lapsedTime, map = this.map) {
-        map[this.IA] = new IndexArray(map.width, map.height, 4, 4);
         this.reIndex();
-        this.poolToIA(map[this.IA]);
+        if (map.width && map.height) {
+            map[this.IA] = new IndexArray(map.width, map.height, 4, 4);
+            this.poolToIA(map[this.IA]);
+        }
         for (const anim of this.POOL) {
             anim.actor.updateAnimation(lapsedTime);
             if (anim.actor.animationThrough) {

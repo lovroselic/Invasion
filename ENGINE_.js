@@ -1165,6 +1165,8 @@ var ENGINE = {
     Fonts: 0,
     Packs: 0,
     SheetSequences: 0,
+    RotSeq: 0,
+    HMRotSeq: null,
     HMSheetSequences: null,
     HMFonts: null,
     HMSequences: null,
@@ -1364,12 +1366,13 @@ var ENGINE = {
           ASSET[el.name] = new LiveSPRITE("1D", []);
           toLoad.push({ srcName: el.srcName, name: el.name, count: el.count, rotate: el.rotate });
         });
-        ENGINE.LOAD.HMSheetSequences = toLoad.length;
-        if (ENGINE.LOAD.HMSheetSequences) appendCanvas("RotatedSheetSequences");
+        ENGINE.LOAD.HMRotSeq = toLoad.length;
+        if (ENGINE.LOAD.HMRotSeq) appendCanvas("RotSeq");
         const temp = Promise.all(
-          toLoad.map((img) => loadImage(img, "RotatedSheetSequences"))
+          toLoad.map((img) => loadImage(img, "RotSeq"))
         ).then(function (obj) {
           obj.forEach(function (el) {
+            console.log("rotation debug, el->", el);
             ENGINE.seqToSprite(el);
             ENGINE.rotateAsset(el.name, el.rotate.first, el.rotate.last, el.rotate.step);
           });

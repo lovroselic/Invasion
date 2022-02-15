@@ -38,7 +38,7 @@ var INI = {
     G: 1000,
 };
 var PRG = {
-    VERSION: "0.06.02",
+    VERSION: "0.06.03",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -288,6 +288,8 @@ var GAME = {
         MAP.create(level, GAME.planes);
         PROFILE_BALLISTIC.init(MAP[level].map.planes[0]);
         DESTRUCTION_ANIMATION.init(MAP[level].map.planes[0]);
+        PROFILE_ACTORS.init(MAP[level].map.planes[0]);
+        //console.log(PROFILE_ACTORS, DESTRUCTION_ANIMATION);
     },
     continueLevel(level) {
         console.log("game continues on level", level);
@@ -319,6 +321,7 @@ var GAME = {
         HERO.move(lapsedTime);
         PROFILE_BALLISTIC.manage(lapsedTime);
         DESTRUCTION_ANIMATION.manage(lapsedTime);
+        PROFILE_ACTORS.manage(lapsedTime);
 
         GAME.frameDraw(lapsedTime);
     },
