@@ -36,9 +36,10 @@ var INI = {
     min_bullet_speed: 500.0,
     bullet_speed_step: 50.0,
     G: 1000,
+    sprite_width: 48,
 };
 var PRG = {
-    VERSION: "0.06.03",
+    VERSION: "0.06.04",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -159,7 +160,17 @@ class Ballistic {
         ENGINE.layersToClear.add("actors");
     }
 }
+class Hut {
+    constructor(grid) {
+        //this.grid = grid;
+        this.actor = new ACTOR('Hut');
+        this.moveState = new _1D_MoveState(grid.x, 0);
+        this.y = grid.y;
+    }
+    draw(map){
 
+    }
+}
 var HERO = {
     startInit() {
         this.LEFT = 32;
@@ -289,7 +300,8 @@ var GAME = {
         PROFILE_BALLISTIC.init(MAP[level].map.planes[0]);
         DESTRUCTION_ANIMATION.init(MAP[level].map.planes[0]);
         PROFILE_ACTORS.init(MAP[level].map.planes[0]);
-        //console.log(PROFILE_ACTORS, DESTRUCTION_ANIMATION);
+        //console.log(PROFILE_ACTORS);
+        SPAWN.spawn(level);
     },
     continueLevel(level) {
         console.log("game continues on level", level);
@@ -340,6 +352,7 @@ var GAME = {
         HERO.draw();
         PROFILE_BALLISTIC.draw();
         DESTRUCTION_ANIMATION.draw(lapsedTime);
+        PROFILE_ACTORS.draw();
         //ENGINE.clearLayer("explosion");
 
         if (DEBUG.FPS) {

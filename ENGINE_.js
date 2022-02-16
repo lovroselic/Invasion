@@ -319,6 +319,12 @@ var ENGINE = {
     CTX.restore();
     let imgDATA = CTX.getImageData(0, 0, CTX.canvas.width, CTX.canvas.height);
     let TRIM = ENGINE.trimCanvas(imgDATA);
+    /* debug start */
+    if (TRIM.top === TRIM.bottom && TRIM.left === TRIM.right){
+      console.error('trying to trim unloaded image');
+      location.reload();
+    }
+    /* debug end */
     let trimmed = CTX.getImageData(
       TRIM.left,
       TRIM.top,
@@ -2372,6 +2378,12 @@ class _3D_ACTOR {
   getImageData() {
     let img = this.asset[this.faceShown][this.now];
     return ENGINE.getImgData(img);
+  }
+}
+class _1D_MoveState {
+  constructor(x, dir){
+    this.x = x;
+    this.dir = dir;
   }
 }
 class MoveState {

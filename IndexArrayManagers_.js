@@ -95,13 +95,14 @@ var PROFILE_ACTORS = {
     reIndex: IAM.reIndex,
     poolToIA(IA) {
         for (const obj of this.POOL) {
-            IA.next(obj.moveState.homeGrid, obj.id);
+            IA.next(obj.moveState.x, obj.id);
         }
     },
     manage(lapsedTime) {
         let map = this.map;
-        map[this.IA] = new IndexArray(map.planeLimits.width, 1, 4, 4);
         this.reIndex();
+        map[this.IA] = new IndexArray(map.planeLimits.width, 1, 4, 4);
+        this.poolToIA(map[this.IA]);
         for (let obj of this.POOL) {
             if (obj) {
                 //obj.collisionBackground(this.map);
