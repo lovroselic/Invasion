@@ -254,6 +254,10 @@ var ENGINE = {
     let CTX = LAYER[layer];
     CTX.drawImage(image, X, Y - image.height);
   },
+  drawBottomCenter(layer, X, Y, image) {
+    let CTX = LAYER[layer];
+    CTX.drawImage(image, X - image.width / 2, Y - image.height);
+  },
   drawPart(layer, X, Y, image, line) {
     let CTX = LAYER[layer];
     CTX.drawImage(
@@ -320,7 +324,7 @@ var ENGINE = {
     let imgDATA = CTX.getImageData(0, 0, CTX.canvas.width, CTX.canvas.height);
     let TRIM = ENGINE.trimCanvas(imgDATA);
     /* debug start */
-    if (TRIM.top === TRIM.bottom && TRIM.left === TRIM.right){
+    if (TRIM.top === TRIM.bottom && TRIM.left === TRIM.right) {
       console.error('trying to trim unloaded image');
       location.reload();
     }
@@ -788,28 +792,13 @@ var ENGINE = {
   extractImg(x, y, CTX) {
     var data, imgDATA;
     var NTX = LAYER.temp2;
-    data = CTX.getImageData(
-      x,
-      y,
-      ENGINE.INI.SPRITESHEET_DEFAULT_WIDTH,
-      ENGINE.INI.SPRITESHEET_DEFAULT_HEIGHT
-    );
+    data = CTX.getImageData(x, y, ENGINE.INI.SPRITESHEET_DEFAULT_WIDTH, ENGINE.INI.SPRITESHEET_DEFAULT_HEIGHT);
     NTX.canvas.width = ENGINE.INI.SPRITESHEET_DEFAULT_WIDTH;
     NTX.canvas.height = ENGINE.INI.SPRITESHEET_DEFAULT_HEIGHT;
     NTX.putImageData(data, 0, 0);
-    imgDATA = NTX.getImageData(
-      0,
-      0,
-      ENGINE.INI.SPRITESHEET_DEFAULT_WIDTH,
-      ENGINE.INI.SPRITESHEET_DEFAULT_HEIGHT
-    );
+    imgDATA = NTX.getImageData(0, 0, ENGINE.INI.SPRITESHEET_DEFAULT_WIDTH, ENGINE.INI.SPRITESHEET_DEFAULT_HEIGHT);
     var TRIM = ENGINE.trimCanvas(imgDATA);
-    var trimmed = NTX.getImageData(
-      TRIM.left,
-      TRIM.top,
-      TRIM.right - TRIM.left,
-      TRIM.bottom - TRIM.top
-    );
+    var trimmed = NTX.getImageData(TRIM.left, TRIM.top, TRIM.right - TRIM.left, TRIM.bottom - TRIM.top);
     NTX.canvas.width = TRIM.right - TRIM.left;
     NTX.canvas.height = TRIM.bottom - TRIM.top;
     NTX.putImageData(trimmed, 0, 0);
@@ -2381,7 +2370,7 @@ class _3D_ACTOR {
   }
 }
 class _1D_MoveState {
-  constructor(x, dir){
+  constructor(x, dir) {
     this.x = x;
     this.dir = dir;
   }

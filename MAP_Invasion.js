@@ -8,7 +8,7 @@ class StaticPoint {
 var MAP = {
     1: {
         width: 6,
-        huts: 20,
+        huts: 25,
         textures: ["Grass", "DarkGreyRock", "GreyRock"],
         //textures: ["Grass", "GreyRock","DarkGreyRock"],
         colors: ["#0E0", '#444', '#888'],
@@ -38,7 +38,9 @@ var MAP = {
             let angle = Math.degrees(Math.asin((y2 - y1) / WindowSize));
             if (Math.abs(angle) <= AngleLimit) {
                 let midheight = data[Math.round(index + 0.5 * WindowSize)];
-                staticPoints.push(new StaticPoint(index, midheight));
+                midheight = Math.max(midheight, y1, y2);
+                //staticPoints.push(new StaticPoint(index, midheight));
+                staticPoints.push(new StaticPoint(Math.round(index + 0.5 * WindowSize), midheight));
                 index += Math.round(DistancePadding * WindowSize);
             } else {
                 index += Math.round(SearchStep * WindowSize);
@@ -48,16 +50,16 @@ var MAP = {
     }
 };
 var SPAWN = {
-    spawn(level){
+    spawn(level) {
         this.spawnHuts(level);
     },
-    spawnHuts(level){
+    spawnHuts(level) {
         console.group("+++++++++++++++++");
         let map = MAP[level].map;
         let positions = map.staticPoints.removeRandomPool(MAP[level].huts);
         console.log("spawning huts", map);
         console.log(positions);
-        for (let pos of positions){
+        for (let pos of positions) {
             PROFILE_ACTORS.add(new Hut(new Grid(pos.index, pos.midHeight)));
             console.log(pos);
         }

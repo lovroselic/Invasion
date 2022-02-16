@@ -39,7 +39,7 @@ var INI = {
     sprite_width: 48,
 };
 var PRG = {
-    VERSION: "0.06.04",
+    VERSION: "0.06.05",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -94,7 +94,7 @@ var PRG = {
         $(ENGINE.gameWindowId).width(ENGINE.gameWIDTH + 4);
         ENGINE.addBOX("TITLE", ENGINE.titleWIDTH, ENGINE.titleHEIGHT, ["title", "hiscore"], null);
         ENGINE.addBOX("SCORE", ENGINE.scoreWIDTH, ENGINE.scoreHEIGHT, ["score_background", "canon_load"], null);
-        ENGINE.addBOX("ROOM", ENGINE.gameWIDTH, ENGINE.gameHEIGHT, ["background", "backplane2", "backplane1", "foreplane",
+        ENGINE.addBOX("ROOM", ENGINE.gameWIDTH, ENGINE.gameHEIGHT, ["background", "backplane2", "backplane1", "foreplane","decor",
             "actors", "explosion", "text", "FPS", "button", "click"], null);
         ENGINE.addBOX("DOWN", ENGINE.bottomWIDTH, ENGINE.bottomHEIGHT, ["bottom", "bottomText"], null);
     },
@@ -162,13 +162,14 @@ class Ballistic {
 }
 class Hut {
     constructor(grid) {
-        //this.grid = grid;
         this.actor = new ACTOR('Hut');
         this.moveState = new _1D_MoveState(grid.x, 0);
         this.y = grid.y;
     }
     draw(map){
-
+        let position = map.getPosition();
+        ENGINE.drawBottomCenter('actors', this.moveState.x - position, this.y, SPRITE.Hut);
+        ENGINE.layersToClear.add("actors");
     }
 }
 var HERO = {
@@ -349,10 +350,10 @@ var GAME = {
         TERRAIN.drawParallaxSlice(MAP[GAME.level].map, ENGINE.gameWIDTH);
         GAME.planes.forEach(ENGINE.layersToClear.add, ENGINE.layersToClear);
 
-        HERO.draw();
         PROFILE_BALLISTIC.draw();
         DESTRUCTION_ANIMATION.draw(lapsedTime);
         PROFILE_ACTORS.draw();
+        HERO.draw();
         //ENGINE.clearLayer("explosion");
 
         if (DEBUG.FPS) {

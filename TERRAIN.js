@@ -177,9 +177,9 @@ var PERLIN = {
     }
 };
 var TERRAIN = {
-    VERSION: "0.90.DEV",
+    VERSION: "0.90.0.DEV",
     CSS: "color: #2ACBE8",
-    NAME: "TerrainGenerator1d",
+    NAME: "TerrainGenerator 1D",
     INI: {
         planes: 3,
         planes_max: [0.95, 0.7, 0.5],

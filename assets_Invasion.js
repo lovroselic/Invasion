@@ -9,7 +9,15 @@ var LoadTextures = [
 ];
 var LoadSprites = [
     { srcName: "Cannonball12-2.png", name: "Cannonball" },
-    { srcName: "Hut.png", name: "Hut" },
+    { srcName: "SmallHut.png", name: "Hut" },
+    { srcName: "spruce.png", name: "tree1" },
+    { srcName: "leaftree1.png", name: "tree2" },
+    { srcName: "leaftree2.png", name: "tree3" },
+    { srcName: "tree4.png", name: "tree4" },
+    { srcName: "tree5.png", name: "tree5," },
+    { srcName: "tree6.png", name: "tree6" },
+    { srcName: "tree7.png", name: "tree7" },
+    { srcName: "tree8.png", name: "tree8" },
     //{ srcName: "Cannonball12.png", name: "Cannonball" },
 ];
 var LoadSequences = [];
