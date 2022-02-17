@@ -56,6 +56,23 @@ var IAM = {
 };
 
 /** Profile IA Managers */
+var DECOR = {
+    POOL: null,
+    map: null,
+    IA: "decor_IA",
+    draw: IAM.draw,
+    linkMap: IAM.linkMap,
+    add: IAM.add,
+    remove: IAM.remove,
+    init: IAM.init,
+    clearAll: IAM.clearAll,
+    show: IAM.show,
+    get: IAM.show,
+    reIndex: IAM.reIndex,
+    poolToIA(IA) { },
+    manage(lapsedTime) {
+    }
+};
 var PROFILE_BALLISTIC = {
     POOL: null,
     map: null,

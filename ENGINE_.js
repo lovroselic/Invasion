@@ -2173,17 +2173,17 @@ class ACTOR {
   refresh() {
     if (this.orientation === null) {
       this.name = this.class;
-      return;
-    }
-    switch (this.asset.type) {
-      case "4D":
-        this.name = `${this.class}_${this.orientation}_${this[this.orientation + "_index"]}`;
-        break;
-      case "1D":
-        this.name = `${this.class}_${this.linear_index.toString().padStart(2, "0")}`;
-        break;
-      default:
-        throw "actor.refresh asset type ERROR";
+    } else {
+      switch (this.asset.type) {
+        case "4D":
+          this.name = `${this.class}_${this.orientation}_${this[this.orientation + "_index"]}`;
+          break;
+        case "1D":
+          this.name = `${this.class}_${this.linear_index.toString().padStart(2, "0")}`;
+          break;
+        default:
+          throw "actor.refresh asset type ERROR";
+      }
     }
 
     this.width = SPRITE[this.name].width;

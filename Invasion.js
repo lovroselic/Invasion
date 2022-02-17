@@ -39,7 +39,7 @@ var INI = {
     sprite_width: 48,
 };
 var PRG = {
-    VERSION: "0.06.05",
+    VERSION: "0.06.06",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -94,7 +94,7 @@ var PRG = {
         $(ENGINE.gameWindowId).width(ENGINE.gameWIDTH + 4);
         ENGINE.addBOX("TITLE", ENGINE.titleWIDTH, ENGINE.titleHEIGHT, ["title", "hiscore"], null);
         ENGINE.addBOX("SCORE", ENGINE.scoreWIDTH, ENGINE.scoreHEIGHT, ["score_background", "canon_load"], null);
-        ENGINE.addBOX("ROOM", ENGINE.gameWIDTH, ENGINE.gameHEIGHT, ["background", "backplane2", "backplane1", "foreplane","decor",
+        ENGINE.addBOX("ROOM", ENGINE.gameWIDTH, ENGINE.gameHEIGHT, ["background", "backplane2", "backplane1", "foreplane", "decor",
             "actors", "explosion", "text", "FPS", "button", "click"], null);
         ENGINE.addBOX("DOWN", ENGINE.bottomWIDTH, ENGINE.bottomHEIGHT, ["bottom", "bottomText"], null);
     },
@@ -166,10 +166,35 @@ class Hut {
         this.moveState = new _1D_MoveState(grid.x, 0);
         this.y = grid.y;
     }
-    draw(map){
+    draw(map) {
         let position = map.getPosition();
-        ENGINE.drawBottomCenter('actors', this.moveState.x - position, this.y, SPRITE.Hut);
-        ENGINE.layersToClear.add("actors");
+        if (this.visible(position)) {
+            ENGINE.drawBottomCenter('actors', this.moveState.x - position, this.y, SPRITE.Hut);
+            ENGINE.layersToClear.add("actors");
+        }
+    }
+    visible(position) {
+        console.log(this.actor.width);
+        return this.moveState.x + this.actor.width > position && this.moveState.x - this.actor.width < position + ENGINE.gameWIDTH;
+    }
+}
+class Tree {
+    constructor(grid) {
+        let tree = `tree${RND(1, 8)}`;
+        this.actor = new ACTOR(tree);
+        this.moveState = new _1D_MoveState(grid.x, 0);
+        this.y = grid.y;
+    }
+    draw(map) {
+        let position = map.getPosition();
+        if (this.visible(position)) {
+            ENGINE.drawBottomCenter('decor', this.moveState.x - position, this.y, this.actor.sprite());
+            ENGINE.layersToClear.add("decor");
+        }
+    }
+    visible(position) {
+        console.log(this.actor.width);
+        return this.moveState.x + this.actor.width > position && this.moveState.x - this.actor.width < position + ENGINE.gameWIDTH;
     }
 }
 var HERO = {
@@ -301,6 +326,7 @@ var GAME = {
         PROFILE_BALLISTIC.init(MAP[level].map.planes[0]);
         DESTRUCTION_ANIMATION.init(MAP[level].map.planes[0]);
         PROFILE_ACTORS.init(MAP[level].map.planes[0]);
+        DECOR.init(MAP[level].map.planes[0]);
         //console.log(PROFILE_ACTORS);
         SPAWN.spawn(level);
     },
@@ -350,11 +376,11 @@ var GAME = {
         TERRAIN.drawParallaxSlice(MAP[GAME.level].map, ENGINE.gameWIDTH);
         GAME.planes.forEach(ENGINE.layersToClear.add, ENGINE.layersToClear);
 
-        PROFILE_BALLISTIC.draw();
-        DESTRUCTION_ANIMATION.draw(lapsedTime);
+        DECOR.draw();
         PROFILE_ACTORS.draw();
+        PROFILE_BALLISTIC.draw();
         HERO.draw();
-        //ENGINE.clearLayer("explosion");
+        DESTRUCTION_ANIMATION.draw(lapsedTime);
 
         if (DEBUG.FPS) {
             GAME.FPS(lapsedTime);
