@@ -39,7 +39,7 @@ var INI = {
     sprite_width: 48,
 };
 var PRG = {
-    VERSION: "0.06.06",
+    VERSION: "0.06.07",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -154,6 +154,7 @@ class Ballistic {
     }
     explode(planePosition) {
         DESTRUCTION_ANIMATION.add(new Explosion(this.position, planePosition));
+        AUDIO.Explosion.play();
     }
     draw() {
         ENGINE.spriteDraw('actors', this.position.x, this.position.y, SPRITE.Cannonball);
@@ -174,7 +175,6 @@ class Hut {
         }
     }
     visible(position) {
-        console.log(this.actor.width);
         return this.moveState.x + this.actor.width > position && this.moveState.x - this.actor.width < position + ENGINE.gameWIDTH;
     }
 }
@@ -193,7 +193,6 @@ class Tree {
         }
     }
     visible(position) {
-        console.log(this.actor.width);
         return this.moveState.x + this.actor.width > position && this.moveState.x - this.actor.width < position + ENGINE.gameWIDTH;
     }
 }

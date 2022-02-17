@@ -51,19 +51,40 @@ var MAP = {
 };
 var SPAWN = {
     spawn(level) {
+        this.spawnTrees(level);
         this.spawnHuts(level);
     },
     spawnHuts(level) {
-        console.group("+++++++++++++++++");
         let map = MAP[level].map;
         let positions = map.staticPoints.removeRandomPool(MAP[level].huts);
-        console.log("spawning huts", map);
-        console.log(positions);
         for (let pos of positions) {
             PROFILE_ACTORS.add(new Hut(new Grid(pos.index, pos.midHeight)));
-            console.log(pos);
         }
-        console.log(PROFILE_ACTORS.POOL);
-        console.groupEnd("+++++++++++++++++");
     },
+    spawnTrees(level) {
+        let map = MAP[level].map;
+        let data = map.planes[0].DATA.map;
+        let WL = map.planes[0].planeLimits.WL;
+        let LN = data.length;
+        const W = 24;
+        const minTree = 1;
+        const maxTree = 13;
+        const minClearing = 5;
+        const maxClearing = 23;
+        let index = WL;
+        let forest = coinFlip();
+        while (index < LN - WL) {
+            if (forest) {
+                let treeN = RND(minTree, maxTree);
+                for (let t = 0; t < treeN; t++) {
+                    let midheight = data[index] + 2;
+                    DECOR.add(new Tree(new Grid(index, midheight)));
+                    index += W;
+                }
+            } else {
+                index += RND(minClearing, maxClearing) * W;
+            }
+            forest = !forest;
+        }
+    }
 };

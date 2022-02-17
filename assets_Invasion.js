@@ -14,7 +14,7 @@ var LoadSprites = [
     { srcName: "leaftree1.png", name: "tree2" },
     { srcName: "leaftree2.png", name: "tree3" },
     { srcName: "tree4.png", name: "tree4" },
-    { srcName: "tree5.png", name: "tree5," },
+    { srcName: "tree5.png", name: "tree5" },
     { srcName: "tree6.png", name: "tree6" },
     { srcName: "tree7.png", name: "tree7" },
     { srcName: "tree8.png", name: "tree8" },
@@ -29,6 +29,7 @@ var LoadRotated = [
 var LoadPacks = [];
 var LoadExtWasm = [];
 var LoadAudio = [
+    { srcName: "Explosion1.mp3", name: "Explosion" },
 ];
 var ExtendSheetTag = [];
 var LoadSheetSequences = [
