@@ -92,6 +92,7 @@ var PROFILE_BALLISTIC = {
         for (let obj of this.POOL) {
             if (obj) {
                 obj.collisionBackground(this.map);
+                obj.collisionEntity(this.map);
                 obj.move(lapsedTime);
             }
         }
@@ -113,7 +114,7 @@ var PROFILE_ACTORS = {
     poolToIA(IA) {
         for (const obj of this.POOL) {
             for (let x = Math.round(obj.moveState.x - obj.actor.width / 2); x <= Math.round(obj.moveState.x + obj.actor.width / 2); x++) {
-                IA.next(x, obj.id);
+                IA.next(new Grid(x, 0), obj.id);
             }
             //IA.next(obj.moveState.x, obj.id);
         }

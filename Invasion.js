@@ -39,7 +39,7 @@ var INI = {
     sprite_width: 48,
 };
 var PRG = {
-    VERSION: "0.06.08",
+    VERSION: "0.06.09",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -131,6 +131,7 @@ class Ballistic {
         this.position = position;
         this.dir = dir;
         this.speed = speed;
+        this.actor = new ACTOR('Cannonball');
     }
     move(lapsedTime) {
         let timeDelta = lapsedTime / 1000;
@@ -150,7 +151,22 @@ class Ballistic {
             PROFILE_BALLISTIC.remove(this.id);
             this.explode(planePosition);
         }
-
+    }
+    collisionEntity(map) {
+        let X = Math.round(this.position.x);
+        let planePosition = map.getPosition();
+        let realX = planePosition + X;
+        let IA = map.profile_actor_IA;
+        let ids = IA.unroll(new Grid(realX,0));
+        if (ids.length){
+            //console.log('ids', ids);
+            for (let id of ids){
+                let obj = PROFILE_ACTORS.show(id);
+                if (obj.checkHit(this)){
+                    console.log(".......obj hit", obj);
+                }
+            }    
+        }
     }
     explode(planePosition) {
         DESTRUCTION_ANIMATION.add(new Explosion(this.position, planePosition));
@@ -168,6 +184,14 @@ class Entity {
     }
     visible(position) {
         return this.moveState.x + this.actor.width > position && this.moveState.x - this.actor.width < position + ENGINE.gameWIDTH;
+    }
+    checkHit(ballistic){
+        //console.log("checking hit", ballistic, this);
+        //console.log("top", ballistic.position.y + ballistic.actor.height / 2 > this.top, ballistic.position.y + ballistic.actor.height / 2, this.top);
+        //console.log("bottom",  ballistic.position.y - ballistic.actor.height / 2 < this.bottom,  ballistic.position.y - ballistic.actor.height / 2 , this.bottom);
+        let top =  ballistic.position.y + ballistic.actor.height / 2 > this.top;
+        let bottom = ballistic.position.y - ballistic.actor.height / 2 < this.bottom;
+        return top && bottom;
     }
 }
 class Hut extends Entity {
