@@ -39,7 +39,7 @@ var INI = {
     sprite_width: 48,
 };
 var PRG = {
-    VERSION: "0.06.07",
+    VERSION: "0.06.08",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -161,11 +161,21 @@ class Ballistic {
         ENGINE.layersToClear.add("actors");
     }
 }
-class Hut {
+class Entity {
     constructor(grid) {
-        this.actor = new ACTOR('Hut');
-        this.moveState = new _1D_MoveState(grid.x, 0);
         this.y = grid.y;
+        this.moveState = new _1D_MoveState(grid.x, 0);
+    }
+    visible(position) {
+        return this.moveState.x + this.actor.width > position && this.moveState.x - this.actor.width < position + ENGINE.gameWIDTH;
+    }
+}
+class Hut extends Entity {
+    constructor(grid) {
+        super(grid);
+        this.actor = new ACTOR('Hut');
+        this.top = this.y - this.actor.height;
+        this.bottom = ENGINE.gameHEIGHT;
     }
     draw(map) {
         let position = map.getPosition();
@@ -174,16 +184,12 @@ class Hut {
             ENGINE.layersToClear.add("actors");
         }
     }
-    visible(position) {
-        return this.moveState.x + this.actor.width > position && this.moveState.x - this.actor.width < position + ENGINE.gameWIDTH;
-    }
 }
-class Tree {
+class Tree extends Entity {
     constructor(grid) {
+        super(grid);
         let tree = `tree${RND(1, 8)}`;
         this.actor = new ACTOR(tree);
-        this.moveState = new _1D_MoveState(grid.x, 0);
-        this.y = grid.y;
     }
     draw(map) {
         let position = map.getPosition();
@@ -191,9 +197,6 @@ class Tree {
             ENGINE.drawBottomCenter('decor', this.moveState.x - position, this.y, this.actor.sprite());
             ENGINE.layersToClear.add("decor");
         }
-    }
-    visible(position) {
-        return this.moveState.x + this.actor.width > position && this.moveState.x - this.actor.width < position + ENGINE.gameWIDTH;
     }
 }
 var HERO = {
