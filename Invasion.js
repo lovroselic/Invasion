@@ -42,7 +42,7 @@ var INI = {
     }
 };
 var PRG = {
-    VERSION: "0.06.10",
+    VERSION: "0.07.00",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -165,7 +165,7 @@ class Ballistic {
             for (let id of ids) {
                 let obj = PROFILE_ACTORS.show(id);
                 if (obj.checkHit(this)) {
-                    console.log(".......obj hit", obj);
+                    //console.log(".......obj hit", obj);
                     PROFILE_BALLISTIC.remove(this.id);
                     PROFILE_ACTORS.remove(id);
                     //this.explode(planePosition);
@@ -195,6 +195,11 @@ class Entity {
     checkHit(ballistic) {
         let top = ballistic.position.y + ballistic.actor.height / 2 > this.top;
         let bottom = ballistic.position.y - ballistic.actor.height / 2 < this.bottom;
+        return top && bottom;
+    }
+    checkHitHeightPoint(heightPoint){
+        let top = heightPoint > this.top;
+        let bottom = heightPoint < this.bottom;
         return top && bottom;
     }
     explode(planePosition) {
@@ -257,8 +262,10 @@ var HERO = {
     move(time) {
         HERO.actor.updateAnimation(time * HERO.speed / INI.base_speed);
         let forePlane = MAP[GAME.level].map.planes[0];
-        let left_axis_y = forePlane.DATA.map[this.LEFT + this.LEFT_AXIS + forePlane.getPosition()];
-        let right_axis_y = forePlane.DATA.map[this.LEFT + this.width + forePlane.getPosition()];
+        let planePosition = forePlane.getPosition();
+        let left_axis_y = forePlane.DATA.map[this.LEFT + this.LEFT_AXIS + planePosition];
+        let right_axis_y = forePlane.DATA.map[this.LEFT + this.width + planePosition];
+        HERO.centerHeightRight = right_axis_y - HERO.height / 2;
         let tan = (right_axis_y - left_axis_y) / (this.width - this.LEFT_AXIS);
         let angle = Math.round(Math.degrees(Math.atan(tan)));
         HERO.actor.setAngle(angle);
@@ -268,7 +275,7 @@ var HERO = {
             shiftY = Math.sin(Math.radians(angle)) * HERO.height;
         }
         this.actor.setDraw(HERO.LEFT, left_axis_y + shiftY);
-        HERO.positionRight = this.LEFT + this.width + forePlane.getPosition();
+        HERO.positionRight = this.LEFT + this.width + planePosition;
         if (HERO.positionRight >= forePlane.planeLimits.rightStop) {
             GAME.levelEnd();
         }
@@ -301,6 +308,25 @@ var HERO = {
         HERO.canonY = Math.round(canonY);
         HERO.canonRootX = Math.round(HERO.canonRootX);
         HERO.canonRootY = Math.round(HERO.canonRootY);
+
+        HERO.collisionToActors(planePosition);
+    },
+    collisionToActors(planePosition){
+        let IA = MAP[GAME.level].map.planes[0].profile_actor_IA;
+        let ids = IA.unroll(new Grid(HERO.positionRight, 0));
+        if (ids.length) {
+            //console.log("ids", ids);
+            for (let id of ids) {
+                let obj = PROFILE_ACTORS.show(id);
+                if (obj.checkHitHeightPoint(HERO.centerHeightRight)) {
+                    //console.log(".......obj hit", obj);
+                    PROFILE_ACTORS.remove(id);
+                    obj.explode(planePosition);
+                    GAME.addScore(obj.score);
+                    HERO.die();
+                }
+            }
+        }
     },
     accelerate(dir, time) {
         let dv = INI.acceleration * time / 1000;
@@ -317,6 +343,9 @@ var HERO = {
         let dir = origin.direction(bullet);
         let speed = new FP_Vector(HERO.bulletSpeed, HERO.bulletSpeed);
         PROFILE_BALLISTIC.add(new Ballistic(bullet, dir, speed));
+    },
+    die(){
+        console.log("...HERO dies...   (not yet implemented)");
     }
 };
 var GAME = {
@@ -392,10 +421,11 @@ var GAME = {
         GAME.respond(lapsedTime);
         //MAP[GAME.level].map.movePlanes(lapsedTime, INI.base_speed);
         MAP[GAME.level].map.movePlanes(lapsedTime, HERO.speed);
-        HERO.move(lapsedTime);
+        //HERO.move(lapsedTime);
         PROFILE_BALLISTIC.manage(lapsedTime);
         DESTRUCTION_ANIMATION.manage(lapsedTime);
         PROFILE_ACTORS.manage(lapsedTime);
+        HERO.move(lapsedTime);
 
         GAME.frameDraw(lapsedTime);
     },
