@@ -37,9 +37,12 @@ var INI = {
     bullet_speed_step: 50.0,
     G: 1000,
     sprite_width: 48,
+    scores: {
+        hut: 10,
+    }
 };
 var PRG = {
-    VERSION: "0.06.09",
+    VERSION: "0.06.10",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -93,7 +96,7 @@ var PRG = {
 
         $(ENGINE.gameWindowId).width(ENGINE.gameWIDTH + 4);
         ENGINE.addBOX("TITLE", ENGINE.titleWIDTH, ENGINE.titleHEIGHT, ["title", "hiscore"], null);
-        ENGINE.addBOX("SCORE", ENGINE.scoreWIDTH, ENGINE.scoreHEIGHT, ["score_background", "canon_load"], null);
+        ENGINE.addBOX("SCORE", ENGINE.scoreWIDTH, ENGINE.scoreHEIGHT, ["score_background", "canon_load", "score"], null);
         ENGINE.addBOX("ROOM", ENGINE.gameWIDTH, ENGINE.gameHEIGHT, ["background", "backplane2", "backplane1", "foreplane", "decor",
             "actors", "explosion", "text", "FPS", "button", "click"], null);
         ENGINE.addBOX("DOWN", ENGINE.bottomWIDTH, ENGINE.bottomHEIGHT, ["bottom", "bottomText"], null);
@@ -157,15 +160,19 @@ class Ballistic {
         let planePosition = map.getPosition();
         let realX = planePosition + X;
         let IA = map.profile_actor_IA;
-        let ids = IA.unroll(new Grid(realX,0));
-        if (ids.length){
-            //console.log('ids', ids);
-            for (let id of ids){
+        let ids = IA.unroll(new Grid(realX, 0));
+        if (ids.length) {
+            for (let id of ids) {
                 let obj = PROFILE_ACTORS.show(id);
-                if (obj.checkHit(this)){
+                if (obj.checkHit(this)) {
                     console.log(".......obj hit", obj);
+                    PROFILE_BALLISTIC.remove(this.id);
+                    PROFILE_ACTORS.remove(id);
+                    //this.explode(planePosition);
+                    obj.explode(planePosition);
+                    GAME.addScore(obj.score);
                 }
-            }    
+            }
         }
     }
     explode(planePosition) {
@@ -185,13 +192,14 @@ class Entity {
     visible(position) {
         return this.moveState.x + this.actor.width > position && this.moveState.x - this.actor.width < position + ENGINE.gameWIDTH;
     }
-    checkHit(ballistic){
-        //console.log("checking hit", ballistic, this);
-        //console.log("top", ballistic.position.y + ballistic.actor.height / 2 > this.top, ballistic.position.y + ballistic.actor.height / 2, this.top);
-        //console.log("bottom",  ballistic.position.y - ballistic.actor.height / 2 < this.bottom,  ballistic.position.y - ballistic.actor.height / 2 , this.bottom);
-        let top =  ballistic.position.y + ballistic.actor.height / 2 > this.top;
+    checkHit(ballistic) {
+        let top = ballistic.position.y + ballistic.actor.height / 2 > this.top;
         let bottom = ballistic.position.y - ballistic.actor.height / 2 < this.bottom;
         return top && bottom;
+    }
+    explode(planePosition) {
+        DESTRUCTION_ANIMATION.add(new Explosion(new Grid(this.moveState.x - planePosition, this.y - this.actor.height / 2), planePosition));
+        AUDIO.Explosion.play();
     }
 }
 class Hut extends Entity {
@@ -200,6 +208,7 @@ class Hut extends Entity {
         this.actor = new ACTOR('Hut');
         this.top = this.y - this.actor.height;
         this.bottom = ENGINE.gameHEIGHT;
+        this.score = INI.scores.hut;
     }
     draw(map) {
         let position = map.getPosition();
@@ -568,6 +577,10 @@ var GAME = {
         SCORE.hiScore();
         TITLE.startTitle();
     },
+    addScore(score) {
+        GAME.score += score;
+        TITLE.score();
+    },
     PAINT: {
         sky() {
             let CTX = LAYER.background;
@@ -592,6 +605,7 @@ var TITLE = {
         TITLE.bottom();
         TITLE.hiScore();
         TITLE.canon_load();
+        TITLE.score();
     },
     startTitle() {
         /*
@@ -735,29 +749,24 @@ var TITLE = {
         ENGINE.clearLayer("score");
         var CTX = LAYER.score;
         var fs = 16;
-        CTX.font = fs + "px Emulogic";
+        CTX.font = fs + "px Alien";
         CTX.fillStyle = GAME.grad;
         CTX.shadowColor = "#cec967";
         CTX.shadowOffsetX = 1;
         CTX.shadowOffsetY = 1;
-        CTX.shadowBlur = 2;
-        CTX.textAlign = "center";
-        var x = ENGINE.sideWIDTH / 2;
-        var y = 48;
-        CTX.fillText("SCORE", x, y);
-        CTX.fillStyle = "#FFF";
-        CTX.shadowColor = "#DDD";
-        CTX.shadowOffsetX = 1;
-        CTX.shadowOffsetY = 1;
         CTX.shadowBlur = 1;
-        y += fs + 4;
-        CTX.fillText(GAME.score.toString().padStart(6, "0"), x, y);
+        CTX.textAlign = "left";
+        var x = ENGINE.scoreWIDTH - 200;
+        let y = ENGINE.scoreHEIGHT / 2;
+        CTX.fillText(`SCORE: ${GAME.score.toString().padStart(6, "0")}`, x, y);
+
         if (GAME.score >= GAME.extraLife[0]) {
             GAME.lives++;
             GAME.extraLife.shift();
             TITLE.lives();
         }
     },
+    lives(){},
     canon_load() {
         ENGINE.clearLayer("canon_load");
         let CTX = LAYER.canon_load;
