@@ -37,12 +37,13 @@ var INI = {
     bullet_speed_step: 50.0,
     G: 1000,
     sprite_width: 48,
+    tank_spawn: 5,
     scores: {
         hut: 10,
     }
 };
 var PRG = {
-    VERSION: "0.07.00",
+    VERSION: "0.07.01",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -197,7 +198,7 @@ class Entity {
         let bottom = ballistic.position.y - ballistic.actor.height / 2 < this.bottom;
         return top && bottom;
     }
-    checkHitHeightPoint(heightPoint){
+    checkHitHeightPoint(heightPoint) {
         let top = heightPoint > this.top;
         let bottom = heightPoint < this.bottom;
         return top && bottom;
@@ -205,6 +206,9 @@ class Entity {
     explode(planePosition) {
         DESTRUCTION_ANIMATION.add(new Explosion(new Grid(this.moveState.x - planePosition, this.y - this.actor.height / 2), planePosition));
         AUDIO.Explosion.play();
+    }
+    move() {
+        return;
     }
 }
 class Hut extends Entity {
@@ -235,6 +239,53 @@ class Tree extends Entity {
             ENGINE.drawBottomCenter('decor', this.moveState.x - position, this.y, this.actor.sprite());
             ENGINE.layersToClear.add("decor");
         }
+    }
+}
+class Enemy {
+    constructor(x, w) {
+        this.moveState = new _1D_MoveState(x, -1, w);
+    }
+    draw() {
+        ENGINE.drawBottomLeft('actors', this.actor.drawX, this.actor.drawY + 2, this.actor.sprite());
+        ENGINE.layersToClear.add("actors");
+    }
+    move(lapsedTime) {
+        let map = MAP[GAME.level].map.planes[0];
+        this.actor.updateAnimation(lapsedTime * this.speed / INI.base_speed);
+        this.moveState.move(map.getLastMovement(), -1);
+        this.setAngle();
+    }
+    checkHitHeightPoint(heightPoint) {
+        console.log("CHECK", this, heightPoint, HERO);
+    }
+}
+class Tank extends Enemy {
+    constructor(left, y, w) {
+        super(Math.floor(left + w / 2), w);
+        this.LEFT_AXIS = 8;
+        this.y = y;
+        this.actor = new Rotating_ACTOR("BlueTank", this.moveState.left, y, 30);
+        this.width = SPRITE[this.actor.name].width;
+        this.height = SPRITE[this.actor.name].height;
+        this.speed = 80.0;
+        this.setAngle();
+    }
+    setAngle() {
+        this.LEFT = Math.round(this.moveState.left);
+        let forePlane = MAP[GAME.level].map.planes[0];
+        let planePosition = forePlane.getPosition();
+        let left_axis_y = forePlane.DATA.map[this.LEFT + this.LEFT_AXIS + planePosition];
+        let right_axis_y = forePlane.DATA.map[this.LEFT + this.width + planePosition];
+        this.centerHeightRight = right_axis_y - this.height / 2;
+        let tan = (right_axis_y - left_axis_y) / (this.width - this.LEFT_AXIS);
+        let angle = Math.round(Math.degrees(Math.atan(tan)));
+        this.actor.setAngle(angle);
+        this.actor.setPosition(this.LEFT, left_axis_y);
+        let shiftY = 0;
+        if (angle > 0) {
+            shiftY = Math.sin(Math.radians(angle)) * this.height;
+        }
+        this.actor.setDraw(this.LEFT, left_axis_y + shiftY);
     }
 }
 var HERO = {
@@ -311,11 +362,11 @@ var HERO = {
 
         HERO.collisionToActors(planePosition);
     },
-    collisionToActors(planePosition){
+    collisionToActors(planePosition) {
         let IA = MAP[GAME.level].map.planes[0].profile_actor_IA;
         let ids = IA.unroll(new Grid(HERO.positionRight, 0));
         if (ids.length) {
-            //console.log("ids", ids);
+            console.log("ids", ids);
             for (let id of ids) {
                 let obj = PROFILE_ACTORS.show(id);
                 if (obj.checkHitHeightPoint(HERO.centerHeightRight)) {
@@ -344,7 +395,7 @@ var HERO = {
         let speed = new FP_Vector(HERO.bulletSpeed, HERO.bulletSpeed);
         PROFILE_BALLISTIC.add(new Ballistic(bullet, dir, speed));
     },
-    die(){
+    die() {
         console.log("...HERO dies...   (not yet implemented)");
     }
 };
@@ -393,6 +444,7 @@ var GAME = {
         DECOR.init(MAP[level].map.planes[0]);
         //console.log(PROFILE_ACTORS);
         SPAWN.spawn(level);
+        SPAWN.spawnTank();
     },
     continueLevel(level) {
         console.log("game continues on level", level);
@@ -426,7 +478,9 @@ var GAME = {
         DESTRUCTION_ANIMATION.manage(lapsedTime);
         PROFILE_ACTORS.manage(lapsedTime);
         HERO.move(lapsedTime);
+        //SPAWN.spawnDynamic(lapsedTime);
 
+        ENGINE.TIMERS.update();
         GAME.frameDraw(lapsedTime);
     },
     deadRun(lapsedTime) {
@@ -796,7 +850,7 @@ var TITLE = {
             TITLE.lives();
         }
     },
-    lives(){},
+    lives() { },
     canon_load() {
         ENGINE.clearLayer("canon_load");
         let CTX = LAYER.canon_load;

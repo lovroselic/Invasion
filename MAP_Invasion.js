@@ -19,7 +19,6 @@ var MAP = {
         let map = TERRAIN.createClassic(W, H, plane_layers, MAP[GAME.level].textures, MAP[GAME.level].colors);
         MAP[level].map = map;
         MAP[level].map.staticPoints = MAP.findStatic(map);
-        //MAP.spawnHuts(level);
         console.log('MAP[level].map', MAP[level].map);
     },
     findStatic(map) {
@@ -39,7 +38,6 @@ var MAP = {
             if (Math.abs(angle) <= AngleLimit) {
                 let midheight = data[Math.round(index + 0.5 * WindowSize)];
                 midheight = Math.max(midheight, y1, y2);
-                //staticPoints.push(new StaticPoint(index, midheight));
                 staticPoints.push(new StaticPoint(Math.round(index + 0.5 * WindowSize), midheight));
                 index += Math.round(DistancePadding * WindowSize);
             } else {
@@ -50,6 +48,7 @@ var MAP = {
     }
 };
 var SPAWN = {
+    tankTimer: null,
     spawn(level) {
         this.spawnTrees(level);
         this.spawnHuts(level);
@@ -86,5 +85,26 @@ var SPAWN = {
             }
             forest = !forest;
         }
+    },
+    spawnTank(){
+        console.group("tank");
+        let map = MAP[GAME.level].map;
+        let position = map.planes[0].getPosition();
+        console.log("%cspawning tank", "color: #4FA");
+        const timerId = 'tankSpawn';
+        //spawn tank
+        let offset = -48;
+        let x = ENGINE.gameWIDTH +  offset + position;
+        let y = map.planes[0].DATA.map[x];
+        PROFILE_ACTORS.add(new Tank(x, y, SPRITE.BlueTank_00.width));
+        console.log(PROFILE_ACTORS);
+
+        console.log(x,y);
+
+        //end
+        //SPAWN.tankTimer = new CountDown(timerId, INI.tank_spawn, SPAWN.spawnTank);
+
+        console.groupEnd("tank");
+        
     }
 };

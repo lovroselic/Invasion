@@ -2252,6 +2252,7 @@ class Rotating_ACTOR extends ACTOR {
     super(sprite_class, x, y, 'linear', ASSET[sprite_class], fps);
     this.drawX = this.x;
     this.drawY = this.y;
+    this.angle = 0;
   }
   setPosition(x, y) {
     this.x = x;
@@ -2370,9 +2371,15 @@ class _3D_ACTOR {
   }
 }
 class _1D_MoveState {
-  constructor(x, dir) {
+  constructor(x, dir, w) {
     this.x = x;
     this.dir = dir;
+    this.left = x - w / 2;
+    this.right = x + w / 2;
+  }
+  move(dx, dir) {
+    this.left = this.left + dir * dx;
+    this.right = this.right + dir * dx;
   }
 }
 class MoveState {

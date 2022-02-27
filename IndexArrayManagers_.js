@@ -116,7 +116,6 @@ var PROFILE_ACTORS = {
             for (let x = Math.round(obj.moveState.x - obj.actor.width / 2); x <= Math.round(obj.moveState.x + obj.actor.width / 2); x++) {
                 IA.next(new Grid(x, 0), obj.id);
             }
-            //IA.next(obj.moveState.x, obj.id);
         }
     },
     manage(lapsedTime) {
@@ -127,7 +126,7 @@ var PROFILE_ACTORS = {
         for (let obj of this.POOL) {
             if (obj) {
                 //obj.collisionBackground(this.map);
-                //obj.move(lapsedTime);
+                obj.move(lapsedTime);
             }
         }
     }

@@ -40,8 +40,12 @@ class Plane {
     getPosition() {
         return Math.round(this.position);
     }
+    getLastMovement(){
+        return this.moved;
+    }
     move(timeLapse, speed, dir) {
-        this.position += dir * (timeLapse * speed * this.speedFactor / 1000);
+        this.moved = dir * (timeLapse * speed * this.speedFactor / 1000);
+        this.position +=  this.moved;
     }
 }
 class Parallax {
@@ -203,7 +207,6 @@ var TERRAIN = {
     drawParallax(px) {
         for (let pl of px.planes) {
             PERLIN.drawShape(pl);
-            //PERLIN.drawPattern(pl);
         }
     },
     drawParallaxSlice(px, W) {
