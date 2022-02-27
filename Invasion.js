@@ -37,13 +37,13 @@ var INI = {
     bullet_speed_step: 50.0,
     G: 1000,
     sprite_width: 48,
-    tank_spawn: 5,
     scores: {
         hut: 10,
+        tank: 100,
     }
 };
 var PRG = {
-    VERSION: "0.07.02",
+    VERSION: "0.07.03",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -291,6 +291,7 @@ class Tank extends Enemy {
         this.bottom = ENGINE.gameHEIGHT;
         this.top = this.y - this.actor.height;
         this.name = "BlueTank";
+        this.score = INI.scores.tank;
         this.setAngle();
     }
     setAngle() {

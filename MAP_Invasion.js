@@ -12,6 +12,7 @@ var MAP = {
         textures: ["Grass", "DarkGreyRock", "GreyRock"],
         //textures: ["Grass", "GreyRock","DarkGreyRock"],
         colors: ["#0E0", '#444', '#888'],
+        tank_spawn: 5,
     },
     create(level, plane_layers) {
         let W = ENGINE.gameWIDTH * MAP[level].width;
@@ -93,7 +94,8 @@ var SPAWN = {
         console.log("%cspawning tank", "color: #4FA");
         const timerId = 'tankSpawn';
         //spawn tank
-        let offset = -48;
+        //let offset = -48;
+        let offset = 48;
         let x = ENGINE.gameWIDTH +  offset + position;
         let y = map.planes[0].DATA.map[x];
         PROFILE_ACTORS.add(new Tank(x, y, SPRITE.BlueTank_00.width));
@@ -102,7 +104,7 @@ var SPAWN = {
         console.log(x,y);
 
         //end
-        //SPAWN.tankTimer = new CountDown(timerId, INI.tank_spawn, SPAWN.spawnTank);
+        SPAWN.tankTimer = new CountDown(timerId, MAP[GAME.level].tank_spawn, SPAWN.spawnTank);
 
         console.groupEnd("tank");
         
