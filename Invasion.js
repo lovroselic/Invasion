@@ -43,7 +43,7 @@ var INI = {
     }
 };
 var PRG = {
-    VERSION: "0.07.01",
+    VERSION: "0.07.02",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -166,7 +166,7 @@ class Ballistic {
             for (let id of ids) {
                 let obj = PROFILE_ACTORS.show(id);
                 if (obj.checkHit(this)) {
-                    //console.log(".......obj hit", obj);
+                    console.log(".......obj hit", obj.name, obj);
                     PROFILE_BALLISTIC.remove(this.id);
                     PROFILE_ACTORS.remove(id);
                     //this.explode(planePosition);
@@ -218,6 +218,7 @@ class Hut extends Entity {
         this.top = this.y - this.actor.height;
         this.bottom = ENGINE.gameHEIGHT;
         this.score = INI.scores.hut;
+        this.name = "Hut";
     }
     draw(map) {
         let position = map.getPosition();
@@ -245,18 +246,37 @@ class Enemy {
     constructor(x, w) {
         this.moveState = new _1D_MoveState(x, -1, w);
     }
-    draw() {
-        ENGINE.drawBottomLeft('actors', this.actor.drawX, this.actor.drawY + 2, this.actor.sprite());
-        ENGINE.layersToClear.add("actors");
+    draw(map) {
+        let position = map.getPosition();
+        if (this.visible(position)) {
+            ENGINE.drawBottomLeft('actors', this.actor.drawX, this.actor.drawY + 2, this.actor.sprite());
+            ENGINE.layersToClear.add("actors");
+        }
     }
     move(lapsedTime) {
         let map = MAP[GAME.level].map.planes[0];
         this.actor.updateAnimation(lapsedTime * this.speed / INI.base_speed);
-        this.moveState.move(map.getLastMovement(), -1);
+        this.moveState.moveStatic(map.getLastMovement()); //compensate HERo's movements
+        this.moved = lapsedTime * this.speed / 1000;
+        this.moveState.move(this.moved);
         this.setAngle();
     }
+    visible(position) {
+        return this.moveState.x + this.actor.width > position && this.moveState.x - this.actor.width < position + ENGINE.gameWIDTH;
+    }
+    checkHit(ballistic) {
+        let top = ballistic.position.y + ballistic.actor.height / 2 > this.top;
+        let bottom = ballistic.position.y - ballistic.actor.height / 2 < this.bottom;
+        return top && bottom;
+    }
     checkHitHeightPoint(heightPoint) {
-        console.log("CHECK", this, heightPoint, HERO);
+        let top = heightPoint > this.top;
+        let bottom = heightPoint < this.bottom;
+        return top && bottom;
+    }
+    explode(planePosition) {
+        DESTRUCTION_ANIMATION.add(new Explosion(new Grid(this.moveState.x - planePosition, this.y - this.actor.height / 2), planePosition));
+        AUDIO.Explosion.play();
     }
 }
 class Tank extends Enemy {
@@ -268,6 +288,9 @@ class Tank extends Enemy {
         this.width = SPRITE[this.actor.name].width;
         this.height = SPRITE[this.actor.name].height;
         this.speed = 80.0;
+        this.bottom = ENGINE.gameHEIGHT;
+        this.top = this.y - this.actor.height;
+        this.name = "BlueTank";
         this.setAngle();
     }
     setAngle() {
@@ -276,6 +299,8 @@ class Tank extends Enemy {
         let planePosition = forePlane.getPosition();
         let left_axis_y = forePlane.DATA.map[this.LEFT + this.LEFT_AXIS + planePosition];
         let right_axis_y = forePlane.DATA.map[this.LEFT + this.width + planePosition];
+        this.top = left_axis_y - this.actor.height;
+        this.y = left_axis_y;
         this.centerHeightRight = right_axis_y - this.height / 2;
         let tan = (right_axis_y - left_axis_y) / (this.width - this.LEFT_AXIS);
         let angle = Math.round(Math.degrees(Math.atan(tan)));
@@ -366,11 +391,11 @@ var HERO = {
         let IA = MAP[GAME.level].map.planes[0].profile_actor_IA;
         let ids = IA.unroll(new Grid(HERO.positionRight, 0));
         if (ids.length) {
-            console.log("ids", ids);
+            //console.log("ids", ids);
             for (let id of ids) {
                 let obj = PROFILE_ACTORS.show(id);
                 if (obj.checkHitHeightPoint(HERO.centerHeightRight)) {
-                    //console.log(".......obj hit", obj);
+                    console.log(".......obj hit", obj.name, obj);
                     PROFILE_ACTORS.remove(id);
                     obj.explode(planePosition);
                     GAME.addScore(obj.score);
@@ -471,14 +496,11 @@ var GAME = {
     run(lapsedTime) {
         if (ENGINE.GAME.stopAnimation) return;
         GAME.respond(lapsedTime);
-        //MAP[GAME.level].map.movePlanes(lapsedTime, INI.base_speed);
         MAP[GAME.level].map.movePlanes(lapsedTime, HERO.speed);
-        //HERO.move(lapsedTime);
         PROFILE_BALLISTIC.manage(lapsedTime);
         DESTRUCTION_ANIMATION.manage(lapsedTime);
         PROFILE_ACTORS.manage(lapsedTime);
         HERO.move(lapsedTime);
-        //SPAWN.spawnDynamic(lapsedTime);
 
         ENGINE.TIMERS.update();
         GAME.frameDraw(lapsedTime);

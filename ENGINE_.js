@@ -2376,10 +2376,21 @@ class _1D_MoveState {
     this.dir = dir;
     this.left = x - w / 2;
     this.right = x + w / 2;
+    this.w = w;
   }
-  move(dx, dir) {
-    this.left = this.left + dir * dx;
-    this.right = this.right + dir * dx;
+  moveStatic(dx) {
+    this.left = this.left + this.dir * dx;
+    this.right = this.right + this.dir * dx;
+  }
+  move(dx) {
+    this.left = this.left + this.dir * dx;
+    this.right = this.right + this.dir * dx;
+    this.x = this.x + this.dir * dx;
+    //this.x = Math.round(this.left + this.w / 2);
+    //console.log("X:", this.x);
+  }
+  getX(){
+    return Math.round(this.x);
   }
 }
 class MoveState {
