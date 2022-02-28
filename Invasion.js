@@ -43,7 +43,7 @@ var INI = {
     }
 };
 var PRG = {
-    VERSION: "0.08.00",
+    VERSION: "0.08.01",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -246,19 +246,7 @@ class Enemy {
     constructor(x) {
         this.moveState = new _1D_MoveState(x, -1);
     }
-    draw(map) {
-        let position = map.getPosition();
-        if (this.visible(position)) {
-            ENGINE.drawBottomLeft('actors', this.actor.drawX, this.actor.drawY + 2, this.actor.sprite());
-            ENGINE.layersToClear.add("actors");
-        }
-    }
-    move(lapsedTime) {
-        this.actor.updateAnimation(lapsedTime * this.speed / INI.base_speed);
-        this.moved = lapsedTime * this.speed / 1000;
-        this.moveState.move(this.moved);
-        this.setAngle();
-    }
+
     visible(position) {
         return this.moveState.x + this.actor.width > position && this.moveState.x - this.actor.width < position + ENGINE.gameWIDTH;
     }
@@ -288,7 +276,68 @@ class Tank extends Enemy {
         this.bottom = ENGINE.gameHEIGHT;
         this.name = "BlueTank";
         this.score = INI.scores.tank;
+        //this.canonAngle = 0;
+        //this.canonAngle = 30;
+        this.canonAngle = 60;
+        this.canonOffX = 24;
+        this.canonOffY = 20;
+        this.canonX = null;
+        this.canonY = null;
+        this.bulletSpeed = INI.start_speed;
         this.setAngle();
+        this.setBarrel();
+    }
+    draw(map) {
+        let position = map.getPosition();
+        if (this.visible(position)) {
+            ENGINE.drawBottomLeft('actors', this.actor.drawX, this.actor.drawY + 2, this.actor.sprite());
+            //
+            ENGINE.drawBottomRight('actors', this.canonX, this.canonY, SPRITE[`CevLeft_${this.canonAngle + this.actor.angle}`]);
+            let CTX = LAYER.actors;
+            CTX.fillStyle = "yellow";
+            CTX.pixelAt(this.canonRootX, this.canonRootY, 2);
+            //CTX.fillStyle = "yellow";
+            //CTX.pixelAt(this.canonX, this.canonY);
+            //
+            ENGINE.layersToClear.add("actors");
+        }
+    }
+    move(lapsedTime) {
+        this.actor.updateAnimation(lapsedTime * this.speed / INI.base_speed);
+        this.moved = lapsedTime * this.speed / 1000;
+        this.moveState.move(this.moved);
+        this.setAngle();
+        this.setBarrel();
+    }
+    setBarrel() {
+        let canonY = this.actor.drawY + 4 - this.canonOffY;
+        let canonX = this.actor.drawX + this.canonOffX;
+        this.canonRootX = canonX;
+        this.canonRootY = canonY;
+        let F = this.height / this.width;
+
+        if (this.actor.angle < 0) {
+            canonY -= Math.sin((Math.radians(this.actor.angle))) * this.height / 2;
+            canonX += Math.sin((Math.radians(this.actor.angle))) * this.height / 2;
+            this.canonRootX = canonX;
+            this.canonRootY += Math.sin(Math.radians(this.actor.angle)) * HERO.height / 2;
+            canonY += Math.sin(Math.radians(this.actor.angle)) * Math.sin(Math.radians(this.canonAngle)) * this.height;
+        }
+        if (this.actor.angle > 0) {
+            canonY -= Math.sin(Math.radians(this.actor.angle)) * this.height / 2;
+            canonX += Math.sin(Math.radians(this.actor.angle)) * this.height / 2 * F;
+            this.canonRootX = canonX;
+            this.canonRootY = canonY;
+        }
+        if (this.actor.angle + this.canonAngle > 90) {
+            canonX += Math.sin(Math.radians(this.actor.angle + this.canonAngle - 90)) * this.height;
+            canonY += Math.sin(Math.radians(this.actor.angle + this.canonAngle - 90)) * this.height / 2 * F;
+        }
+        
+        this.canonX = Math.round(canonX);
+        this.canonY = Math.round(canonY);
+        this.canonRootX = Math.round(this.canonRootX);
+        this.canonRootY = Math.round(this.canonRootY);
     }
     setAngle() {
         let forePlane = MAP[GAME.level].map.planes[0];
@@ -327,8 +376,16 @@ var HERO = {
         HERO.bulletSpeed = INI.start_speed;
     },
     draw() {
-        ENGINE.drawBottomLeft('actors', HERO.canonX, HERO.canonY, SPRITE[`Cev_${HERO.canonAngle + HERO.actor.angle}`]);
+        //ENGINE.drawBottomLeft('actors', HERO.canonX, HERO.canonY, SPRITE[`Cev_${HERO.canonAngle + HERO.actor.angle}`]);
         ENGINE.drawBottomLeft('actors', HERO.actor.drawX, HERO.actor.drawY + 2, HERO.actor.sprite());
+
+        //
+        ENGINE.drawBottomLeft('actors', HERO.canonX, HERO.canonY, SPRITE[`Cev_${HERO.canonAngle + HERO.actor.angle}`]);
+        let CTX = LAYER.actors;
+        CTX.fillStyle = "yellow";
+        CTX.pixelAt(this.canonRootX, this.canonRootY, 2);
+        //
+
         ENGINE.layersToClear.add("actors");
     },
     move(time) {
@@ -369,7 +426,6 @@ var HERO = {
             HERO.canonRootX = canonX;
             HERO.canonRootY -= Math.sin(Math.radians(HERO.actor.angle)) * HERO.height / 2 * F;
             canonY += Math.sin(Math.radians(HERO.actor.angle)) * Math.sin(Math.radians(HERO.canonAngle)) * HERO.height;
-
         }
         if (HERO.actor.angle + HERO.canonAngle < -90) {
             canonX += Math.sin(Math.radians(HERO.actor.angle + HERO.canonAngle + 90)) * HERO.height;

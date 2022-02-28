@@ -254,6 +254,10 @@ var ENGINE = {
     let CTX = LAYER[layer];
     CTX.drawImage(image, X, Y - image.height);
   },
+  drawBottomRight(layer, X, Y, image) {
+    let CTX = LAYER[layer];
+    CTX.drawImage(image, X - image.width, Y - image.height);
+  },
   drawBottomCenter(layer, X, Y, image) {
     let CTX = LAYER[layer];
     CTX.drawImage(image, X - image.width / 2, Y - image.height);

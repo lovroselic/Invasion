@@ -12,7 +12,7 @@ var MAP = {
         textures: ["Grass", "DarkGreyRock", "GreyRock"],
         //textures: ["Grass", "GreyRock","DarkGreyRock"],
         colors: ["#0E0", '#444', '#888'],
-        tank_spawn: 5,
+        tank_spawn: 10,
     },
     create(level, plane_layers) {
         let W = ENGINE.gameWIDTH * MAP[level].width;

@@ -24,6 +24,7 @@ var LoadSequences = [];
 var LoadSheets = [];
 var LoadRotated = [
     { srcName: "cevSilver.png", name: "Cev", rotate: { first: -150, last: 90, step: 1 } },
+    { srcName: "cevSilverLeft.png", name: "CevLeft", rotate: { first: -90, last: 150, step: 1 } },
     //{ srcName: "cev.png", name: "Cev", rotate: { first: -150, last: 90, step: 1 } },
 ];
 var LoadPacks = [];
