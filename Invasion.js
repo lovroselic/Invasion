@@ -43,7 +43,7 @@ var INI = {
     }
 };
 var PRG = {
-    VERSION: "0.08.01",
+    VERSION: "0.08.02",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -276,9 +276,9 @@ class Tank extends Enemy {
         this.bottom = ENGINE.gameHEIGHT;
         this.name = "BlueTank";
         this.score = INI.scores.tank;
-        //this.canonAngle = 0;
+        this.canonAngle = 0;
         //this.canonAngle = 30;
-        this.canonAngle = 60;
+        //this.canonAngle = 60;
         this.canonOffX = 24;
         this.canonOffY = 20;
         this.canonX = null;
@@ -290,15 +290,14 @@ class Tank extends Enemy {
     draw(map) {
         let position = map.getPosition();
         if (this.visible(position)) {
+            ENGINE.drawBottomRight('actors', this.canonX, this.canonY, SPRITE[`CevLeft_${this.canonAngle + this.actor.angle}`]);
             ENGINE.drawBottomLeft('actors', this.actor.drawX, this.actor.drawY + 2, this.actor.sprite());
-            //
+            /*
             ENGINE.drawBottomRight('actors', this.canonX, this.canonY, SPRITE[`CevLeft_${this.canonAngle + this.actor.angle}`]);
             let CTX = LAYER.actors;
             CTX.fillStyle = "yellow";
             CTX.pixelAt(this.canonRootX, this.canonRootY, 2);
-            //CTX.fillStyle = "yellow";
-            //CTX.pixelAt(this.canonX, this.canonY);
-            //
+            */
             ENGINE.layersToClear.add("actors");
         }
     }
@@ -376,15 +375,15 @@ var HERO = {
         HERO.bulletSpeed = INI.start_speed;
     },
     draw() {
-        //ENGINE.drawBottomLeft('actors', HERO.canonX, HERO.canonY, SPRITE[`Cev_${HERO.canonAngle + HERO.actor.angle}`]);
+        ENGINE.drawBottomLeft('actors', HERO.canonX, HERO.canonY, SPRITE[`Cev_${HERO.canonAngle + HERO.actor.angle}`]);
         ENGINE.drawBottomLeft('actors', HERO.actor.drawX, HERO.actor.drawY + 2, HERO.actor.sprite());
 
-        //
+        /*
         ENGINE.drawBottomLeft('actors', HERO.canonX, HERO.canonY, SPRITE[`Cev_${HERO.canonAngle + HERO.actor.angle}`]);
         let CTX = LAYER.actors;
         CTX.fillStyle = "yellow";
         CTX.pixelAt(this.canonRootX, this.canonRootY, 2);
-        //
+        */
 
         ENGINE.layersToClear.add("actors");
     },
