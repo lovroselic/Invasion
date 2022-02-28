@@ -43,7 +43,7 @@ var INI = {
     }
 };
 var PRG = {
-    VERSION: "0.07.03",
+    VERSION: "0.07.04",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -243,8 +243,8 @@ class Tree extends Entity {
     }
 }
 class Enemy {
-    constructor(x, w) {
-        this.moveState = new _1D_MoveState(x, -1, w);
+    constructor(x) {
+        this.moveState = new _1D_MoveState(x, -1);
     }
     draw(map) {
         let position = map.getPosition();
@@ -254,9 +254,7 @@ class Enemy {
         }
     }
     move(lapsedTime) {
-        let map = MAP[GAME.level].map.planes[0];
         this.actor.updateAnimation(lapsedTime * this.speed / INI.base_speed);
-        this.moveState.moveStatic(map.getLastMovement()); //compensate HERo's movements
         this.moved = lapsedTime * this.speed / 1000;
         this.moveState.move(this.moved);
         this.setAngle();
@@ -280,24 +278,22 @@ class Enemy {
     }
 }
 class Tank extends Enemy {
-    constructor(left, y, w) {
-        super(Math.floor(left + w / 2), w);
+    constructor(x) {
+        super(x);
         this.LEFT_AXIS = 8;
-        this.y = y;
-        this.actor = new Rotating_ACTOR("BlueTank", this.moveState.left, y, 30);
+        this.actor = new Rotating_ACTOR("BlueTank");
         this.width = SPRITE[this.actor.name].width;
         this.height = SPRITE[this.actor.name].height;
         this.speed = 80.0;
         this.bottom = ENGINE.gameHEIGHT;
-        this.top = this.y - this.actor.height;
         this.name = "BlueTank";
         this.score = INI.scores.tank;
         this.setAngle();
     }
     setAngle() {
-        this.LEFT = Math.round(this.moveState.left);
         let forePlane = MAP[GAME.level].map.planes[0];
         let planePosition = forePlane.getPosition();
+        this.LEFT = Math.round(this.moveState.x - this.width / 2 - planePosition);
         let left_axis_y = forePlane.DATA.map[this.LEFT + this.LEFT_AXIS + planePosition];
         let right_axis_y = forePlane.DATA.map[this.LEFT + this.width + planePosition];
         this.top = left_axis_y - this.actor.height;
@@ -306,7 +302,6 @@ class Tank extends Enemy {
         let tan = (right_axis_y - left_axis_y) / (this.width - this.LEFT_AXIS);
         let angle = Math.round(Math.degrees(Math.atan(tan)));
         this.actor.setAngle(angle);
-        this.actor.setPosition(this.LEFT, left_axis_y);
         let shiftY = 0;
         if (angle > 0) {
             shiftY = Math.sin(Math.radians(angle)) * this.height;
@@ -396,7 +391,7 @@ var HERO = {
             for (let id of ids) {
                 let obj = PROFILE_ACTORS.show(id);
                 if (obj.checkHitHeightPoint(HERO.centerHeightRight)) {
-                    console.log(".......obj hit", obj.name, obj);
+                    console.log(".......obj hit", HERO.positionRight, obj.name, obj.id, obj.moveState.x);
                     PROFILE_ACTORS.remove(id);
                     obj.explode(planePosition);
                     GAME.addScore(obj.score);

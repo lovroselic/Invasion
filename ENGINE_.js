@@ -2371,25 +2371,14 @@ class _3D_ACTOR {
   }
 }
 class _1D_MoveState {
-  constructor(x, dir, w) {
+  constructor(x, dir) {
     this.x = x;
     this.dir = dir;
-    this.left = x - w / 2;
-    this.right = x + w / 2;
-    this.w = w;
-  }
-  moveStatic(dx) {
-    this.left = this.left + this.dir * dx;
-    this.right = this.right + this.dir * dx;
   }
   move(dx) {
-    this.left = this.left + this.dir * dx;
-    this.right = this.right + this.dir * dx;
     this.x = this.x + this.dir * dx;
-    //this.x = Math.round(this.left + this.w / 2);
-    //console.log("X:", this.x);
   }
-  getX(){
+  getX() {
     return Math.round(this.x);
   }
 }
