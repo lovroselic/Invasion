@@ -88,12 +88,9 @@ var SPAWN = {
         }
     },
     spawnTank() {
-        console.group("tank");
         let map = MAP[GAME.level].map;
         let position = map.planes[0].getPosition();
-        
         const timerId = 'tankSpawn';
-        //spawn tank
         let offset = 48;
         let x = position + ENGINE.gameWIDTH + offset;
         if (x >= map.planes[0].planeLimits.rightStop){
@@ -101,11 +98,9 @@ var SPAWN = {
             return;
         }
         PROFILE_ACTORS.add(new Tank(x));
-        console.log("%cspawning tank", "color: #4FA");
-        console.log("..x-spawn",x);
 
-        //end
-        SPAWN.tankTimer = new CountDown(timerId, MAP[GAME.level].tank_spawn, SPAWN.spawnTank);
+        //debug
+        //SPAWN.tankTimer = new CountDown(timerId, MAP[GAME.level].tank_spawn, SPAWN.spawnTank);
         console.groupEnd("tank");
 
     }

@@ -43,7 +43,7 @@ var INI = {
     }
 };
 var PRG = {
-    VERSION: "0.08.02",
+    VERSION: "0.08.03",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -246,9 +246,11 @@ class Enemy {
     constructor(x) {
         this.moveState = new _1D_MoveState(x, -1);
     }
-
     visible(position) {
         return this.moveState.x + this.actor.width > position && this.moveState.x - this.actor.width < position + ENGINE.gameWIDTH;
+    }
+    onBoard(position) {
+        return this.moveState.x + this.actor.width < position + ENGINE.gameWIDTH;
     }
     checkHit(ballistic) {
         let top = ballistic.position.y + ballistic.actor.height / 2 > this.top;
@@ -283,7 +285,7 @@ class Tank extends Enemy {
         this.canonOffY = 20;
         this.canonX = null;
         this.canonY = null;
-        this.bulletSpeed = INI.start_speed;
+        this.bulletSpeed = INI.max_bullet_speed;
         this.setAngle();
         this.setBarrel();
     }
@@ -306,7 +308,93 @@ class Tank extends Enemy {
         this.moved = lapsedTime * this.speed / 1000;
         this.moveState.move(this.moved);
         this.setAngle();
+        let ready = this.getShootingSolution();
+        console.log("ready", ready);
         this.setBarrel();
+    }
+    getShootingSolution() {
+        let forePlane = MAP[GAME.level].map.planes[0];
+        let position = forePlane.getPosition();
+        if (!this.onBoard(position)) return false;
+        let ready = true;
+
+        //////////////////////////////////
+        console.log("***********************************");
+        let TX = Math.round(this.moveState.x);
+        let HX = Math.round(HERO.LEFT + HERO.width / 2);
+        let distance = TX - HX;
+        console.log("distance", distance);
+        let TY = forePlane.DATA.map[TX];
+        let HY = forePlane.DATA.map[HX];
+        console.log("HY", HY);
+        console.log("TY", TY);
+        let [maxHill, index] = TERRAIN.sampleMin(forePlane.DATA.map, HX, TX, 10);
+
+        //tank shooting over the valley, target bellow
+        if (TY < maxHill){
+            maxHill = TY;
+            index = TX;
+        }
+
+        //dec maxHill to allow bullet passage
+        if (maxHill !== TY){
+            maxHill -= 10;
+        }
+        
+        console.log("maxHill", maxHill);
+
+        let DX = index - TX;
+        let ANGLE = null;
+
+        if (maxHill < TY && maxHill < HY){
+            console.log("..hill");
+            ANGLE = Math.degrees(Math.asin((maxHill - TY) / DX));
+        } else {
+            console.log("..valley");
+            ANGLE = Math.degrees(Math.asin(-(HY - TY) / distance));
+        }
+        console.log("....ANGLE", ANGLE, DX, "current tank angle:", this.actor.angle, "current barell angle", this.canonAngle);
+
+        /*
+        if (maxHill < TY && maxHill < HY) {
+            console.log(".. accross hill");
+        } else {
+            console.log("..accross valley");
+            let angle = Math.degrees(Math.asin((HY - TY) / distance));
+            console.log("....angle", angle, "current tank angle:", this.actor.angle, "current barell angle", this.canonAngle);
+            let goal = -(angle + this.actor.angle);
+            let diff = goal - (angle + this.canonAngle);
+            if (Math.abs(diff) < 5) diff = 0;
+            console.log("......goal", goal, "diff:", diff);
+            console.log("------- change possible -------");
+
+            if (diff < 0 && this.canonAngle === 0) return false;
+            if (diff > 0 && this.canonAngle === 60) return false;
+            if (diff !== 0) {
+                ready = false;
+                this.canonAngle += Math.sign(diff) * 5;
+                console.log("......new cannon angle:", this.canonAngle);
+            }
+            let requiredSpeed = null;
+            if (TY <= HY) {
+                requiredSpeed = Math.sqrt(distance * INI.G);
+            } else {
+
+            }
+            requiredSpeed = roundN(requiredSpeed,50);
+            if (requiredSpeed > INI.max_bullet_speed){
+                requiredSpeed = INI.max_bullet_speed;
+                ready = false;
+            }
+            console.log("......requiredSpeed:", requiredSpeed);
+        }
+        */
+
+
+        //////////////////////////////////
+
+        return ready;
+
     }
     setBarrel() {
         let canonY = this.actor.drawY + 4 - this.canonOffY;
@@ -332,7 +420,7 @@ class Tank extends Enemy {
             canonX += Math.sin(Math.radians(this.actor.angle + this.canonAngle - 90)) * this.height;
             canonY += Math.sin(Math.radians(this.actor.angle + this.canonAngle - 90)) * this.height / 2 * F;
         }
-        
+
         this.canonX = Math.round(canonX);
         this.canonY = Math.round(canonY);
         this.canonRootX = Math.round(this.canonRootX);
@@ -370,6 +458,7 @@ var HERO = {
         this.canonOffY = 20;
         this.canonX = null;
         this.canonY = null;
+        this.bulletSpeed = null;
         console.log("HERO", HERO);
         HERO.speed = 0;
         HERO.bulletSpeed = INI.start_speed;
@@ -470,6 +559,10 @@ var HERO = {
         let dir = origin.direction(bullet);
         let speed = new FP_Vector(HERO.bulletSpeed, HERO.bulletSpeed);
         PROFILE_BALLISTIC.add(new Ballistic(bullet, dir, speed));
+        //debug
+        //let range = (HERO.bulletSpeed**2 * Math.sin(2 * Math.radians(HERO.actor.angle + HERO.canonAngle)))/INI.G;
+        //console.warn("range", range);
+        //throw "debug";
     },
     die() {
         console.log("...HERO dies...   (not yet implemented)");

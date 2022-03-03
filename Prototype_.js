@@ -40,6 +40,9 @@ changelog:
     if (flip <= x) return true;
     return false;
   }
+  function roundN(x, N) {
+    return Math.round(x / N) * N;
+  }
   function round10(x) {
     return Math.round(x / 10) * 10;
   }
@@ -71,6 +74,7 @@ changelog:
   window.RND = RND;
   window.coinFlip = coinFlip;
   window.probable = probable;
+  window.roundN = roundN;
   window.round10 = round10;
   window.round5 = round5;
   window.randomSign = randomSign;

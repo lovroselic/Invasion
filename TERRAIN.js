@@ -181,7 +181,7 @@ var PERLIN = {
     }
 };
 var TERRAIN = {
-    VERSION: "0.90.0.DEV",
+    VERSION: "0.90.1.DEV",
     CSS: "color: #2ACBE8",
     NAME: "TerrainGenerator 1D",
     INI: {
@@ -213,6 +213,17 @@ var TERRAIN = {
         for (let pl of px.planes) {
             PERLIN.drawPattern(pl, pl.getPosition(), W);
         }
+    },
+    sampleMin(data, start, end, window){
+        let min = Infinity;
+        let minIndex = -1;
+        for (let index = start; index <= end; index += window){
+            if (data[index] < min){
+                min = data[index];
+                minIndex = index;
+            }
+        }
+        return [min, minIndex];
     }
 };
 
