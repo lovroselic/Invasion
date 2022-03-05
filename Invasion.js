@@ -9,6 +9,8 @@
       
 TODO:
     --expand m/m collision resolution
+    https://www.101computing.net/projectile-motion-formula/
+    https://www.google.com/search?client=firefox-b-d&q=projectile+motion+game+programming
 
 known bugs: 
 
@@ -43,7 +45,7 @@ var INI = {
     }
 };
 var PRG = {
-    VERSION: "0.08.03",
+    VERSION: "0.08.04",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -317,6 +319,8 @@ class Tank extends Enemy {
         let position = forePlane.getPosition();
         if (!this.onBoard(position)) return false;
         let ready = true;
+        const maxAngle = 70;
+        const minVolley = 10;
 
         //////////////////////////////////
         console.log("***********************************");
@@ -331,68 +335,78 @@ class Tank extends Enemy {
         let [maxHill, index] = TERRAIN.sampleMin(forePlane.DATA.map, HX, TX, 10);
 
         //tank shooting over the valley, target bellow
-        if (TY < maxHill){
+        if (TY < maxHill) {
             maxHill = TY;
             index = TX;
         }
 
         //dec maxHill to allow bullet passage
-        if (maxHill !== TY){
+        if (maxHill !== TY) {
             maxHill -= 10;
         }
-        
+
         console.log("maxHill", maxHill);
 
         let DX = index - TX;
         let ANGLE = null;
 
-        if (maxHill < TY && maxHill < HY){
+        let solutions = [];
+        if (maxHill < TY && maxHill < HY) {
             console.log("..hill");
             ANGLE = Math.degrees(Math.asin((maxHill - TY) / DX));
         } else {
             console.log("..valley");
             ANGLE = Math.degrees(Math.asin(-(HY - TY) / distance));
-        }
-        console.log("....ANGLE", ANGLE, DX, "current tank angle:", this.actor.angle, "current barell angle", this.canonAngle);
-
-        /*
-        if (maxHill < TY && maxHill < HY) {
-            console.log(".. accross hill");
-        } else {
-            console.log("..accross valley");
-            let angle = Math.degrees(Math.asin((HY - TY) / distance));
-            console.log("....angle", angle, "current tank angle:", this.actor.angle, "current barell angle", this.canonAngle);
-            let goal = -(angle + this.actor.angle);
-            let diff = goal - (angle + this.canonAngle);
-            if (Math.abs(diff) < 5) diff = 0;
-            console.log("......goal", goal, "diff:", diff);
-            console.log("------- change possible -------");
-
-            if (diff < 0 && this.canonAngle === 0) return false;
-            if (diff > 0 && this.canonAngle === 60) return false;
-            if (diff !== 0) {
-                ready = false;
-                this.canonAngle += Math.sign(diff) * 5;
-                console.log("......new cannon angle:", this.canonAngle);
-            }
-            let requiredSpeed = null;
-            if (TY <= HY) {
-                requiredSpeed = Math.sqrt(distance * INI.G);
+            let requiredSpeed = Math.sqrt(distance * INI.G);
+            if (this.actor.angle <= ANGLE && requiredSpeed < INI.max_bullet_speed && requiredSpeed > INI.min_bullet_speed) {
+                solutions.push(new FiringSolution(ANGLE, requiredSpeed));
             } else {
-
+                if (TY < HY) {
+                    let dy = HY - TY;
+                    let requiredSpeed = Math.sqrt(INI.G / (2 * dy)) * distance;
+                    console.log(".. trying to drop", requiredSpeed);
+                    //TBC, formula may be wrong ????
+                }
             }
-            requiredSpeed = roundN(requiredSpeed,50);
-            if (requiredSpeed > INI.max_bullet_speed){
-                requiredSpeed = INI.max_bullet_speed;
-                ready = false;
-            }
-            console.log("......requiredSpeed:", requiredSpeed);
         }
-        */
+        console.log("....ANGLE", ANGLE, "DX", DX, "distance", distance, "current tank angle:", this.actor.angle, "current barell angle", this.canonAngle);
 
+        for (let angle = Math.max(minVolley, round5(ANGLE), round5(this.actor.angle + 2.51));
+            angle <= Math.min(maxAngle, round5(this.actor.angle + 60));
+            angle += 5) {
+            let requiredSpeed = Math.sqrt((distance * INI.G) / Math.sin(Math.radians(2 * angle)));
+            if (requiredSpeed > INI.max_bullet_speed || requiredSpeed < INI.min_bullet_speed) {
+                //console.log("angle", angle, "out of range");
+                continue;
+            }
+            console.log("angle", angle, "power", requiredSpeed);
+            solutions.push(new FiringSolution(angle, requiredSpeed));
+        }
+        if (solutions.length === 0) {
+            console.log("no solution");
+            console.log("***********************************");
+            return false;
+        }
+        console.log("solutions", solutions);
+        let solution = FiringSolution.closest(solutions, this.actor.angle, this.canonAngle);
+        console.log("closest solution", solution);
+        this.bulletSpeed = solution.power;
+        let goalDifference = solution.angle - this.actor.angle - this.canonAngle;
+        console.log('goalDifference', goalDifference, "current tank angle:", this.actor.angle, "current barell angle", this.canonAngle);
+        if (Math.abs(goalDifference) < 5) goalDifference = 0;
+        if (goalDifference === 0){
+            return true;
+        }
+        if (goalDifference < 0 && this.canonAngle === 0) return false;
+        if (goalDifference > 0 && this.canonAngle === 60) return false;
+        if (goalDifference !== 0) {
+            ready = false;
+            this.canonAngle += Math.sign(goalDifference) * 5;
+            console.log("......new cannon angle:", this.canonAngle);
+        }
 
         //////////////////////////////////
-
+        console.log("***********************************");
         return ready;
 
     }
@@ -443,6 +457,25 @@ class Tank extends Enemy {
             shiftY = Math.sin(Math.radians(angle)) * this.height;
         }
         this.actor.setDraw(this.LEFT, left_axis_y + shiftY);
+    }
+}
+class FiringSolution {
+    constructor(angle, power) {
+        this.angle = angle;
+        this.power = roundN(power, 50);
+    }
+    static closest(solutions, tank_angle, barrel_angle) {
+        let diff = Infinity;
+        let index = -1;
+        let currentAngle = tank_angle + barrel_angle;
+        for (let i = 0; i < solutions.length; i++) {
+            let thisDiff = Math.abs(currentAngle - solutions[i].angle);
+            if (thisDiff < diff) {
+                diff = thisDiff;
+                index = i;
+            }
+        }
+        return solutions[index];
     }
 }
 var HERO = {
