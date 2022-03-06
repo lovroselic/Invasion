@@ -11,6 +11,7 @@ TODO:
     --expand m/m collision resolution
     https://www.101computing.net/projectile-motion-formula/
     https://www.google.com/search?client=firefox-b-d&q=projectile+motion+game+programming
+    https://cnx.org/contents/UYPplaH7@29.32:--TzKjCB@8/Projectile-motion-on-an-incline
 
 known bugs: 
 
@@ -37,7 +38,7 @@ var INI = {
     max_bullet_speed: 1000.0,
     min_bullet_speed: 500.0,
     bullet_speed_step: 50.0,
-    G: 1000,
+    G: 1250,
     sprite_width: 48,
     scores: {
         hut: 10,
@@ -45,7 +46,7 @@ var INI = {
     }
 };
 var PRG = {
-    VERSION: "0.08.04",
+    VERSION: "0.08.05",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -288,6 +289,7 @@ class Tank extends Enemy {
         this.canonX = null;
         this.canonY = null;
         this.bulletSpeed = INI.max_bullet_speed;
+        this.canShoot = true;
         this.setAngle();
         this.setBarrel();
     }
@@ -311,8 +313,14 @@ class Tank extends Enemy {
         this.moveState.move(this.moved);
         this.setAngle();
         let ready = this.getShootingSolution();
-        console.log("ready", ready);
         this.setBarrel();
+        if (ready && this.canShoot){
+            this.shoot();
+        }
+    }
+    shoot(){
+        console.log(this.name, this.id, "SHOOTS");
+        this.canShoot = false;
     }
     getShootingSolution() {
         let forePlane = MAP[GAME.level].map.planes[0];
@@ -323,15 +331,15 @@ class Tank extends Enemy {
         const minVolley = 10;
 
         //////////////////////////////////
-        console.log("***********************************");
+        //console.log("***********************************");
         let TX = Math.round(this.moveState.x);
         let HX = Math.round(HERO.LEFT + HERO.width / 2);
         let distance = TX - HX;
-        console.log("distance", distance);
+        //console.log("distance", distance);
         let TY = forePlane.DATA.map[TX];
         let HY = forePlane.DATA.map[HX];
-        console.log("HY", HY);
-        console.log("TY", TY);
+        //console.log("HY", HY);
+        //console.log("TY", TY);
         let [maxHill, index] = TERRAIN.sampleMin(forePlane.DATA.map, HX, TX, 10);
 
         //tank shooting over the valley, target bellow
@@ -345,31 +353,37 @@ class Tank extends Enemy {
             maxHill -= 10;
         }
 
-        console.log("maxHill", maxHill);
+        //console.log("maxHill", maxHill);
 
         let DX = index - TX;
         let ANGLE = null;
 
         let solutions = [];
         if (maxHill < TY && maxHill < HY) {
-            console.log("..hill");
+            //console.log("..hill");
             ANGLE = Math.degrees(Math.asin((maxHill - TY) / DX));
         } else {
-            console.log("..valley");
+            //console.log("..valley");
             ANGLE = Math.degrees(Math.asin(-(HY - TY) / distance));
             let requiredSpeed = Math.sqrt(distance * INI.G);
-            if (this.actor.angle <= ANGLE && requiredSpeed < INI.max_bullet_speed && requiredSpeed > INI.min_bullet_speed) {
-                solutions.push(new FiringSolution(ANGLE, requiredSpeed));
+            if (this.actor.angle <= ANGLE && requiredSpeed < INI.max_bullet_speed && requiredSpeed > INI.min_bullet_speed && this.actor.angle + 60 >= ANGLE) {
+                solutions.push(new FiringSolution(ANGLE, requiredSpeed, true));
+                //console.log("DIRECT!!!");
+                //console.log("....ANGLE", ANGLE, "DX", DX, "distance", distance, "current tank angle:", this.actor.angle, "current barell angle", this.canonAngle);
             } else {
-                if (TY < HY) {
+                if (TY < HY && this.actor.angle <= 0) {
                     let dy = HY - TY;
-                    let requiredSpeed = Math.sqrt(INI.G / (2 * dy)) * distance;
-                    console.log(".. trying to drop", requiredSpeed);
-                    //TBC, formula may be wrong ????
+                    let requiredSpeed = Math.sqrt((dy * INI.G) / (2 * Math.tan(Math.radians(ANGLE)) * Math.tan(Math.radians(ANGLE))));
+                    if (requiredSpeed < INI.max_bullet_speed && requiredSpeed > INI.min_bullet_speed) {
+                        solutions.push(new FiringSolution(round5(this.actor.angle), requiredSpeed));
+                        //console.log(".. DROPPING!", round5(this.actor.angle), requiredSpeed);
+                        //console.log("....ANGLE", ANGLE, "DX", DX, "distance", distance, "current tank angle:", this.actor.angle, "current barell angle", this.canonAngle);
+                    }
+
                 }
             }
         }
-        console.log("....ANGLE", ANGLE, "DX", DX, "distance", distance, "current tank angle:", this.actor.angle, "current barell angle", this.canonAngle);
+        //console.log("....ANGLE", ANGLE, "DX", DX, "distance", distance, "current tank angle:", this.actor.angle, "current barell angle", this.canonAngle);
 
         for (let angle = Math.max(minVolley, round5(ANGLE), round5(this.actor.angle + 2.51));
             angle <= Math.min(maxAngle, round5(this.actor.angle + 60));
@@ -379,22 +393,22 @@ class Tank extends Enemy {
                 //console.log("angle", angle, "out of range");
                 continue;
             }
-            console.log("angle", angle, "power", requiredSpeed);
+            //console.log("angle", angle, "power", requiredSpeed);
             solutions.push(new FiringSolution(angle, requiredSpeed));
         }
         if (solutions.length === 0) {
-            console.log("no solution");
-            console.log("***********************************");
+            //console.log("no solution");
+            //console.log("***********************************");
             return false;
         }
-        console.log("solutions", solutions);
+        //console.log("solutions", solutions);
         let solution = FiringSolution.closest(solutions, this.actor.angle, this.canonAngle);
-        console.log("closest solution", solution);
+        //console.log("closest solution", solution);
         this.bulletSpeed = solution.power;
         let goalDifference = solution.angle - this.actor.angle - this.canonAngle;
-        console.log('goalDifference', goalDifference, "current tank angle:", this.actor.angle, "current barell angle", this.canonAngle);
+        //console.log('goalDifference', goalDifference, "current tank angle:", this.actor.angle, "current barell angle", this.canonAngle);
         if (Math.abs(goalDifference) < 5) goalDifference = 0;
-        if (goalDifference === 0){
+        if (goalDifference === 0) {
             return true;
         }
         if (goalDifference < 0 && this.canonAngle === 0) return false;
@@ -402,11 +416,11 @@ class Tank extends Enemy {
         if (goalDifference !== 0) {
             ready = false;
             this.canonAngle += Math.sign(goalDifference) * 5;
-            console.log("......new cannon angle:", this.canonAngle);
+            //console.log("......new cannon angle:", this.canonAngle);
         }
 
         //////////////////////////////////
-        console.log("***********************************");
+        //console.log("***********************************");
         return ready;
 
     }
@@ -460,15 +474,17 @@ class Tank extends Enemy {
     }
 }
 class FiringSolution {
-    constructor(angle, power) {
+    constructor(angle, power, valley = false) {
         this.angle = angle;
         this.power = roundN(power, 50);
+        this.valley = valley;
     }
     static closest(solutions, tank_angle, barrel_angle) {
         let diff = Infinity;
         let index = -1;
         let currentAngle = tank_angle + barrel_angle;
         for (let i = 0; i < solutions.length; i++) {
+            if (solutions[i].valley) return solutions[i];
             let thisDiff = Math.abs(currentAngle - solutions[i].angle);
             if (thisDiff < diff) {
                 diff = thisDiff;
