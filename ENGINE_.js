@@ -2685,7 +2685,7 @@ class Timer {
     this.delta = template.delta;
   }
   update() {
-    this.now = Math.round((this.delta + (Date.now() - this.start)) / 1000);
+    this.now = Math.floor((this.delta + (Date.now() - this.start)) / 1000);
     if (this.constructor.name === "CountDown") {
       if (this.now >= this.value) this.quit();
     }
@@ -2693,7 +2693,9 @@ class Timer {
   time(time) {
     if (this.runs) {
       time = (time || this.delta + (Date.now() - this.start)) / 1000;
-    } else time = this.delta / 1000;
+    } else {
+      time = this.delta / 1000;
+    }
     let hours = Math.floor(time / 3600);
     let min = Math.floor((time % 3600) / 60);
     let sec = Math.floor((time % 3600) % 60);

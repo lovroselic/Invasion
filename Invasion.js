@@ -40,13 +40,14 @@ var INI = {
     bullet_speed_step: 50.0,
     G: 1250,
     sprite_width: 48,
+    tank_cooldown: 2,
     scores: {
         hut: 10,
         tank: 100,
     }
 };
 var PRG = {
-    VERSION: "0.08.05",
+    VERSION: "0.08.06",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -282,8 +283,6 @@ class Tank extends Enemy {
         this.name = "BlueTank";
         this.score = INI.scores.tank;
         this.canonAngle = 0;
-        //this.canonAngle = 30;
-        //this.canonAngle = 60;
         this.canonOffX = 24;
         this.canonOffY = 20;
         this.canonX = null;
@@ -292,6 +291,11 @@ class Tank extends Enemy {
         this.canShoot = true;
         this.setAngle();
         this.setBarrel();
+        this.timer = null;
+    }
+    release(){
+        this.canShoot = true;
+        console.log(this.name, this.id, '...released', this);
     }
     draw(map) {
         let position = map.getPosition();
@@ -314,13 +318,14 @@ class Tank extends Enemy {
         this.setAngle();
         let ready = this.getShootingSolution();
         this.setBarrel();
-        if (ready && this.canShoot){
+        if (ready && this.canShoot) {
             this.shoot();
         }
     }
-    shoot(){
+    shoot() {
         console.log(this.name, this.id, "SHOOTS");
         this.canShoot = false;
+        this.timer =new CountDown(`${this.name}${this.id}`, INI.tank_cooldown, this.release.bind(this));
     }
     getShootingSolution() {
         let forePlane = MAP[GAME.level].map.planes[0];
@@ -366,7 +371,10 @@ class Tank extends Enemy {
             //console.log("..valley");
             ANGLE = Math.degrees(Math.asin(-(HY - TY) / distance));
             let requiredSpeed = Math.sqrt(distance * INI.G);
-            if (this.actor.angle <= ANGLE && requiredSpeed < INI.max_bullet_speed && requiredSpeed > INI.min_bullet_speed && this.actor.angle + 60 >= ANGLE) {
+            if (this.actor.angle <= ANGLE &&
+                requiredSpeed < INI.max_bullet_speed &&
+                requiredSpeed > INI.min_bullet_speed &&
+                this.actor.angle + 60 >= ANGLE) {
                 solutions.push(new FiringSolution(ANGLE, requiredSpeed, true));
                 //console.log("DIRECT!!!");
                 //console.log("....ANGLE", ANGLE, "DX", DX, "distance", distance, "current tank angle:", this.actor.angle, "current barell angle", this.canonAngle);
@@ -379,7 +387,6 @@ class Tank extends Enemy {
                         //console.log(".. DROPPING!", round5(this.actor.angle), requiredSpeed);
                         //console.log("....ANGLE", ANGLE, "DX", DX, "distance", distance, "current tank angle:", this.actor.angle, "current barell angle", this.canonAngle);
                     }
-
                 }
             }
         }
