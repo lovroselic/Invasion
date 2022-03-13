@@ -47,14 +47,14 @@ var INI = {
     }
 };
 var PRG = {
-    VERSION: "0.08.09",
+    VERSION: "0.08.10",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
     INIT() {
-        console.log("%c****************************************************************************************************************", PRG.CSS);
+        console.log("%c**************************************************************************************************************************************", PRG.CSS);
         console.log(`${PRG.NAME} ${PRG.VERSION} by Lovro Selic, (c) C00lSch00l ${PRG.YEAR} on ${navigator.userAgent}`);
-        console.log("%c****************************************************************************************************************", PRG.CSS);
+        console.log("%c**************************************************************************************************************************************", PRG.CSS);
         $("#title").html(PRG.NAME);
         $("#version").html(`${PRG.NAME} V${PRG.VERSION} <span style='font-size:14px'>&copy</span> C00lSch00l ${PRG.YEAR}`);
         $("input#toggleAbout").val("About " + PRG.NAME);
@@ -266,6 +266,7 @@ class Enemy {
         return this.moveState.x + this.actor.width < position + ENGINE.gameWIDTH;
     }
     checkHit(ballistic) {
+        if (ballistic.friendly) return false;
         let top = ballistic.position.y + ballistic.actor.height / 2 > this.top;
         let bottom = ballistic.position.y - ballistic.actor.height / 2 < this.bottom;
         return top && bottom;
@@ -349,7 +350,7 @@ class Tank extends Enemy {
         let bullet = new FP_Grid(this.bulletX, this.bulletY);
         let dir = origin.direction(bullet);
         let speed = new FP_Vector(this.bulletSpeed, this.bulletSpeed);
-        console.error(this.id, this.name, "SHOOTS, speed", this.bulletSpeed, "ANGLE", Math.degrees(Math.asin(dir.y)));
+        //console.error(this.id, this.name, "SHOOTS, speed", this.bulletSpeed, "ANGLE", Math.degrees(Math.asin(dir.y)));
         PROFILE_BALLISTIC.add(new Ballistic(bullet, dir, speed, true));
     }
     getShootingSolution() {
@@ -358,6 +359,7 @@ class Tank extends Enemy {
         if (!this.onBoard(position)) return false;
         let ready = true;
         const maxAngle = 70;
+        const minAngle = 10; 
         const minPower = 300;
         let TX = Math.round(this.moveState.x);
         let HX = Math.round(HERO.LEFT + HERO.width / 2);
@@ -396,17 +398,19 @@ class Tank extends Enemy {
         }
 
         for (let angle = Math.min(maxAngle, round5(this.actor.angle + 60));
-            angle >= Math.max(round5(ANGLE + 2.51), round5(this.actor.angle + 2.51));
+            angle >= Math.max(round5(ANGLE + 2.51), round5(this.actor.angle + 2.51), minAngle);
             angle -= 5) {
-            let range = landing - (DY / Math.tan(Math.radians(angle)));
-            let requiredSpeed = Math.sqrt((INI.G * range) / (2 * Math.cos(Math.radians(angle))));
+            let range = Math.floor(landing - (DY / Math.tan(Math.radians(angle))));
+            if (range <= 0) continue;
+            let requiredSpeed = Math.floor(Math.sqrt((INI.G * range) / (2 * Math.cos(Math.radians(angle)))));
+            //console.log("..angle, landing, range, requiredSpeed",angle, landing, range, requiredSpeed);
             if (requiredSpeed > INI.max_bullet_speed || requiredSpeed < minPower) continue;
             solutions.push(new FiringSolution(angle, requiredSpeed, false));
         }
         if (solutions.length === 0) return false;
 
         let solution = FiringSolution.closest(solutions, this.actor.angle, this.canonAngle);
-        console.log("solution", solution);
+        //console.log("solution", solution);
         this.bulletSpeed = solution.power;
         let goalDifference = solution.angle - this.actor.angle - this.canonAngle;
         if (Math.abs(goalDifference) < 5) goalDifference = 0;
@@ -610,6 +614,9 @@ var HERO = {
     },
     die() {
         console.log("...HERO dies...   (not yet implemented)");
+    },
+    collisionEntity(map){
+
     }
 };
 var GAME = {

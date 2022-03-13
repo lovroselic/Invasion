@@ -100,7 +100,7 @@ var SPAWN = {
         PROFILE_ACTORS.add(new Tank(x));
 
         //debug
-        //SPAWN.tankTimer = new CountDown(timerId, MAP[GAME.level].tank_spawn, SPAWN.spawnTank);
+        SPAWN.tankTimer = new CountDown(timerId, MAP[GAME.level].tank_spawn, SPAWN.spawnTank);
         console.groupEnd("tank");
 
     }
