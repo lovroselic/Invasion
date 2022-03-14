@@ -2385,6 +2385,10 @@ class _1D_MoveState {
   getX() {
     return Math.round(this.x);
   }
+  setX(x){
+    console.assert(Number.isInteger(x), "X must be integer!");
+    this.x = x;
+  }
 }
 class MoveState {
   constructor(startGrid, dir, GA) {

@@ -6,7 +6,7 @@
 console.clear();
 
 var LIB = {
-  VERSION: "3.02",
+  VERSION: "3.03",
   CSS: "color: #EFE",
   log: function () {
     console.log(`%cPrototype LIB ${LIB.VERSION} loaded`, LIB.CSS);
@@ -275,7 +275,12 @@ Array.prototype.addUnique = function (arr) {
   temp = new Set(temp);
   return [...temp];
 };
-
+Array.prototype.removeValueOnce = function(value){
+  let idx = this.indexOf(value);
+  if (idx !== -1){
+    this.splice(idx,1);
+  }
+};
 String.prototype.capitalize = function () {
   return this.charAt(0).toUpperCase() + this.substr(1).toLowerCase();
 };

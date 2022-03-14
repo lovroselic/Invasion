@@ -92,7 +92,9 @@ var PROFILE_BALLISTIC = {
         for (let obj of this.POOL) {
             if (obj) {
                 obj.collisionBackground(this.map);
+                if (obj === null) continue;
                 obj.collisionEntity(this.map);
+                if (obj === null) continue;
                 obj.move(lapsedTime);
             }
         }
@@ -124,7 +126,7 @@ var PROFILE_ACTORS = {
         map[this.IA] = new IndexArray(map.planeLimits.width, 1, 4, 4);
         this.poolToIA(map[this.IA]);
         for (let obj of this.POOL) {
-            if (obj) {
+            if (obj && !obj.ignoreByManager) {
                 //obj.collisionBackground(this.map);
                 obj.move(lapsedTime);
             }

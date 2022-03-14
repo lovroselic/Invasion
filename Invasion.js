@@ -14,6 +14,8 @@ TODO:
     https://cnx.org/contents/UYPplaH7@29.32:--TzKjCB@8/Projectile-motion-on-an-incline
 
 known bugs: 
+    bullet through HERO
+    blu tank puking bullets
 
  */
 ////////////////////////////////////////////////////
@@ -40,14 +42,14 @@ var INI = {
     bullet_speed_step: 50.0,
     G: 1250,
     sprite_width: 48,
-    tank_cooldown: 2,
+    tank_cooldown: 3,
     scores: {
         hut: 10,
         tank: 100,
     }
 };
 var PRG = {
-    VERSION: "0.08.10",
+    VERSION: "0.08.11",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -150,7 +152,6 @@ class Ballistic {
         this.speed.y = this.speed.y + (Math.sign(this.dir.y) || 1) * INI.G * timeDelta;
         this.position = this.position.add(new FP_Vector(x, y));
         if (this.position.x < 0) {
-            console.log(this.id, this.name, 'silently removed after moving');
             PROFILE_BALLISTIC.remove(this.id);
         }
     }
@@ -177,10 +178,10 @@ class Ballistic {
         if (ids.length) {
             for (let id of ids) {
                 let obj = PROFILE_ACTORS.show(id);
-                if (obj.checkHit(this)) {
+                if (obj !== null && obj.checkHit(this)) {
                     console.log(".......obj hit", obj.name, obj);
                     PROFILE_BALLISTIC.remove(this.id);
-                    PROFILE_ACTORS.remove(id);
+                    if (id !== HERO.id) PROFILE_ACTORS.remove(id); //ignore HERO
                     //this.explode(planePosition);
                     obj.explode(planePosition);
                     GAME.addScore(obj.score);
@@ -302,6 +303,7 @@ class Tank extends Enemy {
         this.setAngle();
         this.setBarrel();
         this.timer = null;
+        this.ignoreByManager = false;
     }
     release() {
         this.canShoot = true;
@@ -311,20 +313,6 @@ class Tank extends Enemy {
         if (this.visible(position)) {
             ENGINE.drawBottomRight('actors', this.canonX, this.canonY, SPRITE[`CevLeft_${this.canonAngle + this.actor.angle}`]);
             ENGINE.drawBottomLeft('actors', this.actor.drawX, this.actor.drawY + 2, this.actor.sprite());
-            /*
-            ENGINE.drawBottomRight('actors', this.canonX, this.canonY, SPRITE[`CevLeft_${this.canonAngle + this.actor.angle}`]);
-            let CTX = LAYER.actors;
-            CTX.fillStyle = "yellow";
-            CTX.pixelAt(this.canonRootX, this.canonRootY, 2);
-            */
-            //debug
-            /*
-            this.calcBulletPosition();
-            let CTX = LAYER.actors;
-            CTX.fillStyle = "yellow";
-            CTX.pixelAt(this.bulletX, this.bulletY, 2);
-            ENGINE.layersToClear.add("actors");
-            */
         }
     }
     move(lapsedTime) {
@@ -344,13 +332,12 @@ class Tank extends Enemy {
     }
     shoot() {
         this.canShoot = false;
-        this.timer = new CountDown(`${this.name}${this.id}`, INI.tank_cooldown, this.release.bind(this));
+        this.timer = new CountDown(`${this.name}${this.id}`, RND(INI.tank_cooldown - 1, INI.tank_cooldown + 1), this.release.bind(this));
         this.calcBulletPosition();
         let origin = new FP_Grid(this.canonRootX, this.canonRootY);
         let bullet = new FP_Grid(this.bulletX, this.bulletY);
         let dir = origin.direction(bullet);
         let speed = new FP_Vector(this.bulletSpeed, this.bulletSpeed);
-        //console.error(this.id, this.name, "SHOOTS, speed", this.bulletSpeed, "ANGLE", Math.degrees(Math.asin(dir.y)));
         PROFILE_BALLISTIC.add(new Ballistic(bullet, dir, speed, true));
     }
     getShootingSolution() {
@@ -359,7 +346,7 @@ class Tank extends Enemy {
         if (!this.onBoard(position)) return false;
         let ready = true;
         const maxAngle = 70;
-        const minAngle = 10; 
+        const minAngle = 10;
         const minPower = 300;
         let TX = Math.round(this.moveState.x);
         let HX = Math.round(HERO.LEFT + HERO.width / 2);
@@ -495,6 +482,7 @@ class FiringSolution {
 }
 var HERO = {
     startInit() {
+        this.name = "HERO";
         this.LEFT = 32;
         this.LEFT_AXIS = 8;
         let y = Math.floor(TERRAIN.INI.planes_max[0] * ENGINE.gameHEIGHT);
@@ -507,9 +495,13 @@ var HERO = {
         this.canonX = null;
         this.canonY = null;
         this.bulletSpeed = null;
+        this.ignoreByManager = true;
+        this.bottom = ENGINE.gameHEIGHT;
+        this.speed = 0;
+        this.bulletSpeed = INI.start_speed;
+        this.moveState = new _1D_MoveState(Math.floor(LEFT + this.width / 2), 1);
+        this.score = 0;
         console.log("HERO", HERO);
-        HERO.speed = 0;
-        HERO.bulletSpeed = INI.start_speed;
     },
     draw() {
         ENGINE.drawBottomLeft('actors', HERO.canonX, HERO.canonY, SPRITE[`Cev_${HERO.canonAngle + HERO.actor.angle}`]);
@@ -528,9 +520,13 @@ var HERO = {
         HERO.actor.updateAnimation(time * HERO.speed / INI.base_speed);
         let forePlane = MAP[GAME.level].map.planes[0];
         let planePosition = forePlane.getPosition();
+        let x = Math.floor(this.LEFT + this.width / 2) + planePosition;
+        this.moveState.setX(x);
         let left_axis_y = forePlane.DATA.map[this.LEFT + this.LEFT_AXIS + planePosition];
+        this.y = left_axis_y;
         let right_axis_y = forePlane.DATA.map[this.LEFT + this.width + planePosition];
         HERO.centerHeightRight = right_axis_y - HERO.height / 2;
+        this.top = left_axis_y - this.actor.height;
         let tan = (right_axis_y - left_axis_y) / (this.width - this.LEFT_AXIS);
         let angle = Math.round(Math.degrees(Math.atan(tan)));
         HERO.actor.setAngle(angle);
@@ -578,12 +574,14 @@ var HERO = {
     collisionToActors(planePosition) {
         let IA = MAP[GAME.level].map.planes[0].profile_actor_IA;
         let ids = IA.unroll(new Grid(HERO.positionRight, 0));
+        //remove self
+        ids.removeValueOnce(this.id);
         if (ids.length) {
             //console.log("ids", ids);
             for (let id of ids) {
                 let obj = PROFILE_ACTORS.show(id);
                 if (obj.checkHitHeightPoint(HERO.centerHeightRight)) {
-                    console.log(".......obj hit", HERO.positionRight, obj.name, obj.id, obj.moveState.x);
+                    console.log(".......HERO hit", obj.name, obj.id);
                     PROFILE_ACTORS.remove(id);
                     obj.explode(planePosition);
                     GAME.addScore(obj.score);
@@ -605,18 +603,20 @@ var HERO = {
         let bullet = new FP_Grid(HERO.bulletX, HERO.bulletY);
         let dir = origin.direction(bullet);
         let speed = new FP_Vector(HERO.bulletSpeed, HERO.bulletSpeed);
-        console.log("HERO SHOOTS, speed", HERO.bulletSpeed, "ANGLE", Math.degrees(Math.asin(dir.y)), "positionX", HERO.bulletX, 'positionY', HERO.bulletY);
         PROFILE_BALLISTIC.add(new Ballistic(bullet, dir, speed));
-        //debug
-        //let range = (HERO.bulletSpeed**2 * Math.sin(2 * Math.radians(HERO.actor.angle + HERO.canonAngle)))/INI.G;
-        //console.warn("range", range);
-        //throw "debug";
     },
     die() {
-        console.log("...HERO dies...   (not yet implemented)");
+        console.warn("...HERO dies...   (not yet implemented)");
     },
-    collisionEntity(map){
-
+    checkHit(ballistic) {
+        let top = ballistic.position.y + ballistic.actor.height / 2 > this.top;
+        let bottom = ballistic.position.y - ballistic.actor.height / 2 < this.bottom;
+        return top && bottom;
+    },
+    explode(planePosition) {
+        DESTRUCTION_ANIMATION.add(new Explosion(new Grid(this.moveState.x - planePosition, this.y - this.actor.height / 2), planePosition));
+        AUDIO.Explosion.play();
+        this.die();
     }
 };
 var GAME = {
@@ -663,6 +663,8 @@ var GAME = {
         PROFILE_ACTORS.init(MAP[level].map.planes[0]);
         DECOR.init(MAP[level].map.planes[0]);
 
+        PROFILE_ACTORS.add(HERO);
+        console.log(PROFILE_ACTORS.POOL);
         SPAWN.spawn(level);
         SPAWN.spawnTank();
     },
