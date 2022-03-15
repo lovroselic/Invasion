@@ -8,14 +8,8 @@
 /*
       
 TODO:
-    --expand m/m collision resolution
-    https://www.101computing.net/projectile-motion-formula/
-    https://www.google.com/search?client=firefox-b-d&q=projectile+motion+game+programming
-    https://cnx.org/contents/UYPplaH7@29.32:--TzKjCB@8/Projectile-motion-on-an-incline
 
 known bugs: 
-    bullet through HERO
-    blu tank puking bullets
 
  */
 ////////////////////////////////////////////////////
@@ -28,7 +22,6 @@ var DEBUG = {
     PAINT_TRAIL: false,
     invincible: false,
     INF_LIVES: false,
-
 };
 var INI = {
     base_speed: 128.0,
@@ -49,7 +42,7 @@ var INI = {
     }
 };
 var PRG = {
-    VERSION: "0.08.11",
+    VERSION: "0.08.12",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -159,7 +152,6 @@ class Ballistic {
         let X = Math.round(this.position.x);
         let planePosition = map.getPosition();
         if (X < 0 || X > planePosition + ENGINE.gameWIDTH || X + planePosition >= map.DATA.map.length) {
-            console.log(this.id, this.name, 'silently removed');
             PROFILE_BALLISTIC.remove(this.id);
             return;
         }
@@ -179,7 +171,7 @@ class Ballistic {
             for (let id of ids) {
                 let obj = PROFILE_ACTORS.show(id);
                 if (obj !== null && obj.checkHit(this)) {
-                    console.log(".......obj hit", obj.name, obj);
+                    //console.log(".......obj hit", obj.name, obj);
                     PROFILE_BALLISTIC.remove(this.id);
                     if (id !== HERO.id) PROFILE_ACTORS.remove(id); //ignore HERO
                     //this.explode(planePosition);
@@ -332,7 +324,8 @@ class Tank extends Enemy {
     }
     shoot() {
         this.canShoot = false;
-        this.timer = new CountDown(`${this.name}${this.id}`, RND(INI.tank_cooldown - 1, INI.tank_cooldown + 1), this.release.bind(this));
+        this.timer = new CountDown(`${this.name}${this.id}-${Date.now()}`, RND(INI.tank_cooldown - 1, INI.tank_cooldown + 1), this.release.bind(this));
+        ENGINE.TIMERS.display();//
         this.calcBulletPosition();
         let origin = new FP_Grid(this.canonRootX, this.canonRootY);
         let bullet = new FP_Grid(this.bulletX, this.bulletY);
@@ -349,32 +342,29 @@ class Tank extends Enemy {
         const minAngle = 10;
         const minPower = 300;
         let TX = Math.round(this.moveState.x);
-        let HX = Math.round(HERO.LEFT + HERO.width / 2);
+        let HX = HERO.moveState.getX();
         let landing = TX - HX;
         let TY = forePlane.DATA.map[TX];
         let HY = forePlane.DATA.map[HX];
         let DY = HY - TY;
         let [maxHill, index] = TERRAIN.sampleMin(forePlane.DATA.map, HX, TX, 10);
 
-        //tank shooting over the valley, target bellow
-        if (TY < maxHill) {
+        if (TY <= maxHill) {
             maxHill = TY;
             index = TX;
-        }
-
-        //dec maxHill to allow bullet passage
-        if (maxHill !== TY) {
-            maxHill -= 36;
+        } else if (HY <= maxHill) {
+            maxHill = HY;
+            index = HX;
         }
 
         let DX = index - TX;
         let ANGLE = null;
-
         let solutions = [];
         if (maxHill < TY && maxHill < HY) {
+            maxHill -= 36;
             ANGLE = Math.degrees(Math.asin((maxHill - TY) / DX));
         } else {
-            ANGLE = Math.degrees(Math.asin(-DY / landing));
+            ANGLE = Math.degrees(Math.asin(-DY / landing)); 
             let requiredSpeed = Math.sqrt(landing * INI.G / 2);
             if (this.actor.angle <= ANGLE &&
                 requiredSpeed < INI.max_bullet_speed &&
@@ -390,14 +380,12 @@ class Tank extends Enemy {
             let range = Math.floor(landing - (DY / Math.tan(Math.radians(angle))));
             if (range <= 0) continue;
             let requiredSpeed = Math.floor(Math.sqrt((INI.G * range) / (2 * Math.cos(Math.radians(angle)))));
-            //console.log("..angle, landing, range, requiredSpeed",angle, landing, range, requiredSpeed);
             if (requiredSpeed > INI.max_bullet_speed || requiredSpeed < minPower) continue;
             solutions.push(new FiringSolution(angle, requiredSpeed, false));
         }
         if (solutions.length === 0) return false;
 
         let solution = FiringSolution.closest(solutions, this.actor.angle, this.canonAngle);
-        //console.log("solution", solution);
         this.bulletSpeed = solution.power;
         let goalDifference = solution.angle - this.actor.angle - this.canonAngle;
         if (Math.abs(goalDifference) < 5) goalDifference = 0;
@@ -574,10 +562,8 @@ var HERO = {
     collisionToActors(planePosition) {
         let IA = MAP[GAME.level].map.planes[0].profile_actor_IA;
         let ids = IA.unroll(new Grid(HERO.positionRight, 0));
-        //remove self
         ids.removeValueOnce(this.id);
         if (ids.length) {
-            //console.log("ids", ids);
             for (let id of ids) {
                 let obj = PROFILE_ACTORS.show(id);
                 if (obj.checkHitHeightPoint(HERO.centerHeightRight)) {
@@ -664,7 +650,6 @@ var GAME = {
         DECOR.init(MAP[level].map.planes[0]);
 
         PROFILE_ACTORS.add(HERO);
-        console.log(PROFILE_ACTORS.POOL);
         SPAWN.spawn(level);
         SPAWN.spawnTank();
     },
