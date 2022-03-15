@@ -42,7 +42,7 @@ var INI = {
     }
 };
 var PRG = {
-    VERSION: "0.08.12",
+    VERSION: "0.08.13",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -325,7 +325,6 @@ class Tank extends Enemy {
     shoot() {
         this.canShoot = false;
         this.timer = new CountDown(`${this.name}${this.id}-${Date.now()}`, RND(INI.tank_cooldown - 1, INI.tank_cooldown + 1), this.release.bind(this));
-        ENGINE.TIMERS.display();//
         this.calcBulletPosition();
         let origin = new FP_Grid(this.canonRootX, this.canonRootY);
         let bullet = new FP_Grid(this.bulletX, this.bulletY);
@@ -567,7 +566,7 @@ var HERO = {
             for (let id of ids) {
                 let obj = PROFILE_ACTORS.show(id);
                 if (obj.checkHitHeightPoint(HERO.centerHeightRight)) {
-                    console.log(".......HERO hit", obj.name, obj.id);
+                    //console.log(".......HERO hit", obj.name, obj.id);
                     PROFILE_ACTORS.remove(id);
                     obj.explode(planePosition);
                     GAME.addScore(obj.score);
