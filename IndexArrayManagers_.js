@@ -115,7 +115,7 @@ var PROFILE_ACTORS = {
     reIndex: IAM.reIndex,
     poolToIA(IA) {
         for (const obj of this.POOL) {
-            for (let x = Math.round(obj.moveState.x - obj.actor.width / 2); x <= Math.round(obj.moveState.x + obj.actor.width / 2); x++) {
+            for (let x = Math.max(0, Math.round(obj.moveState.x - obj.actor.width / 2)); x <= Math.round(obj.moveState.x + obj.actor.width / 2); x++) {
                 IA.next(new Grid(x, 0), obj.id);
             }
         }

@@ -39,10 +39,11 @@ var INI = {
     scores: {
         hut: 10,
         tank: 100,
+        plane: 1000,
     }
 };
 var PRG = {
-    VERSION: "0.08.13",
+    VERSION: "0.09.00",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -274,6 +275,51 @@ class Enemy {
         AUDIO.Explosion.play();
     }
 }
+class AirPlane extends Enemy {
+    constructor(x) {
+        super(x);
+        this.score = INI.scores.plane;
+        this.ignoreByManager = false;
+        this.timer = null;
+        this.canShoot = true;
+        this.name = "Plane";
+        this.speed = 200.0;
+        let plane = RND(1, 11);
+        this.actor = new Static_ACTOR(`Plane${plane}`);
+        this.width = SPRITE[this.actor.name].width;
+        this.height = SPRITE[this.actor.name].height;
+        const minY = Math.round(0.1 * ENGINE.gameHEIGHT);
+        const maxY = Math.round(0.5 * ENGINE.gameHEIGHT);
+        this.bottom = RND(minY, maxY);
+        this.top = this.bottom - this.height;
+        this.y = Math.round((this.top + this.bottom) / 2);
+        this.set();
+        console.log(this);
+    }
+    draw(map) {
+        let position = map.getPosition();
+        if (this.visible(position)) {
+            ENGINE.drawBottomLeft('actors', this.actor.drawX, this.actor.drawY, this.actor.sprite());
+        }
+    }
+    set() {
+        let forePlane = MAP[GAME.level].map.planes[0];
+        let planePosition = forePlane.getPosition();
+        this.LEFT = Math.round(this.moveState.x - this.width / 2 - planePosition);
+        this.actor.setDraw(this.LEFT, this.bottom);
+    }
+    move(lapsedTime) {
+        this.moved = lapsedTime * this.speed / 1000;
+        this.moveState.move(this.moved);
+        this.set();
+        let forePlane = MAP[GAME.level].map.planes[0];
+        let position = forePlane.getPosition();
+        if (this.moveState.x + this.actor.width < position) {
+            PROFILE_ACTORS.remove(this.id);
+            console.log("plane", this.id, 'silently removed');
+        }
+    }
+}
 class Tank extends Enemy {
     constructor(x) {
         super(x);
@@ -363,7 +409,7 @@ class Tank extends Enemy {
             maxHill -= 36;
             ANGLE = Math.degrees(Math.asin((maxHill - TY) / DX));
         } else {
-            ANGLE = Math.degrees(Math.asin(-DY / landing)); 
+            ANGLE = Math.degrees(Math.asin(-DY / landing));
             let requiredSpeed = Math.sqrt(landing * INI.G / 2);
             if (this.actor.angle <= ANGLE &&
                 requiredSpeed < INI.max_bullet_speed &&
@@ -651,6 +697,7 @@ var GAME = {
         PROFILE_ACTORS.add(HERO);
         SPAWN.spawn(level);
         SPAWN.spawnTank();
+        SPAWN.spawnPlane();
     },
     continueLevel(level) {
         console.log("game continues on level", level);

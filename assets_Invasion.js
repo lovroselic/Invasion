@@ -18,14 +18,15 @@ var LoadSprites = [
     { srcName: "tree6.png", name: "tree6" },
     { srcName: "tree7.png", name: "tree7" },
     { srcName: "tree8.png", name: "tree8" },
-    //{ srcName: "Cannonball12.png", name: "Cannonball" },
 ];
+for (let i = 1; i <= 11; i++){
+    LoadSprites.push({srcName: `plane${i}.png`, name: `Plane${i}`});
+}
 var LoadSequences = [];
 var LoadSheets = [];
 var LoadRotated = [
     { srcName: "cevSilver.png", name: "Cev", rotate: { first: -150, last: 90, step: 1 } },
     { srcName: "cevSilverLeft.png", name: "CevLeft", rotate: { first: -90, last: 150, step: 1 } },
-    //{ srcName: "cev.png", name: "Cev", rotate: { first: -150, last: 90, step: 1 } },
 ];
 var LoadPacks = [];
 var LoadExtWasm = [];

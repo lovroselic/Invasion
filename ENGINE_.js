@@ -30,7 +30,7 @@ var DownRight = new Vector(1, 1);
 var DownLeft = new Vector(-1, 1);
 
 var ENGINE = {
-  VERSION: "3.07.DEV",
+  VERSION: "3.08.DEV",
   CSS: "color: #0FA",
   INI: {
     ANIMATION_INTERVAL: 16,
@@ -2273,8 +2273,23 @@ class Rotating_ACTOR extends ACTOR {
     return SPRITE[`${this.name}_${this.angle}`];
   }
 }
+class Static_ACTOR{
+  constructor(spriteClass){
+    this._sprite = SPRITE[spriteClass];
+    this.name = spriteClass;
+    this.width = this._sprite.width;
+    this.height = this._sprite.height;
+  }
+  sprite() {
+    return this._sprite;
+  }
+  setDraw(x, y) {
+    this.drawX = x;
+    this.drawY = y;
+  }
+}
 class Flat_ACTOR {
-  constructor(spriteClass, parent) {
+  constructor(spriteClass, parent = null) {
     this.flat = true;
     this.sprite = SPRITE[spriteClass];
     this.parent = parent;

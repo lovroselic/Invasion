@@ -13,6 +13,8 @@ var MAP = {
         //textures: ["Grass", "GreyRock","DarkGreyRock"],
         colors: ["#0E0", '#444', '#888'],
         tank_spawn: 10,
+        //plane_spawn: 20,
+        plane_spawn: 5,
     },
     create(level, plane_layers) {
         let W = ENGINE.gameWIDTH * MAP[level].width;
@@ -98,10 +100,20 @@ var SPAWN = {
             return;
         }
         PROFILE_ACTORS.add(new Tank(x));
-
-        //debug
         SPAWN.tankTimer = new CountDown(timerId, RND(MAP[GAME.level].tank_spawn - 1, MAP[GAME.level].tank_spawn + 1), SPAWN.spawnTank);
-        console.groupEnd("tank");
-
+    },
+    spawnPlane(){
+        let map = MAP[GAME.level].map;
+        let position = map.planes[0].getPosition();
+        const timerId = 'planeSpawn';
+        let offset = 64;
+        let x = position + ENGINE.gameWIDTH + offset;
+        console.log("plane spawned", x);
+        if (x >= map.planes[0].planeLimits.rightStop) {
+            console.log("spawning planes terminated");
+            return;
+        }
+        PROFILE_ACTORS.add(new AirPlane(x));
+        SPAWN.planeTimer = new CountDown(timerId, RND(MAP[GAME.level].plane_spawn - 2, MAP[GAME.level].plane_spawn + 2), SPAWN.spawnPlane);
     }
 };
