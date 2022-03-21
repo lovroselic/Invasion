@@ -19,14 +19,15 @@ var LoadSprites = [
     { srcName: "tree7.png", name: "tree7" },
     { srcName: "tree8.png", name: "tree8" },
 ];
-for (let i = 1; i <= 11; i++){
-    LoadSprites.push({srcName: `plane${i}.png`, name: `Plane${i}`});
+for (let i = 1; i <= 11; i++) {
+    LoadSprites.push({ srcName: `plane${i}.png`, name: `Plane${i}` });
 }
 var LoadSequences = [];
 var LoadSheets = [];
 var LoadRotated = [
     { srcName: "cevSilver.png", name: "Cev", rotate: { first: -150, last: 90, step: 1 } },
     { srcName: "cevSilverLeft.png", name: "CevLeft", rotate: { first: -90, last: 150, step: 1 } },
+    //{ srcName: "bomb1.png", name: "Bomb", rotate: { first: 0, last: 180, step: 1 } },
 ];
 var LoadPacks = [];
 var LoadExtWasm = [];
@@ -40,6 +41,7 @@ var LoadSheetSequences = [
 var LoadRotatedSheetSequences = [
     { srcName: "tank.png", count: 3, name: "Tank", rotate: { first: -90, last: 90, step: 1 } },
     { srcName: "BlueTank.png", count: 3, name: "BlueTank", rotate: { first: -90, last: 90, step: 1 } },
+    { srcName: "bomb1.png", count: 1,name: "Bomb", rotate: { first: 0, last: 180, step: 1 } },
 ];
 var LoadFonts = [
     { srcName: "C64_Pro-STYLE.ttf", name: "C64" },

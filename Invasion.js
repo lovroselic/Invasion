@@ -34,8 +34,10 @@ var INI = {
     min_bullet_speed: 500.0,
     bullet_speed_step: 50.0,
     G: 1250,
+    A: 25,
     sprite_width: 48,
     tank_cooldown: 3,
+    plane_cooldown: 2,
     scores: {
         hut: 10,
         tank: 100,
@@ -43,7 +45,7 @@ var INI = {
     }
 };
 var PRG = {
-    VERSION: "0.09.00",
+    VERSION: "0.09.01",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -129,6 +131,50 @@ class Explosion {
         ENGINE.spriteDraw(this.layer, this.actor.x - (map.getPosition() - this.planePosition), this.actor.y, this.actor.sprite());
         ENGINE.layersToClear.add("explosion");
     }
+}
+class Bomb {
+    constructor(position, dir, speed, friendly = false) {
+        this.position = position;
+        this.dir = dir;
+        this.speed = speed;
+        this.actor = new Rotating_ACTOR('Bomb');
+        this.name = 'Bomb';
+        this.friendly = friendly;
+        this.rotSpeed = 2 / 16;
+        this.setAngle(0.0);
+    }
+    setAngle(a) {
+        this.angle = Math.min(a, 90.0);
+        this.actor.setAngle(180 - Math.round(this.angle));
+    }
+    addAngle(a) {
+        let A = this.angle + a;
+        this.setAngle(A);
+    }
+    rotate(lapsedTime) {
+        this.addAngle(lapsedTime * this.rotSpeed);
+    }
+    move(lapsedTime) {
+        let timeDelta = lapsedTime / 1000;
+        let x = this.speed.x * this.dir.x * timeDelta;
+        let y = this.speed.y * this.dir.y * timeDelta;
+        this.position = this.position.add(new FP_Vector(x, y));
+        this.rotate(lapsedTime);
+        this.speed.y = this.speed.y + INI.G * timeDelta;
+        this.speed.x = Math.max(0, this.speed.x - INI.A * timeDelta);
+       // console.log(this.speed.x);
+
+
+        if (this.position.x < 0) {
+            PROFILE_BALLISTIC.remove(this.id);
+        }
+    }
+    draw() {
+        ENGINE.spriteDraw('actors', this.position.x, this.position.y, this.actor.sprite());
+        ENGINE.layersToClear.add("actors");
+    }
+    collisionBackground(map) { }
+    collisionEntity(map) { }
 }
 class Ballistic {
     constructor(position, dir, speed, friendly = false) {
@@ -318,6 +364,37 @@ class AirPlane extends Enemy {
             PROFILE_ACTORS.remove(this.id);
             console.log("plane", this.id, 'silently removed');
         }
+        let ready = this.getShootingSolution();
+        if (ready && this.canShoot) {
+            this.shoot();
+        }
+    }
+    getShootingSolution() {
+        //placeholder
+        let forePlane = MAP[GAME.level].map.planes[0];
+        let position = forePlane.getPosition();
+        let trigger = this.moveState.x - position;
+        if (trigger < 800) {
+            return true;
+        }
+        return false;
+    }
+    setBombPosition() {
+        this.bombX = Math.round(this.moveState.x);
+        this.bombY = this.bottom + SPRITE.Bomb_00.height / 2;
+    }
+    shoot() {
+        this.canShoot = false;
+        this.timer = new CountDown(`${this.name}${this.id}-${Date.now()}`, RND(INI.plane_cooldown - 1, INI.plane_cooldown + 1), this.release.bind(this));
+        this.setBombPosition();
+        let bomb = new FP_Grid(this.bombX, this.bombY);
+        let dir = new FP_Vector(-1, 1);
+        let speed = new FP_Vector(this.speed, 0);
+        console.log(this.id, "shoots", bomb, dir, speed);
+        PROFILE_BALLISTIC.add(new Bomb(bomb, dir, speed, true));
+    }
+    release() {
+        this.canShoot = true;
     }
 }
 class Tank extends Enemy {
