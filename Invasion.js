@@ -22,6 +22,10 @@ var DEBUG = {
     PAINT_TRAIL: false,
     invincible: false,
     INF_LIVES: false,
+    G: [],
+    A: [],
+    dx: [],
+    dy: []
 };
 var INI = {
     base_speed: 128.0,
@@ -33,8 +37,14 @@ var INI = {
     max_bullet_speed: 1000.0,
     min_bullet_speed: 500.0,
     bullet_speed_step: 50.0,
+    checkDX: 130,
     G: 1250,
-    A: 25,
+    //A: 25,
+    A: 20,
+    //calcG: 295,
+    calcG: 290,
+    //calcA: 131.5,
+    calcA: 623,
     sprite_width: 48,
     tank_cooldown: 3,
     plane_cooldown: 2,
@@ -45,7 +55,7 @@ var INI = {
     }
 };
 var PRG = {
-    VERSION: "0.09.01",
+    VERSION: "0.09.02",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -120,15 +130,14 @@ var PRG = {
     }
 };
 class Explosion {
-    constructor(grid, planePosition) {
+    constructor(grid) {
         this.grid = grid;
         this.layer = 'explosion';
         this.moveState = new MoveState(grid, NOWAY);
         this.actor = new ACTOR("Explosion", grid.x, grid.y, "linear", ASSET.Explosion);
-        this.planePosition = planePosition;
     }
     draw(map) {
-        ENGINE.spriteDraw(this.layer, this.actor.x - (map.getPosition() - this.planePosition), this.actor.y, this.actor.sprite());
+        ENGINE.spriteDraw(this.layer, this.actor.x - map.getPosition(), this.actor.y, this.actor.sprite());
         ENGINE.layersToClear.add("explosion");
     }
 }
@@ -142,6 +151,16 @@ class Bomb {
         this.friendly = friendly;
         this.rotSpeed = 2 / 16;
         this.setAngle(0.0);
+
+        //debug
+
+        this.log = {};
+        this.log.id = Date.now();
+        this.log.startPlanePosition = MAP[GAME.level].map.planes[0].getPosition();
+        this.log.start = this.position;
+        //this.log.t0 = performance.now();
+        this.log.t0 = Date.now();
+        this.log.speedX = this.speed.x;
     }
     setAngle(a) {
         this.angle = Math.min(a, 90.0);
@@ -159,22 +178,77 @@ class Bomb {
         let x = this.speed.x * this.dir.x * timeDelta;
         let y = this.speed.y * this.dir.y * timeDelta;
         this.position = this.position.add(new FP_Vector(x, y));
+        //this.position.x -= MAP[GAME.level].map.planes[0].getLastMovement();
         this.rotate(lapsedTime);
         this.speed.y = this.speed.y + INI.G * timeDelta;
         this.speed.x = Math.max(0, this.speed.x - INI.A * timeDelta);
-       // console.log(this.speed.x);
 
-
-        if (this.position.x < 0) {
+        //if (this.position.x < 0)
+        if (this.position.x - MAP[GAME.level].map.planes[0].getPosition() < 0) {
             PROFILE_BALLISTIC.remove(this.id);
+            console.log(this.name, this.id, 'silently removed - out left');
         }
     }
-    draw() {
-        ENGINE.spriteDraw('actors', this.position.x, this.position.y, this.actor.sprite());
+    draw(map) {
+        ENGINE.spriteDraw('actors', this.position.x - map.getPosition(), this.position.y, this.actor.sprite());
         ENGINE.layersToClear.add("actors");
     }
-    collisionBackground(map) { }
+    collisionBackground(map) {
+        let X = Math.round(this.position.x);
+        let planePosition = map.getPosition();
+        if (X < 0 || X > planePosition + ENGINE.gameWIDTH || X + planePosition >= map.DATA.map.length) {
+            PROFILE_BALLISTIC.remove(this.id);
+            console.log(this.name, this.id, 'silently removed when checking background collision');
+            return;
+        }
+        //let backgroundHeight = map.DATA.map[planePosition + X];
+        let backgroundHeight = map.DATA.map[X];
+        if (Math.round(this.position.y) > backgroundHeight) {
+            PROFILE_BALLISTIC.remove(this.id);
+            this.explode();
+        }
+    }
     collisionEntity(map) { }
+    explode() {
+        //debug
+        this.log.endPlanePosition = MAP[GAME.level].map.planes[0].getPosition();
+        this.log.dP = this.log.endPlanePosition - this.log.startPlanePosition;
+        this.log.end = this.position;
+        //this.log.dx = this.log.end.x - this.log.start.x - this.log.dP;
+        this.log.dx = this.log.end.x - this.log.start.x + this.log.dP;
+        this.log.dy = this.log.end.y - this.log.start.y;
+        //this.log.t_now = performance.now();
+        this.log.t_now = Date.now();
+        this.log.dt = (this.log.t_now - this.log.t0) / 1000;
+        //this.log.calcDX = this.log.speedX * this.log.dt - 0.5 * INI.calcA * this.log.dt ** 2;
+        //this.log.finalSpeedX = Math.max(0, this.log.speedX - INI.A*this.log.dt);
+        //this.log.finalSpeedX = this.log.speedX - INI.A * this.log.dt;
+        //this.log.finalSpeedX = this.speed.x;
+        //this.log.calcDX = (this.log.speedX + this.log.finalSpeedX) / 2 * this.log.dt;
+        this.log.calcDX = (this.log.speedX + 0) / 2 * this.log.dt;
+        //this.log.calcDX = - 0.5 * INI.calcA * this.log.dt ** 2;
+        this.log.calcDY = 0.5 * INI.calcG * this.log.dt ** 2;
+        this.log.checkTime = Math.sqrt(2 * this.log.dy / INI.calcG);
+        console.log(this.log.dt, ":TIME:", this.log.checkTime, 2 * this.log.dx / this.log.speedX);
+        //this.log.G = 2 * this.log.dy / (this.log.dt ** 2);
+        //DEBUG.G.push(this.log.G);
+        //this.log.A = 2 * (this.log.dx - this.log.speedX * this.log.dt) / (this.log.dt ** 2);
+        //this.log.A = 2 * (this.log.dx) / this.log.dt ** 2;
+        //DEBUG.A.push(this.log.A);
+
+        //console.log(this.name, this.id, 'log:', this.log);
+        //console.log('...log (G,A):', this.log.G, this.log.A, this.log.G / INI.G, this.log.A / INI.A);
+        //console.log('...log (dx,dy):', this.log.calcDX / this.log.dx, this.log.calcDY / this.log.dy,);
+        //console.log('...log (dx):', this.log.dx);
+        //DEBUG.dx.push(this.log.dx);
+        //DEBUG.dy.push(this.log.calcDY / this.log.dy);
+        //console.log("G, A", DEBUG.G.average(), DEBUG.A.average());
+        //console.log("G", DEBUG.G.average());
+        //console.log("AVG", DEBUG.dx.average());
+        //debug end
+        DESTRUCTION_ANIMATION.add(new Explosion(this.position));
+        AUDIO.Explosion.play();
+    }
 }
 class Ballistic {
     constructor(position, dir, speed, friendly = false) {
@@ -191,8 +265,9 @@ class Ballistic {
         let y = this.speed.y * this.dir.y * timeDelta - 0.5 * INI.G * timeDelta ** 2;
         this.speed.y = this.speed.y + (Math.sign(this.dir.y) || 1) * INI.G * timeDelta;
         this.position = this.position.add(new FP_Vector(x, y));
-        if (this.position.x < 0) {
+        if (this.position.x - MAP[GAME.level].map.planes[0].getPosition() < 0) {
             PROFILE_BALLISTIC.remove(this.id);
+            console.log(this.name, this.id, 'silently removed when moving');
         }
     }
     collisionBackground(map) {
@@ -200,9 +275,10 @@ class Ballistic {
         let planePosition = map.getPosition();
         if (X < 0 || X > planePosition + ENGINE.gameWIDTH || X + planePosition >= map.DATA.map.length) {
             PROFILE_BALLISTIC.remove(this.id);
+            console.log(this.name, this.id, 'silently removed when checking background collitions');
             return;
         }
-        let backgroundHeight = map.DATA.map[planePosition + X];
+        let backgroundHeight = map.DATA.map[X];
         if (Math.round(this.position.y) > backgroundHeight) {
             PROFILE_BALLISTIC.remove(this.id);
             this.explode(planePosition);
@@ -210,10 +286,11 @@ class Ballistic {
     }
     collisionEntity(map) {
         let X = Math.round(this.position.x);
-        let planePosition = map.getPosition();
-        let realX = planePosition + X;
+        //let planePosition = map.getPosition();
+        //let realX = planePosition + X;
         let IA = map.profile_actor_IA;
-        let ids = IA.unroll(new Grid(realX, 0));
+        let ids = IA.unroll(new Grid(X, 0));
+        //let ids = IA.unroll(new Grid(realX, 0));
         if (ids.length) {
             for (let id of ids) {
                 let obj = PROFILE_ACTORS.show(id);
@@ -222,18 +299,18 @@ class Ballistic {
                     PROFILE_BALLISTIC.remove(this.id);
                     if (id !== HERO.id) PROFILE_ACTORS.remove(id); //ignore HERO
                     //this.explode(planePosition);
-                    obj.explode(planePosition);
+                    obj.explode();
                     GAME.addScore(obj.score);
                 }
             }
         }
     }
-    explode(planePosition) {
-        DESTRUCTION_ANIMATION.add(new Explosion(this.position, planePosition));
+    explode() {
+        DESTRUCTION_ANIMATION.add(new Explosion(this.position));
         AUDIO.Explosion.play();
     }
-    draw() {
-        ENGINE.spriteDraw('actors', this.position.x, this.position.y, SPRITE.Cannonball);
+    draw(map) {
+        ENGINE.spriteDraw('actors', this.position.x - map.getPosition(), this.position.y, SPRITE.Cannonball);
         ENGINE.layersToClear.add("actors");
     }
 }
@@ -257,7 +334,8 @@ class Entity {
         return top && bottom;
     }
     explode(planePosition) {
-        DESTRUCTION_ANIMATION.add(new Explosion(new Grid(this.moveState.x - planePosition, this.y - this.actor.height / 2), planePosition));
+        //DESTRUCTION_ANIMATION.add(new Explosion(new Grid(this.moveState.x - planePosition, this.y - this.actor.height / 2), planePosition));
+        DESTRUCTION_ANIMATION.add(new Explosion(new Grid(this.moveState.x, this.y - this.actor.height / 2)));
         AUDIO.Explosion.play();
     }
     move() {
@@ -316,8 +394,8 @@ class Enemy {
         let bottom = heightPoint < this.bottom;
         return top && bottom;
     }
-    explode(planePosition) {
-        DESTRUCTION_ANIMATION.add(new Explosion(new Grid(this.moveState.x - planePosition, this.y - this.actor.height / 2), planePosition));
+    explode() {
+        DESTRUCTION_ANIMATION.add(new Explosion(new Grid(this.moveState.x, this.y - this.actor.height / 2)));
         AUDIO.Explosion.play();
     }
 }
@@ -340,7 +418,7 @@ class AirPlane extends Enemy {
         this.top = this.bottom - this.height;
         this.y = Math.round((this.top + this.bottom) / 2);
         this.set();
-        console.log(this);
+        //console.log(this);
     }
     draw(map) {
         let position = map.getPosition();
@@ -364,22 +442,51 @@ class AirPlane extends Enemy {
             PROFILE_ACTORS.remove(this.id);
             console.log("plane", this.id, 'silently removed');
         }
-        let ready = this.getShootingSolution();
+        let ready = this.getShootingSolution(forePlane, position);
         if (ready && this.canShoot) {
             this.shoot();
         }
     }
-    getShootingSolution() {
+    getShootingSolution(forePlane, position) {
         //placeholder
-        let forePlane = MAP[GAME.level].map.planes[0];
-        let position = forePlane.getPosition();
+        const TOLERANCE = 36;
+        if (!this.canShoot) return false;
+        //let forePlane = MAP[GAME.level].map.planes[0];
+        //let position = forePlane.getPosition();
         let trigger = this.moveState.x - position;
-        if (trigger < 800) {
+        if (trigger < ENGINE.gameWIDTH / 2) {
+            //get dy at moveState.x - INI.checkDX
+            let landingX = Math.round(this.moveState.x - INI.checkDX);
+            if (landingX < 0) {
+                this.canShoot = false;
+                return false;
+            }
+            let heightAtLanding = forePlane.DATA.map[landingX];
+            let DY = heightAtLanding - (this.bottom + SPRITE.Bomb_00.height / 2);
+            //get dt of dy
+            let requiredTime = Math.sqrt(2 * DY / INI.calcG);
+            //chck location of HERO after dt, using current speed
+            let HeroDisplacement = HERO.speed * requiredTime;
+            let possibleHeroPosition = HERO.moveState.x + HeroDisplacement;
+            //let possibleHeroPosition = HERO.moveState.x;
+            //compare locations
+            console.log("landingX", landingX, "DY", DY, 'requiredTime', requiredTime, 'HeroDisplacement', HeroDisplacement, 'possibleHeroPosition', possibleHeroPosition);
+            let check = landingX - possibleHeroPosition;
+            //let check = landingX + HeroDisplacement - possibleHeroPosition;
+            console.log("check::", check);
+
+            if (check < 0) {
+                this.canShoot = false;
+                return false;
+            }
+            if (check > TOLERANCE) return false;
+
             return true;
         }
         return false;
     }
     setBombPosition() {
+        //this.bombX = Math.round(this.moveState.x - MAP[GAME.level].map.planes[0].getPosition());
         this.bombX = Math.round(this.moveState.x);
         this.bombY = this.bottom + SPRITE.Bomb_00.height / 2;
     }
@@ -415,8 +522,10 @@ class Tank extends Enemy {
         this.canonY = null;
         this.bulletSpeed = INI.max_bullet_speed;
         this.canShoot = true;
-        this.setAngle();
-        this.setBarrel();
+        let forePlane = MAP[GAME.level].map.planes[0];
+        let position = forePlane.getPosition();
+        this.setAngle(forePlane, position);
+        this.setBarrel(position);
         this.timer = null;
         this.ignoreByManager = false;
     }
@@ -434,9 +543,11 @@ class Tank extends Enemy {
         this.actor.updateAnimation(lapsedTime * this.speed / INI.base_speed);
         this.moved = lapsedTime * this.speed / 1000;
         this.moveState.move(this.moved);
-        this.setAngle();
-        let ready = this.getShootingSolution();
-        this.setBarrel();
+        let forePlane = MAP[GAME.level].map.planes[0];
+        let planePosition = forePlane.getPosition();
+        this.setAngle(forePlane, planePosition);
+        let ready = this.getShootingSolution(forePlane, planePosition);
+        this.setBarrel(planePosition);
         if (ready && this.canShoot) {
             this.shoot();
         }
@@ -455,9 +566,9 @@ class Tank extends Enemy {
         let speed = new FP_Vector(this.bulletSpeed, this.bulletSpeed);
         PROFILE_BALLISTIC.add(new Ballistic(bullet, dir, speed, true));
     }
-    getShootingSolution() {
-        let forePlane = MAP[GAME.level].map.planes[0];
-        let position = forePlane.getPosition();
+    getShootingSolution(forePlane, position) {
+        //let forePlane = MAP[GAME.level].map.planes[0];
+        //let position = forePlane.getPosition();
         if (!this.onBoard(position)) return false;
         let ready = true;
         const maxAngle = 70;
@@ -520,7 +631,7 @@ class Tank extends Enemy {
         }
         return ready;
     }
-    setBarrel() {
+    setBarrel(planePosition) {
         let canonY = this.actor.drawY + 4 - this.canonOffY;
         let canonX = this.actor.drawX + this.canonOffX;
         this.canonRootX = canonX;
@@ -547,12 +658,16 @@ class Tank extends Enemy {
 
         this.canonX = Math.round(canonX);
         this.canonY = Math.round(canonY);
-        this.canonRootX = Math.round(this.canonRootX);
+
+        //let forePlane = MAP[GAME.level].map.planes[0];
+        //let planePosition = forePlane.getPosition();
+
+        this.canonRootX = Math.round(this.canonRootX + planePosition);
         this.canonRootY = Math.round(this.canonRootY);
     }
-    setAngle() {
-        let forePlane = MAP[GAME.level].map.planes[0];
-        let planePosition = forePlane.getPosition();
+    setAngle(forePlane, planePosition) {
+        //let forePlane = MAP[GAME.level].map.planes[0];
+        //let planePosition = forePlane.getPosition();
         this.LEFT = Math.round(this.moveState.x - this.width / 2 - planePosition);
         let left_axis_y = forePlane.DATA.map[this.LEFT + this.LEFT_AXIS + planePosition];
         let right_axis_y = forePlane.DATA.map[this.LEFT + this.width + planePosition];
@@ -676,12 +791,12 @@ var HERO = {
 
         HERO.canonX = Math.round(canonX);
         HERO.canonY = Math.round(canonY);
-        HERO.canonRootX = Math.round(HERO.canonRootX);
+        HERO.canonRootX = Math.round(HERO.canonRootX + planePosition);
         HERO.canonRootY = Math.round(HERO.canonRootY);
 
         HERO.collisionToActors(planePosition);
     },
-    collisionToActors(planePosition) {
+    collisionToActors() {
         let IA = MAP[GAME.level].map.planes[0].profile_actor_IA;
         let ids = IA.unroll(new Grid(HERO.positionRight, 0));
         ids.removeValueOnce(this.id);
@@ -691,7 +806,7 @@ var HERO = {
                 if (obj.checkHitHeightPoint(HERO.centerHeightRight)) {
                     //console.log(".......HERO hit", obj.name, obj.id);
                     PROFILE_ACTORS.remove(id);
-                    obj.explode(planePosition);
+                    obj.explode();
                     GAME.addScore(obj.score);
                     HERO.die();
                 }

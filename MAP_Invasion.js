@@ -108,7 +108,7 @@ var SPAWN = {
         const timerId = 'planeSpawn';
         let offset = 64;
         let x = position + ENGINE.gameWIDTH + offset;
-        console.log("plane spawned", x);
+        //console.log("plane spawned", x);
         if (x >= map.planes[0].planeLimits.rightStop) {
             console.log("spawning planes terminated");
             return;
