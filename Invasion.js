@@ -138,7 +138,7 @@ class Explosion {
     }
 }
 class Bomb {
-    constructor(position, dir, speed, friendly = false, debug = null) {
+    constructor(position, dir, speed, friendly = false) {
         this.position = position;
         this.dir = dir;
         this.speed = speed;
@@ -147,18 +147,6 @@ class Bomb {
         this.friendly = friendly;
         this.rotSpeed = 2 / 16;
         this.setAngle(0.0);
-
-        //debug
-
-        this.log = {};
-        this.log.debug = debug;
-        this.log.startPlanePosition = MAP[GAME.level].map.planes[0].getPosition();
-        this.log.start = this.position;
-        this.log.t0 = Date.now();
-        this.log.speedX = this.speed.x;
-        this.log.HeroSpeed = HERO.speed;
-        this.log.HeroPositionX = HERO.moveState.x;
-        this.log.landingX = Math.round(this.position.x - INI.checkDX);
     }
     setAngle(a) {
         this.angle = Math.min(a, 90.0);
@@ -205,38 +193,6 @@ class Bomb {
     }
     collisionEntity(map) { }
     explode() {
-        //debug
-        this.log.dP = MAP[GAME.level].map.planes[0].getPosition() - this.log.startPlanePosition;
-        this.log.end = this.position;
-        this.log.dx = this.log.end.x - this.log.start.x;
-        this.log.dy = this.log.end.y - this.log.start.y;
-        this.log.t_now = Date.now();
-        this.log.dt = (this.log.t_now - this.log.t0) / 1000;
-        this.log.calcDX = (this.log.speedX + 0) / 2 * this.log.dt;
-        this.log.calcDY = 0.5 * INI.calcG * this.log.dt ** 2;
-        this.log.checkTime = Math.sqrt(2 * this.log.dy / INI.calcG);
-        //this.log.HeroDisplacement = this.log.HeroSpeed * this.log.dt;
-        this.log.HeroDisplacement = (this.log.HeroSpeed * this.log.dt)/2;
-        this.log.possibleHeroPosition = this.log.HeroPositionX + this.log.HeroDisplacement;
-        this.log.HeroDX = HERO.moveState.x - this.log.possibleHeroPosition;
-        console.log("********************************************************************************");
-        console.log(".....", "speed", this.log.HeroSpeed, 'this.log.HeroDX ',
-            this.log.HeroDX, "HERO.moveState.x", HERO.moveState.x,
-            "this.log.possibleHeroPosition", this.log.possibleHeroPosition);
-        
-        console.log("REPORT:");
-        console.log("time: calculated", this.log.debug.requiredTime, "actual", this.log.dt);
-        console.log("possible Hero position: calculated:", this.log.debug.possibleHeroPosition, "actual", this.log.possibleHeroPosition);
-        console.log("HeroDisplacement, calculated:", this.log.debug.HeroDisplacement, "expected", this.log.HeroDisplacement);
-        console.log("..actual :: HeroWhenShoot", this.log.debug.HeroWhenShoot, "NOW:", HERO.moveState.x, "MOVED:", HERO.moveState.x - this.log.debug.HeroWhenShoot);
-        console.log("dP", this.log.dP);
-        console.log("check", this.log.debug.check);
-        console.log(".......LOG:", this.log);
-        console.log("********************************************************************************\n");
-
-
-
-        //debug end
         DESTRUCTION_ANIMATION.add(new Explosion(this.position));
         AUDIO.Explosion.play();
     }
@@ -435,8 +391,7 @@ class AirPlane extends Enemy {
         const TOLERANCE = 36;
         if (!this.canShoot) return false;
         let trigger = this.moveState.x - position;
-        if (trigger < ENGINE.gameWIDTH / 2) {
-            //get dy at moveState.x - INI.checkDX
+        if (trigger < ENGINE.gameWIDTH / 3) {
             let landingX = Math.round(this.moveState.x - INI.checkDX);
             if (landingX < 0) {
                 this.canShoot = false;
@@ -444,26 +399,10 @@ class AirPlane extends Enemy {
             }
             let heightAtLanding = forePlane.DATA.map[landingX];
             let DY = heightAtLanding - (this.bottom + SPRITE.Bomb_00.height / 2);
-            //get dt of dy
             let requiredTime = Math.sqrt(2 * DY / INI.calcG);
-
-            //chck location of HERO after dt, using current speed
             let HeroDisplacement = (HERO.speed * requiredTime) / 2;
             let possibleHeroPosition = HERO.moveState.x + HeroDisplacement;
-            //let possibleHeroPosition = HERO.moveState.x;
-            //compare locations
-            //console.log("landingX", landingX, "DY", DY, 'requiredTime', requiredTime, 'HeroDisplacement', HeroDisplacement, 'possibleHeroPosition', possibleHeroPosition);
             let check = landingX - possibleHeroPosition;
-            //console.log("check::", check);
-
-            //debug info, to be removed
-            this.heightAtLanding = heightAtLanding;
-            this.requiredTime = requiredTime;
-            this.check = check;
-            this.HeroDisplacement = HeroDisplacement;
-            this.possibleHeroPosition = possibleHeroPosition;
-            //debug end
-
             if (check < 0) {
                 this.canShoot = false;
                 return false;
@@ -485,22 +424,7 @@ class AirPlane extends Enemy {
         let bomb = new FP_Grid(this.bombX, this.bombY);
         let dir = new FP_Vector(-1, 1);
         let speed = new FP_Vector(this.speed, 0);
-        console.log(this.id, "shoots", bomb, dir, speed);
-        //
-        /*
-        this.heightAtLanding =heightAtLanding;
-        this.requiredTime = requiredTime;
-        this.check = check;
-        this.HeroDisplacement = HeroDisplacement;
-        this.possibleHeroPosition = possibleHeroPosition;
-        */
-        let debugInfo = {
-            "heightAtLanding": this.heightAtLanding, "requiredTime": this.requiredTime, 'check': this.check,
-            "HeroDisplacement": this.HeroDisplacement, "possibleHeroPosition": this.possibleHeroPosition,
-            "HeroWhenShoot": HERO.moveState.x
-        };
-        //
-        PROFILE_BALLISTIC.add(new Bomb(bomb, dir, speed, true, debugInfo));
+        PROFILE_BALLISTIC.add(new Bomb(bomb, dir, speed, true));
     }
     release() {
         this.canShoot = true;
