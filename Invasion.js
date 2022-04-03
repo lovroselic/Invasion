@@ -51,7 +51,7 @@ var INI = {
     }
 };
 var PRG = {
-    VERSION: "0.09.04",
+    VERSION: "0.10.00",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -137,14 +137,56 @@ class Explosion {
         ENGINE.layersToClear.add("explosion");
     }
 }
-class Bomb {
+class GeneralBallisticObject {
     constructor(position, dir, speed, friendly = false) {
         this.position = position;
         this.dir = dir;
         this.speed = speed;
+        this.friendly = friendly;
+    }
+    explode() {
+        DESTRUCTION_ANIMATION.add(new Explosion(this.position));
+        AUDIO.Explosion.play();
+    }
+    collisionBackground(map) {
+        let X = Math.round(this.position.x);
+        let planePosition = map.getPosition();
+        if (X < 0 || X - planePosition < -48 || X > planePosition + ENGINE.gameWIDTH || X >= map.DATA.map.length - 1) {
+            PROFILE_BALLISTIC.remove(this.id);
+            return;
+        }
+        let backgroundHeight = map.DATA.map[X];
+        if (Math.round(this.position.y) > backgroundHeight) {
+            PROFILE_BALLISTIC.remove(this.id);
+            this.explode();
+        }
+    }
+    collisionEntity(map) {
+        let X = Math.round(this.position.x);
+        let IA = map.profile_actor_IA;
+        let ids = IA.unroll(new Grid(X, 0));
+        if (ids.length) {
+            for (let id of ids) {
+                let obj = PROFILE_ACTORS.show(id);
+                if (obj !== null && obj.checkHit(this)) {
+                    PROFILE_BALLISTIC.remove(this.id);
+                    if (id !== HERO.id) PROFILE_ACTORS.remove(id); //ignore HERO
+                    obj.explode();
+                    GAME.addScore(obj.score);
+                }
+            }
+        }
+    }
+    draw(map) {
+        ENGINE.spriteDraw('actors', this.position.x - map.getPosition(), this.position.y, this.getSprite());
+        ENGINE.layersToClear.add("actors");
+    }
+}
+class Bomb extends GeneralBallisticObject {
+    constructor(position, dir, speed, friendly = false) {
+        super(position, dir, speed, friendly);
         this.actor = new Rotating_ACTOR('Bomb');
         this.name = 'Bomb';
-        this.friendly = friendly;
         this.rotSpeed = 2 / 16;
         this.setAngle(0.0);
     }
@@ -170,41 +212,20 @@ class Bomb {
         //missing check for out of bounds on the right side
         if (this.position.x - MAP[GAME.level].map.planes[0].getPosition() < 0) {
             PROFILE_BALLISTIC.remove(this.id);
-            console.log(this.name, this.id, 'silently removed - out left');
         }
     }
-    draw(map) {
-        ENGINE.spriteDraw('actors', this.position.x - map.getPosition(), this.position.y, this.actor.sprite());
-        ENGINE.layersToClear.add("actors");
-    }
-    collisionBackground(map) {
-        let X = Math.round(this.position.x);
-        let planePosition = map.getPosition();
-        if (X - planePosition < 0 || X > planePosition + ENGINE.gameWIDTH || X >= map.DATA.map.length - 1) {
-            PROFILE_BALLISTIC.remove(this.id);
-            console.log(this.name, this.id, 'silently removed when checking background collision');
-            return;
-        }
-        let backgroundHeight = map.DATA.map[X];
-        if (Math.round(this.position.y) > backgroundHeight) {
-            PROFILE_BALLISTIC.remove(this.id);
-            this.explode();
-        }
-    }
-    collisionEntity(map) { }
-    explode() {
-        DESTRUCTION_ANIMATION.add(new Explosion(this.position));
-        AUDIO.Explosion.play();
+    getSprite() {
+        return this.actor.sprite();
     }
 }
-class Ballistic {
+class Ballistic extends GeneralBallisticObject {
     constructor(position, dir, speed, friendly = false) {
-        this.position = position;
-        this.dir = dir;
-        this.speed = speed;
+        super(position, dir, speed, friendly);
         this.actor = new ACTOR('Cannonball');
         this.name = 'Bullet';
-        this.friendly = friendly;
+    }
+    getSprite() {
+        return SPRITE.Cannonball;
     }
     move(lapsedTime) {
         let timeDelta = lapsedTime / 1000;
@@ -214,46 +235,7 @@ class Ballistic {
         this.position = this.position.add(new FP_Vector(x, y));
         if (this.position.x - MAP[GAME.level].map.planes[0].getPosition() < 0 || this.position.x >= MAP[GAME.level].map.planes[0].DATA.map.length - 1) {
             PROFILE_BALLISTIC.remove(this.id);
-            console.log(this.name, this.id, 'silently removed when moving');
         }
-    }
-    collisionBackground(map) {
-        let X = Math.round(this.position.x);
-        let planePosition = map.getPosition();
-        if (X - planePosition < 0 || X > planePosition + ENGINE.gameWIDTH || X >= map.DATA.map.length) {
-            PROFILE_BALLISTIC.remove(this.id);
-            console.log(this.name, this.id, 'silently removed when checking background collitions');
-            return;
-        }
-        let backgroundHeight = map.DATA.map[X];
-        if (Math.round(this.position.y) > backgroundHeight) {
-            PROFILE_BALLISTIC.remove(this.id);
-            this.explode(planePosition);
-        }
-    }
-    collisionEntity(map) {
-        let X = Math.round(this.position.x);
-        let IA = map.profile_actor_IA;
-        let ids = IA.unroll(new Grid(X, 0));
-        if (ids.length) {
-            for (let id of ids) {
-                let obj = PROFILE_ACTORS.show(id);
-                if (obj !== null && obj.checkHit(this)) {
-                    PROFILE_BALLISTIC.remove(this.id);
-                    if (id !== HERO.id) PROFILE_ACTORS.remove(id); //ignore HERO
-                    obj.explode();
-                    GAME.addScore(obj.score);
-                }
-            }
-        }
-    }
-    explode() {
-        DESTRUCTION_ANIMATION.add(new Explosion(this.position));
-        AUDIO.Explosion.play();
-    }
-    draw(map) {
-        ENGINE.spriteDraw('actors', this.position.x - map.getPosition(), this.position.y, SPRITE.Cannonball);
-        ENGINE.layersToClear.add("actors");
     }
 }
 class Entity {
@@ -380,7 +362,6 @@ class AirPlane extends Enemy {
         let position = forePlane.getPosition();
         if (this.moveState.x + this.actor.width < position) {
             PROFILE_ACTORS.remove(this.id);
-            console.log("plane", this.id, 'silently removed');
         }
         let ready = this.getShootingSolution(forePlane, position);
         if (ready && this.canShoot) {
@@ -649,14 +630,6 @@ var HERO = {
     draw() {
         ENGINE.drawBottomLeft('actors', HERO.canonX, HERO.canonY, SPRITE[`Cev_${HERO.canonAngle + HERO.actor.angle}`]);
         ENGINE.drawBottomLeft('actors', HERO.actor.drawX, HERO.actor.drawY + 2, HERO.actor.sprite());
-
-        /*
-        ENGINE.drawBottomLeft('actors', HERO.canonX, HERO.canonY, SPRITE[`Cev_${HERO.canonAngle + HERO.actor.angle}`]);
-        let CTX = LAYER.actors;
-        CTX.fillStyle = "yellow";
-        CTX.pixelAt(this.canonRootX, this.canonRootY, 2);
-        */
-
         ENGINE.layersToClear.add("actors");
     },
     move(time) {
@@ -754,8 +727,8 @@ var HERO = {
         let bottom = ballistic.position.y - ballistic.actor.height / 2 < this.bottom;
         return top && bottom;
     },
-    explode(planePosition) {
-        DESTRUCTION_ANIMATION.add(new Explosion(new Grid(this.moveState.x - planePosition, this.y - this.actor.height / 2), planePosition));
+    explode() {
+        DESTRUCTION_ANIMATION.add(new Explosion(new Grid(this.moveState.x, this.y - this.actor.height / 2)));
         AUDIO.Explosion.play();
         this.die();
     }
