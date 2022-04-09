@@ -1165,9 +1165,7 @@ class GridArray {
 class IndexArray {
   constructor(sizeX = 1, sizeY = 1, byte = 1, banks = 1) {
     if (byte !== 1 && byte !== 2 && byte !== 4) {
-      console.error(
-        "IndexArray set up with wrong size. Reset to default 8 bit!"
-      );
+      console.error("IndexArray set up with wrong size. Reset to default 8 bit!");
       byte = 1;
     }
     banks = parseInt(banks, 10);

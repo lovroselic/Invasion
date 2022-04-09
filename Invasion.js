@@ -49,16 +49,21 @@ var INI = {
     sprite_width: 48,
     tank_cooldown: 3,
     plane_cooldown: 2,
-    HERO_cooldown: 1,
-    //HERO_cooldown: 0.1,
+    //HERO_cooldown: 1,
+    HERO_cooldown: 0.1,
+    parachute_speed: 100.0,
+    landing_offset: 4,
     scores: {
         hut: 10,
         tank: 100,
         plane: 1000,
+        help: -500,
+        parachute: -50,
+        box: 0,
     }
 };
 var PRG = {
-    VERSION: "0.10.03",
+    VERSION: "0.10.04",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -240,7 +245,8 @@ class Ballistic extends GeneralBallisticObject {
         let y = this.speed.y * this.dir.y * timeDelta - 0.5 * INI.G * timeDelta ** 2;
         this.speed.y = this.speed.y + (Math.sign(this.dir.y) || 1) * INI.G * timeDelta;
         this.position = this.position.add(new FP_Vector(x, y));
-        if (this.position.x - MAP[GAME.level].map.planes[0].getPosition() < 0 || this.position.x >= MAP[GAME.level].map.planes[0].DATA.map.length - 1) {
+        if (this.position.x - MAP[GAME.level].map.planes[0].getPosition() < 0 ||
+            this.position.x >= MAP[GAME.level].map.planes[0].DATA.map.length - 1) {
             PROFILE_BALLISTIC.remove(this.id);
         }
     }
@@ -272,6 +278,16 @@ class Entity {
     move() {
         return;
     }
+    collisionBackground() {
+        return;
+    }
+    draw(map) {
+        let position = map.getPosition();
+        if (this.visible(position)) {
+            ENGINE.drawBottomCenter('actors', this.moveState.x - position, this.y, this.actor.sprite());
+            ENGINE.layersToClear.add("actors");
+        }
+    }
 }
 class Hut extends Entity {
     constructor(grid) {
@@ -281,13 +297,6 @@ class Hut extends Entity {
         this.bottom = ENGINE.gameHEIGHT;
         this.score = INI.scores.hut;
         this.name = "Hut";
-    }
-    draw(map) {
-        let position = map.getPosition();
-        if (this.visible(position)) {
-            ENGINE.drawBottomCenter('actors', this.moveState.x - position, this.y, SPRITE.Hut);
-            ENGINE.layersToClear.add("actors");
-        }
     }
 }
 class Tree extends Entity {
@@ -302,6 +311,16 @@ class Tree extends Entity {
             ENGINE.drawBottomCenter('decor', this.moveState.x - position, this.y, this.actor.sprite());
             ENGINE.layersToClear.add("decor");
         }
+    }
+}
+class Box extends Entity {
+    constructor(grid) {
+        super(grid);
+        this.actor = new ACTOR('Box');
+        this.top = this.y - this.actor.height;
+        this.bottom = ENGINE.gameHEIGHT;
+        this.score = INI.scores.box;
+        this.name = "Box";
     }
 }
 class GeneralActor {
@@ -336,6 +355,8 @@ class GeneralActor {
         let forePlane = MAP[GAME.level].map.planes[0];
         let planePosition = forePlane.getPosition();
         this.LEFT = Math.round(this.moveState.x - this.width / 2 - planePosition);
+        this.top = this.bottom - this.height;
+        this.y = Math.round((this.top + this.bottom) / 2);
         this.actor.setDraw(this.LEFT, this.bottom);
     }
     draw(map) {
@@ -344,20 +365,54 @@ class GeneralActor {
             ENGINE.drawBottomLeft('actors', this.actor.drawX, this.actor.drawY, this.actor.sprite());
         }
     }
+    collisionBackground() {
+        return;
+    }
+}
+class Parachute extends GeneralActor {
+    constructor(x, dir, friendly) {
+        super(x, dir, friendly);
+        this.name = "Parachute";
+        this.score = INI.scores.parachute;
+        this.actor = new Static_ACTOR("Parachute");
+        this.width = SPRITE[this.actor.name].width;
+        this.height = SPRITE[this.actor.name].height;
+        this.bottom = 64;
+        this.set();
+    }
+    move(lapsedTime) {
+        this.bottom += lapsedTime * INI.parachute_speed / 1000;
+        this.set();
+    }
+    collisionBackground(map) {
+        let X = Math.round(this.moveState.x);
+        let position = map.getPosition();
+        if (X + this.width - position < 0) {
+            PROFILE_ACTORS.remove(this.id);
+            console.log(this.name, this.id, "out left, silently removed");
+        }
+        let backgroundHeight = map.DATA.map[X];
+        if (Math.round(this.bottom) - INI.landing_offset > backgroundHeight) {
+            PROFILE_ACTORS.remove(this.id);
+            this.land(X, backgroundHeight);
+        }
+    }
+    land(X, backgroundHeight) {
+        console.log('parachute landed');
+        PROFILE_ACTORS.add(new Box(new Grid(X, backgroundHeight + INI.landing_offset), false));
+    }
 }
 class HelpPlane extends GeneralActor {
     constructor(x, dir, friendly) {
         super(x, dir, friendly);
         this.name = "Help";
-        this.score = 0;
-        this.speed = 180.0;
+        this.score = INI.scores.help;
+        this.speed = 250.0;
         this.actor = new Static_ACTOR("HelpPlane");
         this.width = SPRITE[this.actor.name].width;
         this.height = SPRITE[this.actor.name].height;
         this.bottom = 0;
         this.maxY = 32;
-        this.top = this.bottom - this.height;
-        this.y = Math.round((this.top + this.bottom) / 2);
         this.canShoot = true;
         this.set();
     }
@@ -375,13 +430,14 @@ class HelpPlane extends GeneralActor {
             PROFILE_ACTORS.remove(this.id);
         }
         let trigger = this.moveState.x - position;
-        if (trigger > ENGINE.gameWIDTH * 0.6 && this.canShoot){
-            this.canShoot = false;
+        if (trigger > ENGINE.gameWIDTH * 0.6 && this.canShoot) {
             this.dropParachute();
         }
     }
-    dropParachute(){
+    dropParachute() {
         console.log("dropping parachute");
+        this.canShoot = false;
+        PROFILE_ACTORS.add(new Parachute(Math.round(this.moveState.x), 0, false));
     }
 }
 class AirPlane extends GeneralActor {
@@ -398,8 +454,6 @@ class AirPlane extends GeneralActor {
         const minY = Math.round(0.1 * ENGINE.gameHEIGHT);
         const maxY = Math.round(0.5 * ENGINE.gameHEIGHT);
         this.bottom = RND(minY, maxY);
-        this.top = this.bottom - this.height;
-        this.y = Math.round((this.top + this.bottom) / 2);
         this.set();
     }
     move(lapsedTime) {
@@ -480,8 +534,6 @@ class Tank extends GeneralActor {
         let position = forePlane.getPosition();
         this.setAngle(forePlane, position);
         this.setBarrel(position);
-        //this.timer = null;
-        //this.ignoreByManager = false;
     }
     release() {
         this.canShoot = true;
@@ -674,6 +726,7 @@ var HERO = {
         this.score = 0;
         this.cooldown = INI.HERO_cooldown;
         this.release();
+        this.friendly = false;
         console.log("HERO", HERO);
     },
     release() {
@@ -1049,6 +1102,7 @@ var GAME = {
     },
     addScore(score) {
         GAME.score += score;
+        GAME.score = Math.max(0, GAME.score);
         TITLE.score();
     },
     PAINT: {

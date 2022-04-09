@@ -129,7 +129,7 @@ var PROFILE_ACTORS = {
         this.poolToIA(map[this.IA]);
         for (let obj of this.POOL) {
             if (obj && !obj.ignoreByManager) {
-                //obj.collisionBackground(this.map);
+                obj.collisionBackground(this.map);
                 obj.move(lapsedTime);
             }
         }

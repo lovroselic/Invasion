@@ -10,12 +10,10 @@ var MAP = {
         width: 6,
         huts: 25,
         textures: ["Grass", "DarkGreyRock", "GreyRock"],
-        //textures: ["Grass", "GreyRock","DarkGreyRock"],
         colors: ["#0E0", '#444', '#888'],
         tank_spawn: 10,
-        //plane_spawn: 20,
         plane_spawn: 20,
-        help_spawn: 10,
+        help_spawn: 20,
     },
     create(level, plane_layers) {
         let W = ENGINE.gameWIDTH * MAP[level].width;
@@ -106,7 +104,7 @@ var SPAWN = {
         PROFILE_ACTORS.add(new Tank(x));
         SPAWN.tankTimer = new CountDown(timerId, RND(MAP[GAME.level].tank_spawn - 1, MAP[GAME.level].tank_spawn + 1), SPAWN.spawnTank);
     },
-    spawnPlane(){
+    spawnPlane() {
         let map = MAP[GAME.level].map;
         let position = map.planes[0].getPosition();
         const timerId = 'planeSpawn';
@@ -119,7 +117,7 @@ var SPAWN = {
         PROFILE_ACTORS.add(new AirPlane(x));
         SPAWN.planeTimer = new CountDown(timerId, RND(MAP[GAME.level].plane_spawn - 2, MAP[GAME.level].plane_spawn + 2), SPAWN.spawnPlane);
     },
-    spawnHelp(){
+    spawnHelp() {
         let map = MAP[GAME.level].map;
         let x = map.planes[0].getPosition();
         if (x >= map.planes[0].planeLimits.rightStop - ENGINE.gameWIDTH) {
