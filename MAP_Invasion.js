@@ -56,6 +56,9 @@ var SPAWN = {
     spawn(level) {
         this.spawnTrees(level);
         this.spawnHuts(level);
+        this.spawnTank();
+        this.spawnPlane();
+        this.spawnHelp();
     },
     spawnHuts(level) {
         let map = MAP[level].map;
@@ -125,7 +128,7 @@ var SPAWN = {
         }
         const timerId = 'helpSpawn';
         console.log("HELP spawned", x);
-        PROFILE_ACTORS.add(new Help(x));
+        PROFILE_ACTORS.add(new HelpPlane(x, 1, false));
         SPAWN.planeTimer = new CountDown(timerId, RND(MAP[GAME.level].help_spawn - 2, MAP[GAME.level].help_spawn + 2), SPAWN.spawnHelp);
     }
 };

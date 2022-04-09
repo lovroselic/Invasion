@@ -58,7 +58,7 @@ var INI = {
     }
 };
 var PRG = {
-    VERSION: "0.10.02",
+    VERSION: "0.10.03",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -308,6 +308,8 @@ class GeneralActor {
     constructor(x, dir = -1, friendly = true) {
         this.moveState = new _1D_MoveState(x, dir);
         this.friendly = friendly;
+        this.ignoreByManager = false;
+        this.timer = null;
     }
     visible(position) {
         return this.moveState.x + this.actor.width > position && this.moveState.x - this.actor.width < position + ENGINE.gameWIDTH;
@@ -330,13 +332,62 @@ class GeneralActor {
         DESTRUCTION_ANIMATION.add(new Explosion(new Grid(this.moveState.x, this.y - this.actor.height / 2)));
         AUDIO.Explosion.play();
     }
+    set() {
+        let forePlane = MAP[GAME.level].map.planes[0];
+        let planePosition = forePlane.getPosition();
+        this.LEFT = Math.round(this.moveState.x - this.width / 2 - planePosition);
+        this.actor.setDraw(this.LEFT, this.bottom);
+    }
+    draw(map) {
+        let position = map.getPosition();
+        if (this.visible(position)) {
+            ENGINE.drawBottomLeft('actors', this.actor.drawX, this.actor.drawY, this.actor.sprite());
+        }
+    }
+}
+class HelpPlane extends GeneralActor {
+    constructor(x, dir, friendly) {
+        super(x, dir, friendly);
+        this.name = "Help";
+        this.score = 0;
+        this.speed = 180.0;
+        this.actor = new Static_ACTOR("HelpPlane");
+        this.width = SPRITE[this.actor.name].width;
+        this.height = SPRITE[this.actor.name].height;
+        this.bottom = 0;
+        this.maxY = 32;
+        this.top = this.bottom - this.height;
+        this.y = Math.round((this.top + this.bottom) / 2);
+        this.canShoot = true;
+        this.set();
+    }
+    move(lapsedTime) {
+        if (this.bottom < this.maxY) {
+            this.bottom += lapsedTime * 12.0 / 1000;
+            this.bottom = Math.min(this.bottom, this.maxY);
+        }
+        this.moved = lapsedTime * this.speed / 1000;
+        this.moveState.move(this.moved);
+        this.set();
+        let forePlane = MAP[GAME.level].map.planes[0];
+        let position = forePlane.getPosition();
+        if (this.moveState.x >= MAP[GAME.level].map.planes[0].DATA.map.length - 1 || this.moveState.x - this.width - position > ENGINE.gameWIDTH) {
+            PROFILE_ACTORS.remove(this.id);
+        }
+        let trigger = this.moveState.x - position;
+        if (trigger > ENGINE.gameWIDTH * 0.6 && this.canShoot){
+            this.canShoot = false;
+            this.dropParachute();
+        }
+    }
+    dropParachute(){
+        console.log("dropping parachute");
+    }
 }
 class AirPlane extends GeneralActor {
     constructor(x) {
         super(x);
         this.score = INI.scores.plane;
-        this.ignoreByManager = false;
-        this.timer = null;
         this.canShoot = true;
         this.name = "Plane";
         this.speed = 200.0;
@@ -350,18 +401,6 @@ class AirPlane extends GeneralActor {
         this.top = this.bottom - this.height;
         this.y = Math.round((this.top + this.bottom) / 2);
         this.set();
-    }
-    draw(map) {
-        let position = map.getPosition();
-        if (this.visible(position)) {
-            ENGINE.drawBottomLeft('actors', this.actor.drawX, this.actor.drawY, this.actor.sprite());
-        }
-    }
-    set() {
-        let forePlane = MAP[GAME.level].map.planes[0];
-        let planePosition = forePlane.getPosition();
-        this.LEFT = Math.round(this.moveState.x - this.width / 2 - planePosition);
-        this.actor.setDraw(this.LEFT, this.bottom);
     }
     move(lapsedTime) {
         this.moved = lapsedTime * this.speed / 1000;
@@ -398,7 +437,6 @@ class AirPlane extends GeneralActor {
                 return false;
             }
             if (check > TOLERANCE) return false;
-
             return true;
         }
         return false;
@@ -442,8 +480,8 @@ class Tank extends GeneralActor {
         let position = forePlane.getPosition();
         this.setAngle(forePlane, position);
         this.setBarrel(position);
-        this.timer = null;
-        this.ignoreByManager = false;
+        //this.timer = null;
+        //this.ignoreByManager = false;
     }
     release() {
         this.canShoot = true;
@@ -796,8 +834,6 @@ var GAME = {
 
         PROFILE_ACTORS.add(HERO);
         SPAWN.spawn(level);
-        SPAWN.spawnTank();
-        SPAWN.spawnPlane();
     },
     continueLevel(level) {
         console.log("game continues on level", level);
@@ -971,14 +1007,12 @@ var GAME = {
         if (map[ENGINE.KEY.map.Q]) {
             HERO.bulletSpeed += INI.bullet_speed_step;
             HERO.bulletSpeed = Math.min(HERO.bulletSpeed, INI.max_bullet_speed);
-            //TITLE.canon_load();
             ENGINE.GAME.keymap[ENGINE.KEY.map.Q] = false;
             return;
         }
         if (map[ENGINE.KEY.map.A]) {
             HERO.bulletSpeed -= INI.bullet_speed_step;
             HERO.bulletSpeed = Math.max(HERO.bulletSpeed, INI.min_bullet_speed);
-            //TITLE.canon_load();
             ENGINE.GAME.keymap[ENGINE.KEY.map.A] = false;
             return;
         }
