@@ -14,7 +14,8 @@ var MAP = {
         colors: ["#0E0", '#444', '#888'],
         tank_spawn: 10,
         //plane_spawn: 20,
-        plane_spawn: 5,
+        plane_spawn: 20,
+        help_spawn: 10,
     },
     create(level, plane_layers) {
         let W = ENGINE.gameWIDTH * MAP[level].width;
@@ -108,12 +109,23 @@ var SPAWN = {
         const timerId = 'planeSpawn';
         let offset = 64;
         let x = position + ENGINE.gameWIDTH + offset;
-        //console.log("plane spawned", x);
         if (x >= map.planes[0].planeLimits.rightStop) {
             console.log("spawning planes terminated");
             return;
         }
         PROFILE_ACTORS.add(new AirPlane(x));
         SPAWN.planeTimer = new CountDown(timerId, RND(MAP[GAME.level].plane_spawn - 2, MAP[GAME.level].plane_spawn + 2), SPAWN.spawnPlane);
+    },
+    spawnHelp(){
+        let map = MAP[GAME.level].map;
+        let x = map.planes[0].getPosition();
+        if (x >= map.planes[0].planeLimits.rightStop - ENGINE.gameWIDTH) {
+            console.log("spawning help terminated");
+            return;
+        }
+        const timerId = 'helpSpawn';
+        console.log("HELP spawned", x);
+        PROFILE_ACTORS.add(new Help(x));
+        SPAWN.planeTimer = new CountDown(timerId, RND(MAP[GAME.level].help_spawn - 2, MAP[GAME.level].help_spawn + 2), SPAWN.spawnHelp);
     }
 };

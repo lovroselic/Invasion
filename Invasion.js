@@ -8,6 +8,9 @@
 /*
       
 TODO:
+    indicate hero cooldown on board
+    indicate ammunition status
+    indicate cooldown status
 
 known bugs: 
 
@@ -29,9 +32,11 @@ var DEBUG = {
 };
 var INI = {
     base_speed: 128.0,
-    max_speed: 160.0,
+    //max_speed: 160.0,
+    max_speed: 200.0,
     min_speed: 0.0,
-    acceleration: 100.0,
+    //acceleration: 100.0,
+    acceleration: 200.0,
     canon_step: 5,
     start_speed: 750.0,
     max_bullet_speed: 1000.0,
@@ -44,6 +49,8 @@ var INI = {
     sprite_width: 48,
     tank_cooldown: 3,
     plane_cooldown: 2,
+    HERO_cooldown: 1,
+    //HERO_cooldown: 0.1,
     scores: {
         hut: 10,
         tank: 100,
@@ -51,7 +58,7 @@ var INI = {
     }
 };
 var PRG = {
-    VERSION: "0.10.00",
+    VERSION: "0.10.02",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -239,15 +246,16 @@ class Ballistic extends GeneralBallisticObject {
     }
 }
 class Entity {
-    constructor(grid) {
+    constructor(grid, friendly = true) {
         this.y = grid.y;
         this.moveState = new _1D_MoveState(grid.x, 0);
+        this.friendly = friendly;
     }
     visible(position) {
         return this.moveState.x + this.actor.width > position && this.moveState.x - this.actor.width < position + ENGINE.gameWIDTH;
     }
     checkHit(ballistic) {
-        if (ballistic.friendly) return false;
+        if (ballistic.friendly && this.friendly) return false;
         let top = ballistic.position.y + ballistic.actor.height / 2 > this.top;
         let bottom = ballistic.position.y - ballistic.actor.height / 2 < this.bottom;
         return top && bottom;
@@ -296,9 +304,10 @@ class Tree extends Entity {
         }
     }
 }
-class Enemy {
-    constructor(x) {
-        this.moveState = new _1D_MoveState(x, -1);
+class GeneralActor {
+    constructor(x, dir = -1, friendly = true) {
+        this.moveState = new _1D_MoveState(x, dir);
+        this.friendly = friendly;
     }
     visible(position) {
         return this.moveState.x + this.actor.width > position && this.moveState.x - this.actor.width < position + ENGINE.gameWIDTH;
@@ -307,7 +316,7 @@ class Enemy {
         return this.moveState.x + this.actor.width < position + ENGINE.gameWIDTH;
     }
     checkHit(ballistic) {
-        if (ballistic.friendly) return false;
+        if (ballistic.friendly && this.friendly) return false;
         let top = ballistic.position.y + ballistic.actor.height / 2 > this.top;
         let bottom = ballistic.position.y - ballistic.actor.height / 2 < this.bottom;
         return top && bottom;
@@ -322,7 +331,7 @@ class Enemy {
         AUDIO.Explosion.play();
     }
 }
-class AirPlane extends Enemy {
+class AirPlane extends GeneralActor {
     constructor(x) {
         super(x);
         this.score = INI.scores.plane;
@@ -411,7 +420,7 @@ class AirPlane extends Enemy {
         this.canShoot = true;
     }
 }
-class Tank extends Enemy {
+class Tank extends GeneralActor {
     constructor(x) {
         super(x);
         this.LEFT_AXIS = 8;
@@ -625,7 +634,12 @@ var HERO = {
         this.bulletSpeed = INI.start_speed;
         this.moveState = new _1D_MoveState(Math.floor(LEFT + this.width / 2), 1);
         this.score = 0;
+        this.cooldown = INI.HERO_cooldown;
+        this.release();
         console.log("HERO", HERO);
+    },
+    release() {
+        this.canShoot = true;
     },
     draw() {
         ENGINE.drawBottomLeft('actors', HERO.canonX, HERO.canonY, SPRITE[`Cev_${HERO.canonAngle + HERO.actor.angle}`]);
@@ -711,6 +725,9 @@ var HERO = {
         HERO.speed = Math.max(HERO.speed, INI.min_speed);
     },
     shoot() {
+        if (!this.canShoot) return;
+        this.canShoot = false;
+        this.timer = new CountDown(`HERO_cooldown`, this.cooldown, this.release.bind(this));
         HERO.bulletX = Math.round(HERO.canonRootX + HERO.width * 0.98 * Math.cos(Math.radians(HERO.actor.angle + HERO.canonAngle)));
         HERO.bulletY = Math.round(HERO.canonRootY + HERO.width * 0.98 * Math.sin(Math.radians(HERO.actor.angle + HERO.canonAngle)));
         let origin = new FP_Grid(HERO.canonRootX, HERO.canonRootY);
@@ -834,6 +851,8 @@ var GAME = {
         HERO.draw();
         DESTRUCTION_ANIMATION.draw(lapsedTime);
 
+        TITLE.canon_load();
+
         if (DEBUG.FPS) {
             GAME.FPS(lapsedTime);
         }
@@ -952,14 +971,14 @@ var GAME = {
         if (map[ENGINE.KEY.map.Q]) {
             HERO.bulletSpeed += INI.bullet_speed_step;
             HERO.bulletSpeed = Math.min(HERO.bulletSpeed, INI.max_bullet_speed);
-            TITLE.canon_load();
+            //TITLE.canon_load();
             ENGINE.GAME.keymap[ENGINE.KEY.map.Q] = false;
             return;
         }
         if (map[ENGINE.KEY.map.A]) {
             HERO.bulletSpeed -= INI.bullet_speed_step;
             HERO.bulletSpeed = Math.max(HERO.bulletSpeed, INI.min_bullet_speed);
-            TITLE.canon_load();
+            //TITLE.canon_load();
             ENGINE.GAME.keymap[ENGINE.KEY.map.A] = false;
             return;
         }
@@ -1187,7 +1206,12 @@ var TITLE = {
     canon_load() {
         ENGINE.clearLayer("canon_load");
         let CTX = LAYER.canon_load;
-        CTX.fillStyle = "#DEA";
+        let style = "#E12";
+        if (HERO.canShoot) {
+            style = "#DEA";
+        }
+        CTX.fillStyle = style;
+        CTX.strokeStyle = style;
         let x = 24;
         let fs = 14;
         let y = 1.5 * fs;
@@ -1197,9 +1221,7 @@ var TITLE = {
         const w = 100;
         const h = 24;
         y += 5;
-        CTX.fillStyle = "#CEA";
         CTX.fillRect(x, y, w * HERO.bulletSpeed / INI.max_bullet_speed, h);
-        CTX.strokeStyle = "#DEA";
         CTX.strokeRect(x, y, w, h);
     },
     gameOver() {
