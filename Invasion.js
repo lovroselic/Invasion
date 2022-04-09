@@ -63,7 +63,7 @@ var INI = {
     }
 };
 var PRG = {
-    VERSION: "0.10.04",
+    VERSION: "0.10.05",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -281,12 +281,19 @@ class Entity {
     collisionBackground() {
         return;
     }
+    collisionToActors(map) {
+        return;
+    }
     draw(map) {
         let position = map.getPosition();
         if (this.visible(position)) {
             ENGINE.drawBottomCenter('actors', this.moveState.x - position, this.y, this.actor.sprite());
             ENGINE.layersToClear.add("actors");
         }
+    }
+    checkHitActor(other){
+        console.log(other.name, other.id, other.top, other.bottom, this.name, this.id,this.top, this.bottom, other.bottom >= this.top, other.top <= this.bottom);
+        return other.bottom >= this.top && other.top <= this.bottom;
     }
 }
 class Hut extends Entity {
@@ -314,13 +321,17 @@ class Tree extends Entity {
     }
 }
 class Box extends Entity {
-    constructor(grid) {
-        super(grid);
+    constructor(grid, friendly) {
+        super(grid, friendly);
         this.actor = new ACTOR('Box');
         this.top = this.y - this.actor.height;
         this.bottom = ENGINE.gameHEIGHT;
         this.score = INI.scores.box;
         this.name = "Box";
+    }
+    pick(){
+        console.log("picking up box");
+        //add audio
     }
 }
 class GeneralActor {
@@ -341,6 +352,10 @@ class GeneralActor {
         let top = ballistic.position.y + ballistic.actor.height / 2 > this.top;
         let bottom = ballistic.position.y - ballistic.actor.height / 2 < this.bottom;
         return top && bottom;
+    }
+    checkHitActor(other){
+        console.log(other.name, other.id, other.top, other.bottom, this.name, this.id,this.top, this.bottom, other.bottom >= this.top, other.top <= this.bottom);
+        return other.bottom >= this.top && other.top <= this.bottom;
     }
     checkHitHeightPoint(heightPoint) {
         let top = heightPoint > this.top;
@@ -366,6 +381,25 @@ class GeneralActor {
         }
     }
     collisionBackground() {
+        return;
+    }
+    collisionToActors(map) {
+        if (!this.friendly) return;
+        let IA = map.profile_actor_IA;
+        let ids = IA.unroll(new Grid(Math.max(0, Math.round(this.moveState.x - this.width / 2)), 0)); //all moving left
+        ids.removeValueOnce(this.id);
+        ids.removeValueOnce(HERO.id); //ignore HERO, it has own method
+        if (ids.length) {
+            for (let id of ids) {
+                let obj = PROFILE_ACTORS.show(id);
+                if (this.friendly && obj.friendly) continue;
+                if (obj.checkHitActor(this)) {
+                    console.log(this.name, this.id, ".......hits", obj.name, obj.id);
+                    PROFILE_ACTORS.remove(id);
+                    obj.explode();
+                }
+            }
+        }
         return;
     }
 }
@@ -800,11 +834,16 @@ var HERO = {
             for (let id of ids) {
                 let obj = PROFILE_ACTORS.show(id);
                 if (obj.checkHitHeightPoint(HERO.centerHeightRight)) {
-                    //console.log(".......HERO hit", obj.name, obj.id);
-                    PROFILE_ACTORS.remove(id);
-                    obj.explode();
-                    GAME.addScore(obj.score);
-                    HERO.die();
+                    console.log(".......HERO hit", obj.name, obj.id);
+                    if (obj.name === 'Box') {
+                        obj.pick();
+                        PROFILE_ACTORS.remove(id);
+                    } else {
+                        PROFILE_ACTORS.remove(id);
+                        obj.explode();
+                        GAME.addScore(obj.score);
+                        HERO.die();
+                    }
                 }
             }
         }

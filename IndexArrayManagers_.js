@@ -130,6 +130,9 @@ var PROFILE_ACTORS = {
         for (let obj of this.POOL) {
             if (obj && !obj.ignoreByManager) {
                 obj.collisionBackground(this.map);
+                if (obj === null) continue;
+                obj.collisionToActors(this.map);
+                if (obj === null) continue;
                 obj.move(lapsedTime);
             }
         }
