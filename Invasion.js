@@ -63,7 +63,7 @@ var INI = {
     }
 };
 var PRG = {
-    VERSION: "0.10.05",
+    VERSION: "0.11.00",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -182,7 +182,7 @@ class GeneralBallisticObject {
                 let obj = PROFILE_ACTORS.show(id);
                 if (obj !== null && obj.checkHit(this)) {
                     PROFILE_BALLISTIC.remove(this.id);
-                    if (id !== HERO.id) PROFILE_ACTORS.remove(id); //ignore HERO
+                    if (id !== HERO.id) PROFILE_ACTORS.remove(id);
                     obj.explode();
                     GAME.addScore(obj.score);
                 }
@@ -221,7 +221,6 @@ class Bomb extends GeneralBallisticObject {
         this.rotate(lapsedTime);
         this.speed.y = this.speed.y + INI.G * timeDelta;
         this.speed.x = Math.max(0, this.speed.x - INI.A * timeDelta);
-        //missing check for out of bounds on the right side
         if (this.position.x - MAP[GAME.level].map.planes[0].getPosition() < 0) {
             PROFILE_BALLISTIC.remove(this.id);
         }
@@ -291,8 +290,7 @@ class Entity {
             ENGINE.layersToClear.add("actors");
         }
     }
-    checkHitActor(other){
-        console.log(other.name, other.id, other.top, other.bottom, this.name, this.id,this.top, this.bottom, other.bottom >= this.top, other.top <= this.bottom);
+    checkHitActor(other) {
         return other.bottom >= this.top && other.top <= this.bottom;
     }
 }
@@ -329,8 +327,9 @@ class Box extends Entity {
         this.score = INI.scores.box;
         this.name = "Box";
     }
-    pick(){
+    pick() {
         console.log("picking up box");
+        //cont
         //add audio
     }
 }
@@ -353,8 +352,7 @@ class GeneralActor {
         let bottom = ballistic.position.y - ballistic.actor.height / 2 < this.bottom;
         return top && bottom;
     }
-    checkHitActor(other){
-        console.log(other.name, other.id, other.top, other.bottom, this.name, this.id,this.top, this.bottom, other.bottom >= this.top, other.top <= this.bottom);
+    checkHitActor(other) {
         return other.bottom >= this.top && other.top <= this.bottom;
     }
     checkHitHeightPoint(heightPoint) {
@@ -386,15 +384,15 @@ class GeneralActor {
     collisionToActors(map) {
         if (!this.friendly) return;
         let IA = map.profile_actor_IA;
-        let ids = IA.unroll(new Grid(Math.max(0, Math.round(this.moveState.x - this.width / 2)), 0)); //all moving left
+        let ids = IA.unroll(new Grid(Math.max(0, Math.round(this.moveState.x - this.width / 2)), 0)); 
         ids.removeValueOnce(this.id);
-        ids.removeValueOnce(HERO.id); //ignore HERO, it has own method
+        ids.removeValueOnce(HERO.id); 
         if (ids.length) {
             for (let id of ids) {
                 let obj = PROFILE_ACTORS.show(id);
                 if (this.friendly && obj.friendly) continue;
                 if (obj.checkHitActor(this)) {
-                    console.log(this.name, this.id, ".......hits", obj.name, obj.id);
+                    //console.log(this.name, this.id, ".......hits", obj.name, obj.id);
                     PROFILE_ACTORS.remove(id);
                     obj.explode();
                 }
@@ -423,7 +421,7 @@ class Parachute extends GeneralActor {
         let position = map.getPosition();
         if (X + this.width - position < 0) {
             PROFILE_ACTORS.remove(this.id);
-            console.log(this.name, this.id, "out left, silently removed");
+            //console.log(this.name, this.id, "out left, silently removed");
         }
         let backgroundHeight = map.DATA.map[X];
         if (Math.round(this.bottom) - INI.landing_offset > backgroundHeight) {
@@ -432,7 +430,7 @@ class Parachute extends GeneralActor {
         }
     }
     land(X, backgroundHeight) {
-        console.log('parachute landed');
+        //console.log('parachute landed');
         PROFILE_ACTORS.add(new Box(new Grid(X, backgroundHeight + INI.landing_offset), false));
     }
 }
@@ -469,7 +467,7 @@ class HelpPlane extends GeneralActor {
         }
     }
     dropParachute() {
-        console.log("dropping parachute");
+        //console.log("dropping parachute");
         this.canShoot = false;
         PROFILE_ACTORS.add(new Parachute(Math.round(this.moveState.x), 0, false));
     }
