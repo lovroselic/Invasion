@@ -63,7 +63,7 @@ var INI = {
     }
 };
 var PRG = {
-    VERSION: "0.11.00",
+    VERSION: "0.11.01",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -250,14 +250,24 @@ class Ballistic extends GeneralBallisticObject {
         }
     }
 }
-class Entity {
-    constructor(grid, friendly = true) {
-        this.y = grid.y;
-        this.moveState = new _1D_MoveState(grid.x, 0);
+class MotherActor {
+    constructor(friendly) {
         this.friendly = friendly;
+        this.ignoreByManager = false;
+        this.timer = null;
+    }
+    checkHitActor(other) {
+        return other.bottom >= this.top && other.top <= this.bottom;
+    }
+    collisionBackground() {
+        return;
     }
     visible(position) {
         return this.moveState.x + this.actor.width > position && this.moveState.x - this.actor.width < position + ENGINE.gameWIDTH;
+    }
+    explode() {
+        DESTRUCTION_ANIMATION.add(new Explosion(new Grid(this.moveState.x, this.y - this.actor.height / 2)));
+        AUDIO.Explosion.play();
     }
     checkHit(ballistic) {
         if (ballistic.friendly && this.friendly) return false;
@@ -265,23 +275,26 @@ class Entity {
         let bottom = ballistic.position.y - ballistic.actor.height / 2 < this.bottom;
         return top && bottom;
     }
+    move() {
+        return;
+    }
+    collisionToActors(map) {
+        return;
+    }
     checkHitHeightPoint(heightPoint) {
         let top = heightPoint > this.top;
         let bottom = heightPoint < this.bottom;
         return top && bottom;
     }
-    explode() {
-        DESTRUCTION_ANIMATION.add(new Explosion(new Grid(this.moveState.x, this.y - this.actor.height / 2)));
-        AUDIO.Explosion.play();
+    onBoard(position) {
+        return this.moveState.x + this.actor.width < position + ENGINE.gameWIDTH;
     }
-    move() {
-        return;
-    }
-    collisionBackground() {
-        return;
-    }
-    collisionToActors(map) {
-        return;
+}
+class Entity extends MotherActor {
+    constructor(grid, friendly = true) {
+        super(friendly);
+        this.y = grid.y;
+        this.moveState = new _1D_MoveState(grid.x, 0);
     }
     draw(map) {
         let position = map.getPosition();
@@ -289,9 +302,6 @@ class Entity {
             ENGINE.drawBottomCenter('actors', this.moveState.x - position, this.y, this.actor.sprite());
             ENGINE.layersToClear.add("actors");
         }
-    }
-    checkHitActor(other) {
-        return other.bottom >= this.top && other.top <= this.bottom;
     }
 }
 class Hut extends Entity {
@@ -333,36 +343,10 @@ class Box extends Entity {
         //add audio
     }
 }
-class GeneralActor {
+class GeneralActor extends MotherActor {
     constructor(x, dir = -1, friendly = true) {
+        super(friendly);
         this.moveState = new _1D_MoveState(x, dir);
-        this.friendly = friendly;
-        this.ignoreByManager = false;
-        this.timer = null;
-    }
-    visible(position) {
-        return this.moveState.x + this.actor.width > position && this.moveState.x - this.actor.width < position + ENGINE.gameWIDTH;
-    }
-    onBoard(position) {
-        return this.moveState.x + this.actor.width < position + ENGINE.gameWIDTH;
-    }
-    checkHit(ballistic) {
-        if (ballistic.friendly && this.friendly) return false;
-        let top = ballistic.position.y + ballistic.actor.height / 2 > this.top;
-        let bottom = ballistic.position.y - ballistic.actor.height / 2 < this.bottom;
-        return top && bottom;
-    }
-    checkHitActor(other) {
-        return other.bottom >= this.top && other.top <= this.bottom;
-    }
-    checkHitHeightPoint(heightPoint) {
-        let top = heightPoint > this.top;
-        let bottom = heightPoint < this.bottom;
-        return top && bottom;
-    }
-    explode() {
-        DESTRUCTION_ANIMATION.add(new Explosion(new Grid(this.moveState.x, this.y - this.actor.height / 2)));
-        AUDIO.Explosion.play();
     }
     set() {
         let forePlane = MAP[GAME.level].map.planes[0];
@@ -378,21 +362,17 @@ class GeneralActor {
             ENGINE.drawBottomLeft('actors', this.actor.drawX, this.actor.drawY, this.actor.sprite());
         }
     }
-    collisionBackground() {
-        return;
-    }
     collisionToActors(map) {
         if (!this.friendly) return;
         let IA = map.profile_actor_IA;
-        let ids = IA.unroll(new Grid(Math.max(0, Math.round(this.moveState.x - this.width / 2)), 0)); 
+        let ids = IA.unroll(new Grid(Math.max(0, Math.round(this.moveState.x - this.width / 2)), 0));
         ids.removeValueOnce(this.id);
-        ids.removeValueOnce(HERO.id); 
+        ids.removeValueOnce(HERO.id);
         if (ids.length) {
             for (let id of ids) {
                 let obj = PROFILE_ACTORS.show(id);
                 if (this.friendly && obj.friendly) continue;
                 if (obj.checkHitActor(this)) {
-                    //console.log(this.name, this.id, ".......hits", obj.name, obj.id);
                     PROFILE_ACTORS.remove(id);
                     obj.explode();
                 }
@@ -421,7 +401,6 @@ class Parachute extends GeneralActor {
         let position = map.getPosition();
         if (X + this.width - position < 0) {
             PROFILE_ACTORS.remove(this.id);
-            //console.log(this.name, this.id, "out left, silently removed");
         }
         let backgroundHeight = map.DATA.map[X];
         if (Math.round(this.bottom) - INI.landing_offset > backgroundHeight) {
@@ -430,7 +409,6 @@ class Parachute extends GeneralActor {
         }
     }
     land(X, backgroundHeight) {
-        //console.log('parachute landed');
         PROFILE_ACTORS.add(new Box(new Grid(X, backgroundHeight + INI.landing_offset), false));
     }
 }
@@ -467,7 +445,6 @@ class HelpPlane extends GeneralActor {
         }
     }
     dropParachute() {
-        //console.log("dropping parachute");
         this.canShoot = false;
         PROFILE_ACTORS.add(new Parachute(Math.round(this.moveState.x), 0, false));
     }
@@ -832,7 +809,6 @@ var HERO = {
             for (let id of ids) {
                 let obj = PROFILE_ACTORS.show(id);
                 if (obj.checkHitHeightPoint(HERO.centerHeightRight)) {
-                    console.log(".......HERO hit", obj.name, obj.id);
                     if (obj.name === 'Box') {
                         obj.pick();
                         PROFILE_ACTORS.remove(id);

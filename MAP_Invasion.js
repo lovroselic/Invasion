@@ -125,7 +125,6 @@ var SPAWN = {
             return;
         }
         const timerId = 'helpSpawn';
-        console.log("HELP spawned", x);
         PROFILE_ACTORS.add(new HelpPlane(x, 1, false));
         SPAWN.planeTimer = new CountDown(timerId, RND(MAP[GAME.level].help_spawn - 2, MAP[GAME.level].help_spawn + 2), SPAWN.spawnHelp);
     }
