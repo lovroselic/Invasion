@@ -49,8 +49,11 @@ var INI = {
     sprite_width: 48,
     tank_cooldown: 3,
     plane_cooldown: 2,
-    //HERO_cooldown: 1,
-    HERO_cooldown: 0.1,
+    HERO_cooldown: 1,
+    HERO_yield: 0.5,
+    ammunition: 1000 * 20,
+    //power_cooldown: 60,
+    power_cooldown: 10,
     parachute_speed: 100.0,
     landing_offset: 4,
     scores: {
@@ -63,7 +66,7 @@ var INI = {
     }
 };
 var PRG = {
-    VERSION: "0.11.01",
+    VERSION: "0.11.02",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -117,7 +120,7 @@ var PRG = {
 
         $(ENGINE.gameWindowId).width(ENGINE.gameWIDTH + 4);
         ENGINE.addBOX("TITLE", ENGINE.titleWIDTH, ENGINE.titleHEIGHT, ["title", "hiscore"], null);
-        ENGINE.addBOX("SCORE", ENGINE.scoreWIDTH, ENGINE.scoreHEIGHT, ["score_background", "canon_load", "score"], null);
+        ENGINE.addBOX("SCORE", ENGINE.scoreWIDTH, ENGINE.scoreHEIGHT, ["score_background", "canon_load", "score", "rate", "yield", "ammo", "stage", "lives"], null);
         ENGINE.addBOX("ROOM", ENGINE.gameWIDTH, ENGINE.gameHEIGHT, ["background", "backplane2", "backplane1", "foreplane", "decor",
             "actors", "explosion", "text", "FPS", "button", "click"], null);
         ENGINE.addBOX("DOWN", ENGINE.bottomWIDTH, ENGINE.bottomHEIGHT, ["bottom", "bottomText"], null);
@@ -278,7 +281,7 @@ class MotherActor {
     move() {
         return;
     }
-    collisionToActors(map) {
+    collisionToActors() {
         return;
     }
     checkHitHeightPoint(heightPoint) {
@@ -338,9 +341,16 @@ class Box extends Entity {
         this.name = "Box";
     }
     pick() {
-        console.log("picking up box");
-        //cont
-        //add audio
+        /*let rewards = {
+            Yield: 50,
+            Rate: 100,
+            Ammo: 250,
+        };*/
+        let rewards = {
+            Yield: 100,
+        };
+        HERO.rewards[weightedRnd(rewards)]();
+        AUDIO.PickBox.play();
     }
 }
 class GeneralActor extends MotherActor {
@@ -371,6 +381,7 @@ class GeneralActor extends MotherActor {
         if (ids.length) {
             for (let id of ids) {
                 let obj = PROFILE_ACTORS.show(id);
+                if (obj === null) continue;
                 if (this.friendly && obj.friendly) continue;
                 if (obj.checkHitActor(this)) {
                     PROFILE_ACTORS.remove(id);
@@ -734,6 +745,8 @@ var HERO = {
         this.moveState = new _1D_MoveState(Math.floor(LEFT + this.width / 2), 1);
         this.score = 0;
         this.cooldown = INI.HERO_cooldown;
+        this.ammunition = INI.ammunition;
+        this.yield = INI.HERO_yield;
         this.release();
         this.friendly = false;
         console.log("HERO", HERO);
@@ -808,6 +821,7 @@ var HERO = {
         if (ids.length) {
             for (let id of ids) {
                 let obj = PROFILE_ACTORS.show(id);
+                if (obj === null) continue;
                 if (obj.checkHitHeightPoint(HERO.centerHeightRight)) {
                     if (obj.name === 'Box') {
                         obj.pick();
@@ -852,7 +866,40 @@ var HERO = {
         DESTRUCTION_ANIMATION.add(new Explosion(new Grid(this.moveState.x, this.y - this.actor.height / 2)));
         AUDIO.Explosion.play();
         this.die();
-    }
+    },
+    rewards: {
+        Ammo() {
+            console.log("filling ammo");
+            this.ammunition = INI.ammunition;
+            //repaint ammo
+        },
+        Yield() {
+            console.log("increasing yield");
+            //repaint yield
+        },
+        resetYield(){},
+        Rate() {
+            console.log("increasing rate");
+            let rate = HERO.rates.indexOf(HERO.cooldown);
+            if (rate >= 0 && rate < HERO.rates.length - 1) {
+                rate++;
+            } else return HERO.rewards.Ammo();
+            HERO.cooldown = HERO.rates[rate];
+            this.rateTimer = new CountDown("Rate-" + Date.now(), INI.power_cooldown, HERO.rewards.resetRate);
+            TITLE.rate();
+        },
+        resetRate() {
+            console.log("reseting rate");
+            let rate = HERO.rates.indexOf(HERO.cooldown);
+            if (rate > 0 && rate < HERO.rates.length) {
+                rate--;
+            } else rate = 0;
+            HERO.cooldown = HERO.rates[rate];
+            TITLE.rate();
+        },
+    },
+    rates: [1, 0.5, 0.1],
+    yields: [0.5, 0.75, 1.0]
 };
 var GAME = {
     start() {
@@ -1142,6 +1189,7 @@ var TITLE = {
         TITLE.bottom();
         TITLE.hiScore();
         TITLE.canon_load();
+        TITLE.rate();
         TITLE.score();
     },
     startTitle() {
@@ -1304,6 +1352,25 @@ var TITLE = {
         }
     },
     lives() { },
+    stage() { },
+    rate() {
+        ENGINE.clearLayer("rate");
+        let CTX = LAYER.rate;
+        let style = "#DEA";
+        CTX.fillStyle = style;
+        //CTX.strokeStyle = style;
+        let x = 148;
+        let fs = 14;
+        let y = 1.5 * fs;
+        CTX.font = fs + "px Alien";
+        CTX.textAlign = "left";
+        CTX.fillText("Rate:", x, y);
+        let rate = HERO.rates.indexOf(HERO.cooldown);
+        let rateString = "".fill('*', ++rate);
+        CTX.fillText(rateString, x, y + 1.5 * fs);
+    },
+    yield() { },
+    ammo() { },
     canon_load() {
         ENGINE.clearLayer("canon_load");
         let CTX = LAYER.canon_load;

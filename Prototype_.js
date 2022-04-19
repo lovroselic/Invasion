@@ -6,7 +6,7 @@
 console.clear();
 
 var LIB = {
-  VERSION: "3.03",
+  VERSION: "3.04",
   CSS: "color: #EFE",
   log: function () {
     console.log(`%cPrototype LIB ${LIB.VERSION} loaded`, LIB.CSS);
@@ -275,10 +275,10 @@ Array.prototype.addUnique = function (arr) {
   temp = new Set(temp);
   return [...temp];
 };
-Array.prototype.removeValueOnce = function(value){
+Array.prototype.removeValueOnce = function (value) {
   let idx = this.indexOf(value);
-  if (idx !== -1){
-    this.splice(idx,1);
+  if (idx !== -1) {
+    this.splice(idx, 1);
   }
 };
 String.prototype.capitalize = function () {
@@ -302,6 +302,16 @@ String.prototype.splitByN = function (N) {
     result.push(this.substr(i, N));
   }
   return result;
+};
+String.prototype.fill = function (stringy, howMany) {
+  var s = this;
+  for (; ;) {
+    if (howMany & 1) s += stringy;
+    howMany >>= 1;
+    if (howMany) stringy += stringy;
+    else break;
+  }
+  return s;
 };
 
 class Grid {

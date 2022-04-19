@@ -36,6 +36,7 @@ var LoadPacks = [];
 var LoadExtWasm = [];
 var LoadAudio = [
     { srcName: "Explosion1.mp3", name: "Explosion" },
+    { srcName: "UseScroll.mp3", name: "PickBox" },
 ];
 var ExtendSheetTag = [];
 var LoadSheetSequences = [

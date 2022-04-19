@@ -13,7 +13,8 @@ var MAP = {
         colors: ["#0E0", '#444', '#888'],
         tank_spawn: 10,
         plane_spawn: 20,
-        help_spawn: 20,
+        //help_spawn: 20,
+        help_spawn: 5,
     },
     create(level, plane_layers) {
         let W = ENGINE.gameWIDTH * MAP[level].width;
