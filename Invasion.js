@@ -52,8 +52,8 @@ var INI = {
     HERO_cooldown: 1,
     HERO_yield: 0.5,
     ammunition: 1000 * 20,
-    //power_cooldown: 60,
-    power_cooldown: 10,
+    power_cooldown: 60,
+    //power_cooldown: 10,
     parachute_speed: 100.0,
     landing_offset: 4,
     scores: {
@@ -66,7 +66,7 @@ var INI = {
     }
 };
 var PRG = {
-    VERSION: "0.11.02",
+    VERSION: "0.11.03",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -342,7 +342,7 @@ class Box extends Entity {
     }
     pick() {
         /*let rewards = {
-            Yield: 50,
+            Yield: 100,
             Rate: 100,
             Ammo: 250,
         };*/
@@ -875,9 +875,25 @@ var HERO = {
         },
         Yield() {
             console.log("increasing yield");
+            let Y = HERO.yields.indexOf(HERO.yield);
+            if (Y >= 0 && Y < HERO.yields.length - 1) {
+                Y++;
+            } else return HERO.rewards.Ammo();
+            HERO.yield = HERO.yields[Y];
+            this.yieldTimer = new CountDown("Yield-" + Date.now(), INI.power_cooldown, HERO.rewards.resetYield);
+            TITLE.yield();
             //repaint yield
         },
-        resetYield(){},
+        resetYield() {
+            console.log("reseting yield");
+            let Y = HERO.yields.indexOf(HERO.yield);
+            if (Y > 0 && Y < HERO.yields.length) {
+                Y--;
+            } else Y = 0;
+            HERO.yield = HERO.yields[Y];
+            TITLE.yield();
+
+        },
         Rate() {
             console.log("increasing rate");
             let rate = HERO.rates.indexOf(HERO.cooldown);
@@ -1190,6 +1206,7 @@ var TITLE = {
         TITLE.hiScore();
         TITLE.canon_load();
         TITLE.rate();
+        TITLE.yield();
         TITLE.score();
     },
     startTitle() {
@@ -1358,7 +1375,6 @@ var TITLE = {
         let CTX = LAYER.rate;
         let style = "#DEA";
         CTX.fillStyle = style;
-        //CTX.strokeStyle = style;
         let x = 148;
         let fs = 14;
         let y = 1.5 * fs;
@@ -1369,7 +1385,20 @@ var TITLE = {
         let rateString = "".fill('*', ++rate);
         CTX.fillText(rateString, x, y + 1.5 * fs);
     },
-    yield() { },
+    yield() {
+        ENGINE.clearLayer("yield");
+        let CTX = LAYER.yield;
+        let style = "#DEA";
+        CTX.fillStyle = style;
+        let x = 228;
+        let fs = 14;
+        let y = 1.5 * fs;
+        CTX.font = fs + "px Alien";
+        CTX.textAlign = "left";
+        CTX.fillText("Yield:", x, y);
+        let Y = HERO.yields.indexOf(HERO.yield);
+        CTX.fillText(`${HERO.yields[Y] * 100}%`, x, y + 1.5 * fs);
+    },
     ammo() { },
     canon_load() {
         ENGINE.clearLayer("canon_load");
