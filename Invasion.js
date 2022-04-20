@@ -51,9 +51,8 @@ var INI = {
     plane_cooldown: 2,
     HERO_cooldown: 1,
     HERO_yield: 0.5,
-    ammunition: 1000 * 20,
+    ammunition: 1000 * 25,
     power_cooldown: 60,
-    //power_cooldown: 10,
     parachute_speed: 100.0,
     landing_offset: 4,
     scores: {
@@ -66,7 +65,7 @@ var INI = {
     }
 };
 var PRG = {
-    VERSION: "0.11.03",
+    VERSION: "0.11.04",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -341,14 +340,14 @@ class Box extends Entity {
         this.name = "Box";
     }
     pick() {
-        /*let rewards = {
+        let rewards = {
             Yield: 100,
             Rate: 100,
             Ammo: 250,
-        };*/
-        let rewards = {
-            Yield: 100,
         };
+        /*let rewards = {
+            Yield: 100,
+        };*/
         HERO.rewards[weightedRnd(rewards)]();
         AUDIO.PickBox.play();
     }
@@ -844,6 +843,16 @@ var HERO = {
     },
     shoot() {
         if (!this.canShoot) return;
+        //check ammo
+        let ammoConsuption = Math.round(HERO.bulletSpeed / HERO.yield);
+        if (ammoConsuption > HERO.ammunition){
+            //fail shooting
+            AUDIO.FailShoot.play();
+            return;
+        }
+        //
+        HERO.ammunition -= ammoConsuption;
+        TITLE.ammo();
         this.canShoot = false;
         this.timer = new CountDown(`HERO_cooldown`, this.cooldown, this.release.bind(this));
         HERO.bulletX = Math.round(HERO.canonRootX + HERO.width * 0.98 * Math.cos(Math.radians(HERO.actor.angle + HERO.canonAngle)));
@@ -853,6 +862,7 @@ var HERO = {
         let dir = origin.direction(bullet);
         let speed = new FP_Vector(HERO.bulletSpeed, HERO.bulletSpeed);
         PROFILE_BALLISTIC.add(new Ballistic(bullet, dir, speed));
+        AUDIO.Shoot.play();
     },
     die() {
         console.warn("...HERO dies...   (not yet implemented)");
@@ -870,8 +880,9 @@ var HERO = {
     rewards: {
         Ammo() {
             console.log("filling ammo");
-            this.ammunition = INI.ammunition;
+            HERO.ammunition = INI.ammunition;
             //repaint ammo
+            TITLE.ammo();
         },
         Yield() {
             console.log("increasing yield");
@@ -1207,6 +1218,7 @@ var TITLE = {
         TITLE.canon_load();
         TITLE.rate();
         TITLE.yield();
+        TITLE.ammo();
         TITLE.score();
     },
     startTitle() {
@@ -1399,7 +1411,24 @@ var TITLE = {
         let Y = HERO.yields.indexOf(HERO.yield);
         CTX.fillText(`${HERO.yields[Y] * 100}%`, x, y + 1.5 * fs);
     },
-    ammo() { },
+    ammo() {
+        ENGINE.clearLayer("ammo");
+        let CTX = LAYER.ammo;
+        let style = "#DEA";
+        CTX.fillStyle = style;
+        CTX.strokeStyle = style;
+        let x = 320;
+        let fs = 14;
+        let y = 1.5 * fs;
+        CTX.font = fs + "px Alien";
+        CTX.textAlign = "left";
+        CTX.fillText("Ammunition:", x, y);
+        const w = 200;
+        const h = 24;
+        y += 5;
+        CTX.fillRect(x, y, w * HERO.ammunition / INI.ammunition, h);
+        CTX.strokeRect(x, y, w, h);
+    },
     canon_load() {
         ENGINE.clearLayer("canon_load");
         let CTX = LAYER.canon_load;
