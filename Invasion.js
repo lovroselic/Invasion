@@ -32,10 +32,8 @@ var DEBUG = {
 };
 var INI = {
     base_speed: 128.0,
-    //max_speed: 160.0,
     max_speed: 200.0,
     min_speed: 0.0,
-    //acceleration: 100.0,
     acceleration: 200.0,
     canon_step: 5,
     start_speed: 750.0,
@@ -51,10 +49,10 @@ var INI = {
     plane_cooldown: 2,
     HERO_cooldown: 1,
     HERO_yield: 0.5,
-    ammunition: 1000 * 25,
     power_cooldown: 60,
     parachute_speed: 100.0,
     landing_offset: 4,
+    armor: 12,
     scores: {
         hut: 10,
         tank: 100,
@@ -62,10 +60,16 @@ var INI = {
         help: -500,
         parachute: -50,
         box: 0,
+    },
+    damage: {
+        hut: 1,
+        tank: 3,
+        bomb: 6,
+        parachute: 1,
     }
 };
 var PRG = {
-    VERSION: "0.11.04",
+    VERSION: "0.12.00",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -94,6 +98,7 @@ var PRG = {
         $("#terrain_version").html(TERRAIN.VERSION);
         $("#lib_version").html(LIB.VERSION);
         $("#IA_version").html(IAM.version);
+        $("#speech_version").html(SPEECH.VERSION);
 
         $("#toggleHelp").click(function () {
             $("#help").toggle(400);
@@ -119,7 +124,7 @@ var PRG = {
 
         $(ENGINE.gameWindowId).width(ENGINE.gameWIDTH + 4);
         ENGINE.addBOX("TITLE", ENGINE.titleWIDTH, ENGINE.titleHEIGHT, ["title", "hiscore"], null);
-        ENGINE.addBOX("SCORE", ENGINE.scoreWIDTH, ENGINE.scoreHEIGHT, ["score_background", "canon_load", "score", "rate", "yield", "ammo", "stage", "lives"], null);
+        ENGINE.addBOX("SCORE", ENGINE.scoreWIDTH, ENGINE.scoreHEIGHT, ["score_background", "canon_load", "score", "rate", "yield", "ammo", "stage", "lives", "armor"], null);
         ENGINE.addBOX("ROOM", ENGINE.gameWIDTH, ENGINE.gameHEIGHT, ["background", "backplane2", "backplane1", "foreplane", "decor",
             "actors", "explosion", "text", "FPS", "button", "click"], null);
         ENGINE.addBOX("DOWN", ENGINE.bottomWIDTH, ENGINE.bottomHEIGHT, ["bottom", "bottomText"], null);
@@ -157,6 +162,7 @@ class GeneralBallisticObject {
         this.dir = dir;
         this.speed = speed;
         this.friendly = friendly;
+        this.damage = 0;
     }
     explode() {
         DESTRUCTION_ANIMATION.add(new Explosion(this.position));
@@ -185,7 +191,7 @@ class GeneralBallisticObject {
                 if (obj !== null && obj.checkHit(this)) {
                     PROFILE_BALLISTIC.remove(this.id);
                     if (id !== HERO.id) PROFILE_ACTORS.remove(id);
-                    obj.explode();
+                    obj.explode(this.damage);
                     GAME.addScore(obj.score);
                 }
             }
@@ -203,6 +209,7 @@ class Bomb extends GeneralBallisticObject {
         this.name = 'Bomb';
         this.rotSpeed = 2 / 16;
         this.setAngle(0.0);
+        this.damage = INI.damage.bomb;
     }
     setAngle(a) {
         this.angle = Math.min(a, 90.0);
@@ -236,6 +243,7 @@ class Ballistic extends GeneralBallisticObject {
         super(position, dir, speed, friendly);
         this.actor = new ACTOR('Cannonball');
         this.name = 'Bullet';
+        this.damage = INI.damage.tank;
     }
     getSprite() {
         return SPRITE.Cannonball;
@@ -257,6 +265,7 @@ class MotherActor {
         this.friendly = friendly;
         this.ignoreByManager = false;
         this.timer = null;
+        this.damage = 0;
     }
     checkHitActor(other) {
         return other.bottom >= this.top && other.top <= this.bottom;
@@ -314,6 +323,7 @@ class Hut extends Entity {
         this.bottom = ENGINE.gameHEIGHT;
         this.score = INI.scores.hut;
         this.name = "Hut";
+        this.damage = INI.damage.hut;
     }
 }
 class Tree extends Entity {
@@ -345,9 +355,6 @@ class Box extends Entity {
             Rate: 100,
             Ammo: 250,
         };
-        /*let rewards = {
-            Yield: 100,
-        };*/
         HERO.rewards[weightedRnd(rewards)]();
         AUDIO.PickBox.play();
     }
@@ -401,6 +408,7 @@ class Parachute extends GeneralActor {
         this.height = SPRITE[this.actor.name].height;
         this.bottom = 64;
         this.set();
+        this.damage = INI.damage.parachute;
     }
     move(lapsedTime) {
         this.bottom += lapsedTime * INI.parachute_speed / 1000;
@@ -455,6 +463,7 @@ class HelpPlane extends GeneralActor {
         }
     }
     dropParachute() {
+        if (HERO.dead) return;
         this.canShoot = false;
         PROFILE_ACTORS.add(new Parachute(Math.round(this.moveState.x), 0, false));
     }
@@ -519,6 +528,7 @@ class AirPlane extends GeneralActor {
         this.bombY = this.bottom + SPRITE.Bomb_00.height / 2;
     }
     shoot() {
+        if (HERO.dead) return;
         this.canShoot = false;
         this.timer = new CountDown(`${this.name}${this.id}-${Date.now()}`, RND(INI.plane_cooldown - 1, INI.plane_cooldown + 1), this.release.bind(this));
         this.setBombPosition();
@@ -553,6 +563,7 @@ class Tank extends GeneralActor {
         let position = forePlane.getPosition();
         this.setAngle(forePlane, position);
         this.setBarrel(position);
+        this.damage = INI.damage.tank;
     }
     release() {
         this.canShoot = true;
@@ -565,6 +576,7 @@ class Tank extends GeneralActor {
         }
     }
     move(lapsedTime) {
+        if (HERO.dead) return;
         this.actor.updateAnimation(lapsedTime * this.speed / INI.base_speed);
         this.moved = lapsedTime * this.speed / 1000;
         this.moveState.move(this.moved);
@@ -582,6 +594,7 @@ class Tank extends GeneralActor {
         this.bulletY = Math.round(this.canonRootY - this.width * 0.98 * Math.sin(Math.radians(this.actor.angle + this.canonAngle)));
     }
     shoot() {
+        if (HERO.dead) return;
         this.canShoot = false;
         this.timer = new CountDown(`${this.name}${this.id}-${Date.now()}`, RND(INI.tank_cooldown - 1, INI.tank_cooldown + 1), this.release.bind(this));
         this.calcBulletPosition();
@@ -744,8 +757,10 @@ var HERO = {
         this.moveState = new _1D_MoveState(Math.floor(LEFT + this.width / 2), 1);
         this.score = 0;
         this.cooldown = INI.HERO_cooldown;
-        this.ammunition = INI.ammunition;
+        this.ammunition = MAP[GAME.level].ammunition;
         this.yield = INI.HERO_yield;
+        this.armor = INI.armor;
+        this.dead = false;
         this.release();
         this.friendly = false;
         console.log("HERO", HERO);
@@ -754,11 +769,14 @@ var HERO = {
         this.canShoot = true;
     },
     draw() {
-        ENGINE.drawBottomLeft('actors', HERO.canonX, HERO.canonY, SPRITE[`Cev_${HERO.canonAngle + HERO.actor.angle}`]);
+        if (!HERO.dead) {
+            ENGINE.drawBottomLeft('actors', HERO.canonX, HERO.canonY, SPRITE[`Cev_${HERO.canonAngle + HERO.actor.angle}`]);
+        }
         ENGINE.drawBottomLeft('actors', HERO.actor.drawX, HERO.actor.drawY + 2, HERO.actor.sprite());
         ENGINE.layersToClear.add("actors");
     },
     move(time) {
+        if (HERO.dead) return;
         HERO.actor.updateAnimation(time * HERO.speed / INI.base_speed);
         let forePlane = MAP[GAME.level].map.planes[0];
         let planePosition = forePlane.getPosition();
@@ -829,7 +847,8 @@ var HERO = {
                         PROFILE_ACTORS.remove(id);
                         obj.explode();
                         GAME.addScore(obj.score);
-                        HERO.die();
+                        //HERO.die();
+                        HERO.explode(obj.damage);
                     }
                 }
             }
@@ -843,10 +862,8 @@ var HERO = {
     },
     shoot() {
         if (!this.canShoot) return;
-        //check ammo
         let ammoConsuption = Math.round(HERO.bulletSpeed / HERO.yield);
-        if (ammoConsuption > HERO.ammunition){
-            //fail shooting
+        if (ammoConsuption > HERO.ammunition) {
             AUDIO.FailShoot.play();
             return;
         }
@@ -866,26 +883,48 @@ var HERO = {
     },
     die() {
         console.warn("...HERO dies...   (not yet implemented)");
+        if (HERO.dead) return;
+        HERO.dead = true;
+        HERO.speed = 0;
+        let G = this.actor.getDraw();
+        this.actor = new Static_ACTOR("BrokenTank");
+        this.width = SPRITE[this.actor.name].width;
+        this.height = SPRITE[this.actor.name].height;
+        this.actor.setDraw(G.x, G.y);
+        let texts = [
+            "Oh no. It seems your tank is destroyed.",
+            "Another tank bites the dust."
+        ];
+        SPEECH.speak(texts.chooseRandom());
+    },
+    death() {
+        console.warn("...HERO death...   (not yet implemented)");
+        ENGINE.GAME.ANIMATION.stop(); //debug, placeholder
     },
     checkHit(ballistic) {
         let top = ballistic.position.y + ballistic.actor.height / 2 > this.top;
         let bottom = ballistic.position.y - ballistic.actor.height / 2 < this.bottom;
         return top && bottom;
     },
-    explode() {
+    hit(damage) {
+        HERO.armor -= damage;
+        HERO.armor = Math.max(0, HERO.armor);
+        TITLE.armor();
+        if (HERO.armor <= 0) {
+            HERO.die();
+        }
+    },
+    explode(damage) {
         DESTRUCTION_ANIMATION.add(new Explosion(new Grid(this.moveState.x, this.y - this.actor.height / 2)));
         AUDIO.Explosion.play();
-        this.die();
+        this.hit(damage);
     },
     rewards: {
         Ammo() {
-            console.log("filling ammo");
-            HERO.ammunition = INI.ammunition;
-            //repaint ammo
+            HERO.ammunition = MAP[GAME.level].ammunition;
             TITLE.ammo();
         },
         Yield() {
-            console.log("increasing yield");
             let Y = HERO.yields.indexOf(HERO.yield);
             if (Y >= 0 && Y < HERO.yields.length - 1) {
                 Y++;
@@ -893,20 +932,17 @@ var HERO = {
             HERO.yield = HERO.yields[Y];
             this.yieldTimer = new CountDown("Yield-" + Date.now(), INI.power_cooldown, HERO.rewards.resetYield);
             TITLE.yield();
-            //repaint yield
         },
         resetYield() {
-            console.log("reseting yield");
             let Y = HERO.yields.indexOf(HERO.yield);
             if (Y > 0 && Y < HERO.yields.length) {
                 Y--;
             } else Y = 0;
             HERO.yield = HERO.yields[Y];
             TITLE.yield();
-
+            AUDIO.PowerEnd.play();
         },
         Rate() {
-            console.log("increasing rate");
             let rate = HERO.rates.indexOf(HERO.cooldown);
             if (rate >= 0 && rate < HERO.rates.length - 1) {
                 rate++;
@@ -916,13 +952,13 @@ var HERO = {
             TITLE.rate();
         },
         resetRate() {
-            console.log("reseting rate");
             let rate = HERO.rates.indexOf(HERO.cooldown);
             if (rate > 0 && rate < HERO.rates.length) {
                 rate--;
             } else rate = 0;
             HERO.cooldown = HERO.rates[rate];
             TITLE.rate();
+            AUDIO.PowerEnd.play();
         },
     },
     rates: [1, 0.5, 0.1],
@@ -983,6 +1019,12 @@ var GAME = {
         console.log("level", level, "executes");
         GAME.drawFirstFrame(level);
         GAME.resume();
+        let texts = [
+            "Go on then. Bring them democracy.", 
+            "Free poor bastards",
+            "Let's invade this poor country. Maybe they have oil."
+        ];
+        SPEECH.speak(texts.chooseRandom());
     },
     levelEnd() {
         //SPEECH.speak("Good job!");
@@ -997,6 +1039,17 @@ var GAME = {
         GAME.levelCompleted = false;
         ENGINE.GAME.ANIMATION.waitThen(GAME.levelStart, 2);
     },
+    checkIfProcessesComplete() {
+        if (PROFILE_BALLISTIC.POOL.length !== 0) return;
+        if (DESTRUCTION_ANIMATION.POOL.length !== 0) return;
+        let waitFor = ['Plane', 'Help', "Parachute"];
+        for (let obj of PROFILE_ACTORS.POOL) {
+            if (obj === null) continue;
+            if (waitFor.includes(obj.name)) return;
+        }
+        console.log("SCENE completed!");
+        HERO.death();
+    },
     run(lapsedTime) {
         if (ENGINE.GAME.stopAnimation) return;
         GAME.respond(lapsedTime);
@@ -1005,9 +1058,9 @@ var GAME = {
         DESTRUCTION_ANIMATION.manage(lapsedTime);
         PROFILE_ACTORS.manage(lapsedTime);
         HERO.move(lapsedTime);
-
         ENGINE.TIMERS.update();
         GAME.frameDraw(lapsedTime);
+        if (HERO.dead) GAME.checkIfProcessesComplete();
     },
     deadRun(lapsedTime) {
         //DESTRUCTION_ANIMATION.manage(lapsedTime);
@@ -1109,7 +1162,7 @@ var GAME = {
         GAME.paused = false;
     },
     respond(lapsedTime) {
-        if (false) return;
+        if (HERO.dead) return;
         var map = ENGINE.GAME.keymap;
 
         if (map[ENGINE.KEY.map.F4]) {
@@ -1219,6 +1272,7 @@ var TITLE = {
         TITLE.rate();
         TITLE.yield();
         TITLE.ammo();
+        TITLE.armor();
         TITLE.score();
     },
     startTitle() {
@@ -1411,6 +1465,27 @@ var TITLE = {
         let Y = HERO.yields.indexOf(HERO.yield);
         CTX.fillText(`${HERO.yields[Y] * 100}%`, x, y + 1.5 * fs);
     },
+    armor() {
+        ENGINE.clearLayer("armor");
+        let CTX = LAYER.armor;
+        let armor = HERO.armor / INI.armor;
+        let style = "#AFA";
+        if (armor <= 0.5) style = "yellow";
+        if (armor <= 0.25) style = "red";
+        CTX.fillStyle = style;
+        CTX.strokeStyle = style;
+        let x = 320 + 32 + 200;
+        let fs = 14;
+        let y = 1.5 * fs;
+        CTX.font = fs + "px Alien";
+        CTX.textAlign = "left";
+        CTX.fillText("Armor:", x, y);
+        const w = 200;
+        const h = 24;
+        y += 5;
+        CTX.fillRect(x, y, w * armor, h);
+        CTX.strokeRect(x, y, w, h);
+    },
     ammo() {
         ENGINE.clearLayer("ammo");
         let CTX = LAYER.ammo;
@@ -1426,7 +1501,7 @@ var TITLE = {
         const w = 200;
         const h = 24;
         y += 5;
-        CTX.fillRect(x, y, w * HERO.ammunition / INI.ammunition, h);
+        CTX.fillRect(x, y, w * HERO.ammunition / MAP[GAME.level].ammunition, h);
         CTX.strokeRect(x, y, w, h);
     },
     canon_load() {
@@ -1488,7 +1563,7 @@ var TITLE = {
 // -- main --
 $(function () {
     PRG.INIT();
-    //SPEECH.init();
+    SPEECH.init();
     PRG.setup();
     ENGINE.LOAD.preload();
     SCORE.init("SC", "GhostRun", 10, 2500);

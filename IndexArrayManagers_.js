@@ -6,6 +6,7 @@
 
 var IAM = {
     version: "1.03.DEV",
+    POOL: null,
     draw() {
         for (let obj of this.POOL) {
             if (obj) obj.draw(this.map);

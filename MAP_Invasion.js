@@ -11,10 +11,10 @@ var MAP = {
         huts: 25,
         textures: ["Grass", "DarkGreyRock", "GreyRock"],
         colors: ["#0E0", '#444', '#888'],
-        tank_spawn: 10,
-        plane_spawn: 20,
-        //help_spawn: 20,
-        help_spawn: 5,
+        tank_spawn: 30,
+        plane_spawn: 60,
+        help_spawn: 10,
+        ammunition: 1000 * 40,
     },
     create(level, plane_layers) {
         let W = ENGINE.gameWIDTH * MAP[level].width;
@@ -93,6 +93,7 @@ var SPAWN = {
         }
     },
     spawnTank() {
+        if (HERO.dead) return;
         let map = MAP[GAME.level].map;
         let position = map.planes[0].getPosition();
         const timerId = 'tankSpawn';
@@ -106,6 +107,7 @@ var SPAWN = {
         SPAWN.tankTimer = new CountDown(timerId, RND(MAP[GAME.level].tank_spawn - 1, MAP[GAME.level].tank_spawn + 1), SPAWN.spawnTank);
     },
     spawnPlane() {
+        if (HERO.dead) return;
         let map = MAP[GAME.level].map;
         let position = map.planes[0].getPosition();
         const timerId = 'planeSpawn';
@@ -119,6 +121,7 @@ var SPAWN = {
         SPAWN.planeTimer = new CountDown(timerId, RND(MAP[GAME.level].plane_spawn - 2, MAP[GAME.level].plane_spawn + 2), SPAWN.spawnPlane);
     },
     spawnHelp() {
+        if (HERO.dead) return;
         let map = MAP[GAME.level].map;
         let x = map.planes[0].getPosition();
         if (x >= map.planes[0].planeLimits.rightStop - ENGINE.gameWIDTH) {

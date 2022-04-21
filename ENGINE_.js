@@ -2161,6 +2161,8 @@ class ACTOR {
     this.resetIndexes();
     if (this.class !== null) this.refresh();
     this.animationThrough = false;
+    this.drawX = null;
+    this.drawY = null;
   }
   simplify(name) {
     this.class = name;
@@ -2250,6 +2252,13 @@ class ACTOR {
     this.resetIndexes();
     this.animateMove(this.orientation);
   }
+  setDraw(x, y) {
+    this.drawX = x;
+    this.drawY = y;
+  }
+  getDraw() {
+    return new Grid(this.drawX, this.drawY);
+  }
 }
 class Rotating_ACTOR extends ACTOR {
   constructor(sprite_class, x, y, fps) {
@@ -2262,10 +2271,10 @@ class Rotating_ACTOR extends ACTOR {
     this.x = x;
     this.y = y;
   }
-  setDraw(x, y) {
+  /*setDraw(x, y) {
     this.drawX = x;
     this.drawY = y;
-  }
+  }*/
   setAngle(angle) {
     this.angle = angle;
   }
@@ -2273,8 +2282,8 @@ class Rotating_ACTOR extends ACTOR {
     return SPRITE[`${this.name}_${this.angle}`];
   }
 }
-class Static_ACTOR{
-  constructor(spriteClass){
+class Static_ACTOR {
+  constructor(spriteClass) {
     this._sprite = SPRITE[spriteClass];
     this.name = spriteClass;
     this.width = this._sprite.width;
@@ -2400,7 +2409,7 @@ class _1D_MoveState {
   getX() {
     return Math.round(this.x);
   }
-  setX(x){
+  setX(x) {
     console.assert(Number.isInteger(x), "X must be integer!");
     this.x = x;
   }

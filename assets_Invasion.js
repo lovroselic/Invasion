@@ -21,6 +21,7 @@ var LoadSprites = [
     { srcName: "B17.png", name: "HelpPlane" },
     { srcName: "Box.png", name: "Box" },
     { srcName: "Parachute.png", name: "Parachute" },
+    { srcName: "BrokenTank.png", name: "BrokenTank" },
 ];
 for (let i = 1; i <= 11; i++) {
     LoadSprites.push({ srcName: `plane${i}.png`, name: `Plane${i}` });
@@ -39,6 +40,7 @@ var LoadAudio = [
     { srcName: "UseScroll.mp3", name: "PickBox" },
     { srcName: "Fuse.mp3", name: "FailShoot" },
     { srcName: "TankFiring.mp3", name: "Shoot" },
+    { srcName: "Failed magic.mp3", name: "PowerEnd" },
 ];
 var ExtendSheetTag = [];
 var LoadSheetSequences = [
