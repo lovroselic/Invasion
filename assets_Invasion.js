@@ -22,6 +22,7 @@ var LoadSprites = [
     { srcName: "Box.png", name: "Box" },
     { srcName: "Parachute.png", name: "Parachute" },
     { srcName: "BrokenTank.png", name: "BrokenTank" },
+    { srcName: "LittleTank.png", name: "LittleTank" },
 ];
 for (let i = 1; i <= 11; i++) {
     LoadSprites.push({ srcName: `plane${i}.png`, name: `Plane${i}` });

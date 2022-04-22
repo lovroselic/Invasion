@@ -69,7 +69,7 @@ var INI = {
     }
 };
 var PRG = {
-    VERSION: "0.12.00",
+    VERSION: "0.12.01",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -354,6 +354,7 @@ class Box extends Entity {
             Yield: 100,
             Rate: 100,
             Ammo: 250,
+            Armor: 50,
         };
         HERO.rewards[weightedRnd(rewards)]();
         AUDIO.PickBox.play();
@@ -920,6 +921,14 @@ var HERO = {
         this.hit(damage);
     },
     rewards: {
+        Armor(){
+            if (HERO.armor === INI.armor) {
+                return HERO.rewards.Rate();
+            }
+            HERO.armor += RND(1,2) * 0.25 * INI.armor;
+            HERO.armor = Math.min(HERO.armor, INI.armor);
+            TITLE.armor();
+        },
         Ammo() {
             HERO.ammunition = MAP[GAME.level].ammunition;
             TITLE.ammo();
@@ -1020,7 +1029,7 @@ var GAME = {
         GAME.drawFirstFrame(level);
         GAME.resume();
         let texts = [
-            "Go on then. Bring them democracy.", 
+            "Go on then. Bring them democracy.",
             "Free poor bastards",
             "Let's invade this poor country. Maybe they have oil."
         ];
@@ -1273,6 +1282,8 @@ var TITLE = {
         TITLE.yield();
         TITLE.ammo();
         TITLE.armor();
+        TITLE.lives();
+        TITLE.stage();
         TITLE.score();
     },
     startTitle() {
@@ -1304,7 +1315,7 @@ var TITLE = {
         TITLE.scoreBackground();
     },
     scoreBackground() {
-        ENGINE.fillLayer("score_background", "#222");
+        ENGINE.fillLayer("score_background", "#000");
     },
     topBackground() {
         var CTX = LAYER.title;
@@ -1434,8 +1445,36 @@ var TITLE = {
             TITLE.lives();
         }
     },
-    lives() { },
-    stage() { },
+    lives() {
+        ENGINE.clearLayer("lives");
+        let CTX = LAYER.lives;
+        let style = "#DEA";
+        CTX.fillStyle = style;
+        let x = 776;
+        let fs = 14;
+        let y = 1.5 * fs;
+        CTX.font = fs + "px Alien";
+        CTX.textAlign = "left";
+        CTX.fillText("Tanks:", x, y);
+        y += 5;
+        for (let t = 0; t < GAME.lives; t++) {
+            ENGINE.draw("lives", x, y, SPRITE.LittleTank);
+            x += 16;
+        }
+    },
+    stage() {
+        ENGINE.clearLayer("stage");
+        let CTX = LAYER.stage;
+        let style = "#DEA";
+        CTX.fillStyle = style;
+        let x = 928;
+        let fs = 14;
+        let y = 1.5 * fs;
+        CTX.font = fs + "px Alien";
+        CTX.textAlign = "center";
+        CTX.fillText("Stage:", x, y);
+        CTX.fillText(`${GAME.level}`, x, y + 1.5 * fs);
+    },
     rate() {
         ENGINE.clearLayer("rate");
         let CTX = LAYER.rate;
@@ -1474,7 +1513,7 @@ var TITLE = {
         if (armor <= 0.25) style = "red";
         CTX.fillStyle = style;
         CTX.strokeStyle = style;
-        let x = 320 + 32 + 200;
+        let x = 552;
         let fs = 14;
         let y = 1.5 * fs;
         CTX.font = fs + "px Alien";
