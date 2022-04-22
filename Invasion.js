@@ -69,7 +69,7 @@ var INI = {
     }
 };
 var PRG = {
-    VERSION: "0.12.01",
+    VERSION: "0.12.02",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -764,7 +764,7 @@ var HERO = {
         this.dead = false;
         this.release();
         this.friendly = false;
-        console.log("HERO", HERO);
+        //console.log("HERO", HERO);
     },
     release() {
         this.canShoot = true;
@@ -899,8 +899,19 @@ var HERO = {
         SPEECH.speak(texts.chooseRandom());
     },
     death() {
-        console.warn("...HERO death...   (not yet implemented)");
-        ENGINE.GAME.ANIMATION.stop(); //debug, placeholder
+        GAME.lives--;
+        TITLE.lives();
+        if (GAME.lives === 0) {
+            return GAME.over();
+        }
+        ENGINE.TEXT.centeredText(
+            "Press ENTER to try again",
+            ENGINE.gameWIDTH,
+            ENGINE.gameHEIGHT / 2
+        );
+        ENGINE.GAME.ANIMATION.next(
+            ENGINE.KEY.waitFor.bind(null, GAME.levelStart, "enter")
+        );
     },
     checkHit(ballistic) {
         let top = ballistic.position.y + ballistic.actor.height / 2 > this.top;
@@ -921,11 +932,11 @@ var HERO = {
         this.hit(damage);
     },
     rewards: {
-        Armor(){
+        Armor() {
             if (HERO.armor === INI.armor) {
                 return HERO.rewards.Rate();
             }
-            HERO.armor += RND(1,2) * 0.25 * INI.armor;
+            HERO.armor += RND(1, 2) * 0.25 * INI.armor;
             HERO.armor = Math.min(HERO.armor, INI.armor);
             TITLE.armor();
         },
@@ -994,18 +1005,20 @@ var GAME = {
         ENGINE.TEXT.setRD(GameRD);
         ENGINE.watchVisibility(GAME.lostFocus);
         ENGINE.GAME.start(16);
-        GAME.prepareForRestart();
+        //GAME.prepareForRestart();
         GAME.completed = false;
         GAME.won = false;
         GAME.level = 1;
         GAME.score = 0;
         GAME.lives = 3;
-        HERO.startInit();
+        //HERO.startInit();
         GAME.fps = new FPS_measurement();
         GAME.levelStart();
     },
     levelStart() {
         console.log("starting level", GAME.level);
+        HERO.startInit();
+        GAME.prepareForRestart();
         GAME.initLevel(GAME.level);
         GAME.continueLevel(GAME.level);
     },
@@ -1102,6 +1115,9 @@ var GAME = {
         GAME.planes.forEach(ENGINE.layersToClear.add, ENGINE.layersToClear);
     },
     prepareForRestart() {
+        let clear = ["background", "backplane2", "backplane1", "foreplane", "decor","actors", "explosion", "text", "FPS", "button"];
+        clear.forEach(item => ENGINE.layersToClear.add(item));
+        ENGINE.clearLayerStack();
         ENGINE.TIMERS.clear();
     },
     setup() {
@@ -1267,6 +1283,11 @@ var GAME = {
             CTX.fillRect(0, 0, ENGINE.gameWIDTH, ENGINE.gameHEIGHT);
         }
     },
+    over() {
+        console.warn("GAME OVER not implemented");
+        ENGINE.GAME.ANIMATION.stop(); //debug, placeholder
+
+    }
 };
 var TITLE = {
     firstFrame() {
