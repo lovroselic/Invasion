@@ -699,11 +699,12 @@ var ENGINE = {
     return cname;
   },
   watchVisibility(func) {
-    document.addEventListener("visibilitychange", function () {
-      if (document.visibilityState !== "visible") {
-        func.call();
-      }
-    });
+    document.addEventListener("visibilitychange", ENGINE._watch.bind(null, func), false);
+  },
+  _watch(func) {
+    if (document.visibilityState !== "visible") {
+      func.call();
+    }
   },
   cutGrid(layer, point) {
     var CTX = layer;

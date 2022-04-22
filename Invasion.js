@@ -8,9 +8,8 @@
 /*
       
 TODO:
-    indicate hero cooldown on board
-    indicate ammunition status
-    indicate cooldown status
+    GAME OVER
+    MAIN TITLE
 
 known bugs: 
 
@@ -53,6 +52,7 @@ var INI = {
     parachute_speed: 100.0,
     landing_offset: 4,
     armor: 12,
+    //armor: 1,
     scores: {
         hut: 10,
         tank: 100,
@@ -69,7 +69,7 @@ var INI = {
     }
 };
 var PRG = {
-    VERSION: "0.12.02",
+    VERSION: "0.12.03",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -883,7 +883,6 @@ var HERO = {
         AUDIO.Shoot.play();
     },
     die() {
-        console.warn("...HERO dies...   (not yet implemented)");
         if (HERO.dead) return;
         HERO.dead = true;
         HERO.speed = 0;
@@ -894,7 +893,9 @@ var HERO = {
         this.actor.setDraw(G.x, G.y);
         let texts = [
             "Oh no. It seems your tank is destroyed.",
-            "Another tank bites the dust."
+            "Another tank bites the dust.",
+            "You died because you are hopeless.",
+            "You are just bad. Perhaps you should stop playing."
         ];
         SPEECH.speak(texts.chooseRandom());
     },
@@ -904,14 +905,8 @@ var HERO = {
         if (GAME.lives === 0) {
             return GAME.over();
         }
-        ENGINE.TEXT.centeredText(
-            "Press ENTER to try again",
-            ENGINE.gameWIDTH,
-            ENGINE.gameHEIGHT / 2
-        );
-        ENGINE.GAME.ANIMATION.next(
-            ENGINE.KEY.waitFor.bind(null, GAME.levelStart, "enter")
-        );
+        ENGINE.TEXT.centeredText("Press <ENTER> to try again", ENGINE.gameWIDTH, ENGINE.gameHEIGHT / 2);
+        ENGINE.GAME.ANIMATION.next(ENGINE.KEY.waitFor.bind(null, GAME.levelStart, "enter"));
     },
     checkHit(ballistic) {
         let top = ballistic.position.y + ballistic.actor.height / 2 > this.top;
@@ -1000,18 +995,15 @@ var GAME = {
         $("#pause").prop("disabled", false);
         $("#pause").off();
         GAME.paused = false;
-
         let GameRD = new RenderData("Alien", 60, "#DDD", "text", "#000", 2, 2, 2);
         ENGINE.TEXT.setRD(GameRD);
         ENGINE.watchVisibility(GAME.lostFocus);
         ENGINE.GAME.start(16);
-        //GAME.prepareForRestart();
         GAME.completed = false;
         GAME.won = false;
         GAME.level = 1;
         GAME.score = 0;
         GAME.lives = 3;
-        //HERO.startInit();
         GAME.fps = new FPS_measurement();
         GAME.levelStart();
     },
@@ -1029,7 +1021,6 @@ var GAME = {
         DESTRUCTION_ANIMATION.init(MAP[level].map.planes[0]);
         PROFILE_ACTORS.init(MAP[level].map.planes[0]);
         DECOR.init(MAP[level].map.planes[0]);
-
         PROFILE_ACTORS.add(HERO);
         SPAWN.spawn(level);
     },
@@ -1039,12 +1030,14 @@ var GAME = {
     },
     levelExecute(level) {
         console.log("level", level, "executes");
+
         GAME.drawFirstFrame(level);
         GAME.resume();
         let texts = [
             "Go on then. Bring them democracy.",
             "Free poor bastards",
-            "Let's invade this poor country. Maybe they have oil."
+            "Let's invade this poor country. Maybe they have oil.",
+            "They have stockpiled biological and chemical weapons in their huts. Kill them all."
         ];
         SPEECH.speak(texts.chooseRandom());
     },
@@ -1115,7 +1108,7 @@ var GAME = {
         GAME.planes.forEach(ENGINE.layersToClear.add, ENGINE.layersToClear);
     },
     prepareForRestart() {
-        let clear = ["background", "backplane2", "backplane1", "foreplane", "decor","actors", "explosion", "text", "FPS", "button"];
+        let clear = ["background", "backplane2", "backplane1", "foreplane", "decor", "actors", "explosion", "text", "FPS", "button"];
         clear.forEach(item => ENGINE.layersToClear.add(item));
         ENGINE.clearLayerStack();
         ENGINE.TIMERS.clear();
@@ -1165,6 +1158,7 @@ var GAME = {
     },
     pause() {
         if (GAME.paused) return;
+        if (HERO.dead) return;
         if (false || GAME.levelCompleted) return;
         console.log("%cGAME paused.", PRG.CSS);
         $("#pause").prop("value", "Resume Game [F4]");
@@ -1285,6 +1279,9 @@ var GAME = {
     },
     over() {
         console.warn("GAME OVER not implemented");
+        ENGINE.TEXT.centeredText("Game Over", ENGINE.gameWIDTH, ENGINE.gameHEIGHT / 2);
+
+
         ENGINE.GAME.ANIMATION.stop(); //debug, placeholder
 
     }
