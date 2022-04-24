@@ -32,7 +32,6 @@ var LoadSheets = [];
 var LoadRotated = [
     { srcName: "cevSilver.png", name: "Cev", rotate: { first: -150, last: 90, step: 1 } },
     { srcName: "cevSilverLeft.png", name: "CevLeft", rotate: { first: -90, last: 150, step: 1 } },
-    //{ srcName: "bomb1.png", name: "Bomb", rotate: { first: 0, last: 180, step: 1 } },
 ];
 var LoadPacks = [];
 var LoadExtWasm = [];
@@ -42,6 +41,7 @@ var LoadAudio = [
     { srcName: "Fuse.mp3", name: "FailShoot" },
     { srcName: "TankFiring.mp3", name: "Shoot" },
     { srcName: "Failed magic.mp3", name: "PowerEnd" },
+    { srcName: "Black Dog's Chain - LaugingSkull.mp3", name: "Title" }
 ];
 var ExtendSheetTag = [];
 var LoadSheetSequences = [

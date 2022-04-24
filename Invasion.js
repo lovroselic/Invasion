@@ -8,6 +8,7 @@
 /*
       
 TODO:
+    spawn delay
     GAME OVER
     MAIN TITLE
 
@@ -69,7 +70,7 @@ var INI = {
     }
 };
 var PRG = {
-    VERSION: "0.12.03",
+    VERSION: "0.12.04",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -353,7 +354,7 @@ class Box extends Entity {
         let rewards = {
             Yield: 100,
             Rate: 100,
-            Ammo: 250,
+            Ammo: 100,
             Armor: 50,
         };
         HERO.rewards[weightedRnd(rewards)]();
@@ -895,7 +896,8 @@ var HERO = {
             "Oh no. It seems your tank is destroyed.",
             "Another tank bites the dust.",
             "You died because you are hopeless.",
-            "You are just bad. Perhaps you should stop playing."
+            "You are just bad. Perhaps you should stop playing.",
+            "You died. You should aim better. You suck."
         ];
         SPEECH.speak(texts.chooseRandom());
     },
@@ -1030,14 +1032,13 @@ var GAME = {
     },
     levelExecute(level) {
         console.log("level", level, "executes");
-
         GAME.drawFirstFrame(level);
         GAME.resume();
         let texts = [
             "Go on then. Bring them democracy.",
-            "Free poor bastards",
+            "Free poor bastards from themselves.",
             "Let's invade this poor country. Maybe they have oil.",
-            "They have stockpiled biological and chemical weapons in their huts. Kill them all."
+            "They have stockpiled biological and chemical weapons in their huts. Destroy them all."
         ];
         SPEECH.speak(texts.chooseRandom());
     },
@@ -1077,13 +1078,6 @@ var GAME = {
         GAME.frameDraw(lapsedTime);
         if (HERO.dead) GAME.checkIfProcessesComplete();
     },
-    deadRun(lapsedTime) {
-        //DESTRUCTION_ANIMATION.manage(lapsedTime);
-        GAME.deadFrameDraw(lapsedTime);
-    },
-    deadFrameDraw(lapsedTime) {
-        ENGINE.clearLayerStack();
-    },
     frameDraw(lapsedTime) {
         ENGINE.clearLayerStack();
         TERRAIN.drawParallaxSlice(MAP[GAME.level].map, ENGINE.gameWIDTH);
@@ -1109,8 +1103,7 @@ var GAME = {
     },
     prepareForRestart() {
         let clear = ["background", "backplane2", "backplane1", "foreplane", "decor", "actors", "explosion", "text", "FPS", "button"];
-        clear.forEach(item => ENGINE.layersToClear.add(item));
-        ENGINE.clearLayerStack();
+        ENGINE.clearManylayers(clear);
         ENGINE.TIMERS.clear();
     },
     setup() {
@@ -1126,16 +1119,16 @@ var GAME = {
     },
     setTitle() {
         const text = GAME.generateTitleText();
-        const RD = new RenderData("Adore", 16, "#0E0", "bottomText");
+        const RD = new RenderData("Alien", 16, "#0E0", "bottomText");
         const SQ = new Square(0, 0, LAYER.bottomText.canvas.width, LAYER.bottomText.canvas.height);
         GAME.movingText = new MovingText(text, 4, RD, SQ);
     },
     generateTitleText() {
         let text = `${PRG.NAME} ${PRG.VERSION
             }, a game by Lovro Selic, ${"\u00A9"} C00LSch00L ${PRG.YEAR
-            }. Title screen graphics by Trina Selic. Music: 'Determination' written and performed by LaughingSkull, ${"\u00A9"
-            } 2007 Lovro Selic. `;
-        text += "     ENGINE, SPEECH, GRID, MAZE, AI and GAME code by Lovro Selic using JavaScript. ";
+            }. Music: 'Black Dog's Chain' written and performed by LaughingSkull, ${"\u00A9"
+            } 2018 Lovro Selic. `;
+        text += "     ENGINE, SPEECH, GRID, TERRAIN, IAM libraries and GAME code by Lovro Selic using JavaScript. ";
         text = text.split("").join(String.fromCharCode(8202));
         return text;
     },
@@ -1238,17 +1231,6 @@ var GAME = {
         GAME.fps.update(fps);
         CTX.fillText(GAME.fps.getFps(), 5, 10);
     },
-    endLaugh() {
-        ENGINE.GAME.ANIMATION.stop();
-        GAME.lives--;
-        if (GAME.lives < 0 && !DEBUG.INF_LIVES) {
-            console.log("GAME OVER");
-            TITLE.gameOver();
-            GAME.end();
-        } else {
-            GAME.continueLevel(GAME.level);
-        }
-    },
     end() {
         ENGINE.showMouse();
         AUDIO.Death.onended = GAME.checkScore;
@@ -1257,7 +1239,6 @@ var GAME = {
     checkScore() {
         SCORE.checkScore(GAME.score);
         SCORE.hiScore();
-        TITLE.startTitle();
     },
     addScore(score) {
         GAME.score += score;
@@ -1278,12 +1259,11 @@ var GAME = {
         }
     },
     over() {
-        console.warn("GAME OVER not implemented");
-        ENGINE.TEXT.centeredText("Game Over", ENGINE.gameWIDTH, ENGINE.gameHEIGHT / 2);
-
-
-        ENGINE.GAME.ANIMATION.stop(); //debug, placeholder
-
+        TITLE.gameOver();
+        ENGINE.showMouse();
+        GAME.checkScore();
+        TITLE.hiScore();
+        ENGINE.GAME.ANIMATION.next(ENGINE.KEY.waitFor.bind(null, TITLE.startTitle, "enter"));
     }
 };
 var TITLE = {
@@ -1305,26 +1285,61 @@ var TITLE = {
         TITLE.score();
     },
     startTitle() {
-        /*
         $("#pause").prop("disabled", true);
         if (AUDIO.Title) AUDIO.Title.play();
         TITLE.clearAllLayers();
         TITLE.blackBackgrounds();
-        TITLE.titlePlot();
-        ENGINE.draw("background", 0, 0, TEXTURE.GhostRun2_cover);
+        TITLE.mainTitle();
         $("#DOWN")[0].scrollIntoView();
-
         ENGINE.topCanvas = ENGINE.getCanvasName("ROOM");
         TITLE.drawButtons();
         GAME.setTitle();
         ENGINE.GAME.start(16);
         ENGINE.GAME.ANIMATION.next(GAME.runTitle);
-        */
-        GAME.start();
+    },
+    mainTitle() {
+        let CTX = LAYER.background;
+        CTX.shadowColor = "#000";
+        CTX.shadowOffsetX = 0;
+        CTX.shadowOffsetY = 0;
+        CTX.shadowBlur = 3;
+        let startFS = 200;
+        CTX.textAlign = "center";
+        let x = ENGINE.gameWIDTH / 2;
+        let y = ENGINE.gameHEIGHT / 4;
+        let ITER = 32;
+        let step = 8;
+        let fStep = 2;
+        let R = ITER;
+        let G = ITER * step;
+        let B = 255 - step * ITER;
+        for (let i = 0; i < ITER; i++) {
+            CTX.font = (startFS - fStep * i) + "px Alien";
+            CTX.fillStyle = `rgb(${R - i}, ${G - step * i}, ${B + step * i})`;
+            CTX.fillText(PRG.NAME, x, y - i * fStep / 2);
+        }
+        CTX.fillStyle = "silver";
+        CTX.shadowColor = "#dec1A3";
+        CTX.shadowOffsetX = 1;
+        CTX.shadowOffsetY = 1;
+        CTX.shadowBlur = 2;
+        y = ENGINE.gameHEIGHT / 2;
+        let fs = 24;
+        CTX.font = fs + "px Alien";
+        CTX.fillText('by', x, y);
+        y += 1.5 * fs;
+        CTX.fillText('Lovro Selic', x, y);
+
+        ENGINE.resetShadow(CTX);
+        ENGINE.drawScaled('background', 224, 492, SPRITE.Cev_0, 4);
+        ENGINE.drawScaled('background', 128, 460, SPRITE.Tank_00, 4);
+        ENGINE.drawScaled('background', 928, 492, SPRITE.CevLeft_0, 4);
+        ENGINE.drawScaled('background', 928, 460, SPRITE.BlueTank_00, 4);
     },
     clearAllLayers() {
-        ENGINE.layersToClear = new Set(["text", "actors", "explosion", "button", "title"]);
-        ENGINE.clearLayerStack();
+        let clear = ["actors", "title", "background", "backplane2", "backplane1", "foreplane", "decor", "actors", "explosion", "text", "FPS", "button",
+            "score_background", "canon_load", "score", "rate", "yield", "ammo", "stage", "lives", "armor", "hiscore"];
+        ENGINE.clearManylayers(clear);
     },
     blackBackgrounds() {
         this.topBackground();
@@ -1403,7 +1418,7 @@ var TITLE = {
         ENGINE.clearLayer("button");
         FORM.BUTTON.POOL.clear();
         let x = 36;
-        let y = 720;
+        let y = 720 - 32;
         let w = 166;
         let h = 24;
         let startBA = new Area(x, y, w, h);
@@ -1421,6 +1436,7 @@ var TITLE = {
         AUDIO.Title.play();
     },
     hiScore() {
+        ENGINE.clearLayer("hiscore");
         var CTX = LAYER.hiscore;
         var fs = 16;
         CTX.font = fs + "px Alien";
@@ -1589,7 +1605,7 @@ var TITLE = {
         var x = ENGINE.gameWIDTH / 2;
         var y = ENGINE.gameHEIGHT / 2;
         var fs = 64;
-        CTX.font = fs + "px Arcade";
+        CTX.font = fs + "px Alien";
         var txt = CTX.measureText("GAME OVER");
         var gx = x - txt.width / 2;
         var gy = y - fs;

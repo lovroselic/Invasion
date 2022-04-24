@@ -30,7 +30,7 @@ var DownRight = new Vector(1, 1);
 var DownLeft = new Vector(-1, 1);
 
 var ENGINE = {
-  VERSION: "3.08.DEV",
+  VERSION: "3.09.DEV",
   CSS: "color: #0FA",
   INI: {
     ANIMATION_INTERVAL: 16,
@@ -150,6 +150,10 @@ var ENGINE = {
     CTX.fillStyle = pat;
     CTX.fillRect(0, 0, CTX.canvas.width, CTX.canvas.height);
   },
+  clearManylayers(layers) {
+    layers.forEach(item => ENGINE.layersToClear.add(item));
+    ENGINE.clearLayerStack();
+  },
   clearLayer(layer) {
     let CTX = LAYER[layer];
     CTX.clearRect(0, 0, CTX.canvas.width, CTX.canvas.height);
@@ -249,6 +253,10 @@ var ENGINE = {
   draw(layer, X, Y, image) {
     let CTX = LAYER[layer];
     CTX.drawImage(image, X, Y);
+  },
+  drawScaled(layer, X, Y, image, scale = 1) {
+    let CTX = LAYER[layer];
+    CTX.drawImage(image, 0, 0, image.width, image.height, X, Y, image.width * scale, image.height * scale);
   },
   drawBottomLeft(layer, X, Y, image) {
     let CTX = LAYER[layer];
