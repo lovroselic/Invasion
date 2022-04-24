@@ -6,7 +6,7 @@
 
 //////////////////engine.js/////////////////////////
 //                                                //
-//      ENGINE version 3.03        by LS          //
+//      ENGINE version 3.10        by LS          //
 //                                                //
 ////////////////////////////////////////////////////
 
@@ -30,7 +30,7 @@ var DownRight = new Vector(1, 1);
 var DownLeft = new Vector(-1, 1);
 
 var ENGINE = {
-  VERSION: "3.09.DEV",
+  VERSION: "3.10",
   CSS: "color: #0FA",
   INI: {
     ANIMATION_INTERVAL: 16,
@@ -2035,6 +2035,7 @@ var PATTERN = {
   }
 };
 ///////////////////////////obsolete part/////////////////////////
+/*
 var AnimationSPRITE = function (x, y, type, howmany) {
   this.x = x;
   this.y = y;
@@ -2136,6 +2137,7 @@ var EXPLOSIONS = {
     }
   }
 };
+*/
 //////////////////////////obsolete part end////////////////////////////////
 class LiveSPRITE {
   constructor(type, left, right, front, back) {
@@ -2280,10 +2282,6 @@ class Rotating_ACTOR extends ACTOR {
     this.x = x;
     this.y = y;
   }
-  /*setDraw(x, y) {
-    this.drawX = x;
-    this.drawY = y;
-  }*/
   setAngle(angle) {
     this.angle = angle;
   }
@@ -2722,7 +2720,6 @@ class Timer {
     this.delta = template.delta;
   }
   update() {
-    //this.now = Math.floor((this.delta + (Date.now() - this.start)) / 1000);
     this.now = (this.delta + (Date.now() - this.start)) / 1000;
     if (this.constructor.name === "CountDown") {
       if (this.now >= this.value) this.quit();

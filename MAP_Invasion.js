@@ -103,7 +103,6 @@ var SPAWN = {
         let offset = 48;
         let x = position + ENGINE.gameWIDTH + offset;
         if (x >= map.planes[0].planeLimits.rightStop) {
-            console.log("spawning tanks terminated");
             return;
         }
         PROFILE_ACTORS.add(new Tank(x));
@@ -117,7 +116,6 @@ var SPAWN = {
         let offset = 64;
         let x = position + ENGINE.gameWIDTH + offset;
         if (x >= map.planes[0].planeLimits.rightStop) {
-            console.log("spawning planes terminated");
             return;
         }
         PROFILE_ACTORS.add(new AirPlane(x));
@@ -128,7 +126,6 @@ var SPAWN = {
         let map = MAP[GAME.level].map;
         let x = map.planes[0].getPosition();
         if (x >= map.planes[0].planeLimits.rightStop - ENGINE.gameWIDTH) {
-            console.log("spawning help terminated");
             return;
         }
         const timerId = 'helpSpawn';

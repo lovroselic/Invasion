@@ -1,5 +1,5 @@
-//Assets for GhostRun2
-console.log("Assets for template ready.");
+//Assets for Invasion
+console.log("Assets for INVASION ready.");
 
 var LoadTextures = [
     { srcName: "grass1.png", name: "Grass" },
@@ -56,6 +56,3 @@ var LoadFonts = [
     { srcName: "C64_Pro-STYLE.ttf", name: "C64" },
     { srcName: "CosmicAlien.ttf", name: "Alien" },
 ];
-
-//////////////////Preprocess data ////////////////////////////
-var AssetNamesToRotate = ["Tank"];

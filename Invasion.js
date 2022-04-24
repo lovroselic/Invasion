@@ -8,12 +8,11 @@
 /*
       
 TODO:
-    spawn delay
-    GAME OVER
-    MAIN TITLE
+    End LEvel
+    levels
 
 known bugs: 
-
+    asset not ready for rotation
  */
 ////////////////////////////////////////////////////
 
@@ -70,7 +69,7 @@ var INI = {
     }
 };
 var PRG = {
-    VERSION: "0.12.04",
+    VERSION: "0.13.00",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
