@@ -6,6 +6,11 @@ class StaticPoint {
     }
 }
 var MAP = {
+    createNewLevel(level) {
+        if (!MAP.hasOwnProperty(level)) {
+            MAP[level] = $.extend(true, {}, MAP[INI.final_level]);
+        }
+    },
     1: {
         width: 6,
         huts: 25,
@@ -15,6 +20,77 @@ var MAP = {
         plane_spawn: 60,
         help_spawn: 10,
         ammunition: 1000 * 40,
+    },
+    2: {
+        width: 6,
+        huts: 25,
+        textures: ["Sand", "Grass", "DarkGreyRock"],
+        colors: ["#0E0", '#444', '#888'],
+        tank_spawn: 25,
+        plane_spawn: 40,
+        help_spawn: 15,
+        ammunition: 1000 * 35,
+    },
+    3: {
+        width: 6,
+        huts: 25,
+        textures: ["Snow", "GreyRock", "DarkGreyRock"],
+        colors: ["#0E0", '#444', '#888'],
+        tank_spawn: 20,
+        plane_spawn: 30,
+        help_spawn: 20,
+        ammunition: 1000 * 30,
+    },
+    4: {
+        width: 6,
+        huts: 25,
+        textures: ["Grass", "DarkGreyRock", "Snow"],
+        colors: ["#0E0", '#444', '#888'],
+        tank_spawn: 15,
+        plane_spawn: 25,
+        help_spawn: 25,
+        ammunition: 1000 * 30,
+    },
+    5: {
+        width: 6,
+        huts: 30,
+        textures: ["Sand", "DarkGreyRock", "Snow"],
+        colors: ["#0E0", '#444', '#888'],
+        tank_spawn: 10,
+        plane_spawn: 20,
+        help_spawn: 30,
+        ammunition: 1000 * 25,
+    },
+    6: {
+        width: 6,
+        huts: 30,
+        textures: ["Grass", "DarkGreyRock", "Snow"],
+        colors: ["#0E0", '#444', '#888'],
+        tank_spawn: 10,
+        plane_spawn: 18,
+        help_spawn: 32,
+        ammunition: 1000 * 25,
+    },
+    7: {
+        width: 6,
+        huts: 30,
+        textures: ["GreyRock", "DarkGreyRock", "Grass"],
+        colors: ["#0E0", '#444', '#888'],
+        tank_spawn: 10,
+        plane_spawn: 15,
+        help_spawn: 35,
+        ammunition: 1000 * 25,
+        
+    },
+    8: {
+        width: 6,
+        huts: 32,
+        textures: ["Grass", "DarkGreyRock", "Snow"],
+        colors: ["#0E0", '#444', '#888'],
+        tank_spawn: 10,
+        plane_spawn: 12,
+        help_spawn: 40,
+        ammunition: 1000 * 25,
     },
     create(level, plane_layers) {
         let W = ENGINE.gameWIDTH * MAP[level].width;

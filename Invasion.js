@@ -21,13 +21,8 @@ var DEBUG = {
     BUTTONS: false,
     SETTING: true,
     VERBOSE: false,
-    PAINT_TRAIL: false,
     invincible: false,
     INF_LIVES: false,
-    G: [],
-    A: [],
-    dx: [],
-    dy: []
 };
 var INI = {
     base_speed: 128.0,
@@ -52,7 +47,6 @@ var INI = {
     parachute_speed: 100.0,
     landing_offset: 4,
     armor: 12,
-    //armor: 1,
     scores: {
         hut: 10,
         tank: 100,
@@ -66,10 +60,11 @@ var INI = {
         tank: 3,
         bomb: 6,
         parachute: 1,
-    }
+    },
+    final_level: 8,
 };
 var PRG = {
-    VERSION: "0.13.00",
+    VERSION: "0.13.01",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -915,6 +910,7 @@ var HERO = {
         return top && bottom;
     },
     hit(damage) {
+        if (DEBUG.invincible) return;
         HERO.armor -= damage;
         HERO.armor = Math.max(0, HERO.armor);
         TITLE.armor();
@@ -996,13 +992,13 @@ var GAME = {
         $("#pause").prop("disabled", false);
         $("#pause").off();
         GAME.paused = false;
-        let GameRD = new RenderData("Alien", 60, "#DDD", "text", "#000", 2, 2, 2);
+        let GameRD = new RenderData("Alien", 48, "#DDD", "text", "#000", 2, 2, 2);
         ENGINE.TEXT.setRD(GameRD);
         ENGINE.watchVisibility(GAME.lostFocus);
         ENGINE.GAME.start(16);
-        GAME.completed = false;
         GAME.won = false;
-        GAME.level = 1;
+        //GAME.level = 1;
+        GAME.level = 8;
         GAME.score = 0;
         GAME.lives = 3;
         GAME.fps = new FPS_measurement();
@@ -1010,13 +1006,16 @@ var GAME = {
     },
     levelStart() {
         console.log("starting level", GAME.level);
-        HERO.startInit();
+        //HERO.startInit();
+        GAME.levelFinished = false;
         GAME.prepareForRestart();
         GAME.initLevel(GAME.level);
+        HERO.startInit();
         GAME.continueLevel(GAME.level);
     },
     initLevel(level) {
         console.log("init level", level);
+        MAP.createNewLevel(GAME.level);
         MAP.create(level, GAME.planes);
         PROFILE_BALLISTIC.init(MAP[level].map.planes[0]);
         DESTRUCTION_ANIMATION.init(MAP[level].map.planes[0]);
@@ -1042,16 +1041,20 @@ var GAME = {
         SPEECH.speak(texts.chooseRandom());
     },
     levelEnd() {
-        //SPEECH.speak("Good job!");
-        GAME.levelCompleted = true;
+        SPEECH.speak("Good job!");
+        GAME.levelFinished = true;
         ENGINE.TEXT.centeredText("LEVEL COMPLETED", ENGINE.gameWIDTH, ENGINE.gameHEIGHT / 4);
-        ENGINE.GAME.ANIMATION.stop();
-        //TITLE.endLevel();
-        //ENGINE.GAME.ANIMATION.next(ENGINE.KEY.waitFor.bind(null, GAME.nextLevel, "enter"));
+        let bonus = Math.min(100000, 10000 * (2 ** (GAME.level - 1)));
+        GAME.addScore(bonus);
+        ENGINE.TEXT.centeredText(`Bonus: ${bonus}`, ENGINE.gameWIDTH, ENGINE.gameHEIGHT * 0.5);
+        ENGINE.TEXT.centeredText("Press <ENTER> to continue", ENGINE.gameWIDTH, ENGINE.gameHEIGHT * 0.75);
+        ENGINE.GAME.ANIMATION.next(ENGINE.KEY.waitFor.bind(null, GAME.nextLevel, "enter"));
     },
     nextLevel() {
         GAME.level++;
-        GAME.levelCompleted = false;
+        //check MAP
+
+        //
         ENGINE.GAME.ANIMATION.waitThen(GAME.levelStart, 2);
     },
     checkIfProcessesComplete() {
@@ -1150,8 +1153,8 @@ var GAME = {
     },
     pause() {
         if (GAME.paused) return;
+        if (GAME.levelFinished) return;
         if (HERO.dead) return;
-        if (false || GAME.levelCompleted) return;
         console.log("%cGAME paused.", PRG.CSS);
         $("#pause").prop("value", "Resume Game [F4]");
         $("#pause").off("click", GAME.pause);
@@ -1626,6 +1629,8 @@ var TITLE = {
         CTX.shadowOffsetY = 2;
         CTX.shadowBlur = 3;
         CTX.fillText("GAME OVER", x, y);
+        CTX.font = 32 + "px Alien";
+        ENGINE.TEXT.centeredText("Press <ENTER> to continue", ENGINE.gameWIDTH, ENGINE.gameHEIGHT * 0.75);
     },
     endLevel() {
 

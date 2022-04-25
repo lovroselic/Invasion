@@ -6,6 +6,8 @@ var LoadTextures = [
     { srcName: "GreyRock.jpg", name: "GreyRock" },
     { srcName: "DarkRock.png", name: "DarkRock" },
     { srcName: "DarkGreyRock.jpg", name: "DarkGreyRock" },
+    { srcName: "sand.png", name: "Sand" },
+    { srcName: "snow.jpg", name: "Snow" },
 ];
 var LoadSprites = [
     { srcName: "Cannonball12-2.png", name: "Cannonball" },
