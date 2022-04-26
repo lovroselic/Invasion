@@ -64,7 +64,7 @@ var INI = {
     final_level: 8,
 };
 var PRG = {
-    VERSION: "0.14.00",
+    VERSION: "0.14.01",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -997,8 +997,8 @@ var GAME = {
         ENGINE.watchVisibility(GAME.lostFocus);
         ENGINE.GAME.start(16);
         GAME.won = false;
-        //GAME.level = 1;
-        GAME.level = 8;
+        GAME.level = 1;
+        //GAME.level = 8;
         GAME.score = 0;
         GAME.lives = 3;
         GAME.fps = new FPS_measurement();

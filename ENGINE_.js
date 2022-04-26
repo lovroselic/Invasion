@@ -856,7 +856,6 @@ var ENGINE = {
       x = q * ENGINE.INI.SPRITESHEET_DEFAULT_WIDTH;
       let NTX = ENGINE.extractImg(x, 0, CTX);
       newName = obj.name + "_" + q.toString().padStart(2, "0");
-      //console.log("seqToSprite", obj.name, "->", newName);
       ASSET[obj.name].linear.push(ENGINE.contextToSprite(newName, NTX));
       names.push(newName);
     }
@@ -1367,10 +1366,12 @@ var ENGINE = {
           toLoad.map((img) => loadImage(img, "RotSeq"))
         )
           .then(function (obj) {
+
             obj.forEach(function (el) {
               let assetNames = ENGINE.seqToSprite(el);
               let createdSprites = ASSET[el.name].linear;
-              let ready = Promise.all(createdSprites.map((sprite) => isReady(sprite)))
+
+              const ready = Promise.all(createdSprites.map((sprite) => isReady(sprite)))
                 .then(
                   (obj) => {
                     obj.forEach((S, i) => {
@@ -1382,6 +1383,11 @@ var ENGINE = {
                   }
                 );
             });
+
+            return new Promise((resolve, reject) => {
+              setTimeout(() => resolve(1), 1000);
+            });
+
           });
         return temp;
       }
