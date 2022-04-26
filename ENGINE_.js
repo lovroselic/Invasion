@@ -338,7 +338,7 @@ var ENGINE = {
     /* debug start */
     if (TRIM.top === TRIM.bottom && TRIM.left === TRIM.right) {
       console.error('trying to trim unloaded image');
-      location.reload();
+      //location.reload();
     }
     /* debug end */
     let trimmed = CTX.getImageData(
@@ -851,12 +851,16 @@ var ENGINE = {
     var CTX = ENGINE.drawSheet(obj.img);
     let x;
     let newName;
+    let names = [];
     for (var q = 0; q < obj.count; q++) {
       x = q * ENGINE.INI.SPRITESHEET_DEFAULT_WIDTH;
       let NTX = ENGINE.extractImg(x, 0, CTX);
       newName = obj.name + "_" + q.toString().padStart(2, "0");
+      //console.log("seqToSprite", obj.name, "->", newName);
       ASSET[obj.name].linear.push(ENGINE.contextToSprite(newName, NTX));
+      names.push(newName);
     }
+    return names;
   },
   sheetToSprite(obj) {
     var CTX = ENGINE.drawSheet(obj.img);
@@ -886,15 +890,6 @@ var ENGINE = {
   },
   spriteToAsset(obj) {
     ASSET[obj.asset].linear.push(SPRITE[obj.name]);
-  },
-  rotateAsset(assetName, startAngle, endAngle, step = 1) {
-    let sprites = ASSET[assetName].linear;
-    for (let angle = startAngle; angle <= endAngle; angle += step) {
-      for (let i = 0; i < sprites.length; i++) {
-        let name = `${assetName}_${i.toString().padStart(2, "0")}_${angle}`;
-        ENGINE.rotateImage(sprites[i], angle, name);
-      }
-    }
   },
   KEY: {
     on() {
@@ -1212,15 +1207,7 @@ var ENGINE = {
 
       function appendCanvas(name) {
         let id = "preload_" + name;
-        $("#load").append(
-          "<canvas id ='" +
-          id +
-          "' width='" +
-          ENGINE.LOAD_W +
-          "' height='" +
-          ENGINE.LOAD_H +
-          "'></canvas>"
-        );
+        $("#load").append(`<canvas id ='${id}' width='${ENGINE.LOAD_W}' height='${ENGINE.LOAD_H}'></canvas>`);
         LAYER.PRELOAD[name] = $("#" + id)[0].getContext("2d");
       }
       function loadTextures(arrPath = LoadTextures) {
@@ -1378,14 +1365,32 @@ var ENGINE = {
         if (ENGINE.LOAD.HMRotSeq) appendCanvas("RotSeq");
         const temp = Promise.all(
           toLoad.map((img) => loadImage(img, "RotSeq"))
-        ).then(function (obj) {
-          obj.forEach(function (el) {
-            console.log("rotation debug, el->", el);
-            ENGINE.seqToSprite(el);
-            ENGINE.rotateAsset(el.name, el.rotate.first, el.rotate.last, el.rotate.step);
+        )
+          .then(function (obj) {
+            obj.forEach(function (el) {
+              let assetNames = ENGINE.seqToSprite(el);
+              let createdSprites = ASSET[el.name].linear;
+              let ready = Promise.all(createdSprites.map((sprite) => isReady(sprite)))
+                .then(
+                  (obj) => {
+                    obj.forEach((S, i) => {
+                      for (let angle = el.rotate.first; angle <= el.rotate.last; angle += el.rotate.step) {
+                        let name = `${assetNames[i]}_${angle}`;
+                        ENGINE.rotateImage(S, angle, name);
+                      }
+                    });
+                  }
+                );
+            });
           });
-        });
         return temp;
+      }
+      function isReady(sprite) {
+        return new Promise((resolve, reject) => {
+          sprite.onload = () => {
+            resolve(sprite);
+          };
+        });
       }
       function loadWASM(arrPath = LoadExtWasm) {
         var LoadIntWasm = []; //internal hard coded ENGINE requirements
@@ -1436,7 +1441,7 @@ var ENGINE = {
         switch (typeof srcData) {
           case "string":
             srcName = srcData;
-            name = srcName.substr(0, srcName.indexOf("."));
+            name = srcName.substring(0, srcName.indexOf("."));
             break;
           case "object":
             srcName = srcData.srcName;
@@ -1468,7 +1473,7 @@ var ENGINE = {
             ENGINE.drawLoadingGraph(counter);
             resolve(obj);
           };
-          img.onerror = (err) => resolve(err);
+          img.onerror = (err) => reject(err);
           img.crossOrigin = "Anonymous";
           img.src = src;
         });
