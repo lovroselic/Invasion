@@ -125,21 +125,8 @@ var ENGINE = {
   },
   init() {
     console.log(`%cInitializing ENGINE V${String(ENGINE.VERSION)}`, ENGINE.CSS);
-
-    $("#temp").append(
-      "<canvas id ='temp_canvas' width='" +
-      ENGINE.INI.sprite_maxW +
-      "' height='" +
-      ENGINE.INI.sprite_maxH +
-      "'></canvas>"
-    );
-    $("#temp2").append(
-      "<canvas id ='temp_canvas2' width='" +
-      ENGINE.INI.sprite_maxW +
-      "' height='" +
-      ENGINE.INI.sprite_maxH +
-      "'></canvas>"
-    );
+    $("#temp").append(`<canvas id ='temp_canvas' width='${ENGINE.INI.sprite_maxW}' height='${ENGINE.INI.sprite_maxH}'></canvas>`);
+    $("#temp2").append(`<canvas id ='temp_canvas2' width='${ENGINE.INI.sprite_maxW}' height='${ENGINE.INI.sprite_maxH}'></canvas>`);
     LAYER.temp = $("#temp_canvas")[0].getContext("2d");
     LAYER.temp2 = $("#temp_canvas2")[0].getContext("2d");
     VIEW.init();
@@ -192,9 +179,7 @@ var ENGINE = {
     if (width === null) return;
     if (height === null) return;
     let layers = alias.length;
-    $(ENGINE.gameWindowId).append(
-      `<div id ='${id}' style='position: relative'></div>`
-    );
+    $(ENGINE.gameWindowId).append(`<div id ='${id}' style='position: relative'></div>`);
     if (type === "side" || type === "fside") {
       $(`#${id}`).addClass("gw");
     } else {
@@ -335,12 +320,6 @@ var ENGINE = {
     CTX.restore();
     let imgDATA = CTX.getImageData(0, 0, CTX.canvas.width, CTX.canvas.height);
     let TRIM = ENGINE.trimCanvas(imgDATA);
-    /* debug start */
-    if (TRIM.top === TRIM.bottom && TRIM.left === TRIM.right) {
-      console.error('trying to trim unloaded image');
-      //location.reload();
-    }
-    /* debug end */
     let trimmed = CTX.getImageData(
       TRIM.left,
       TRIM.top,
@@ -368,10 +347,7 @@ var ENGINE = {
       }
       ENGINE.INI.COLLISION_SAFE++;
     }
-    console.log(
-      `%cENGINE.INI.COLLISION_SAFE set to: ${ENGINE.INI.COLLISION_SAFE}`,
-      ENGINE.CSS
-    );
+    console.log(`%cENGINE.INI.COLLISION_SAFE set to: ${ENGINE.INI.COLLISION_SAFE}`, ENGINE.CSS);
   },
   ready() {
     ENGINE.setCollisionsafe();
@@ -842,7 +818,7 @@ var ENGINE = {
         x = q * ENGINE.INI.SPRITESHEET_DEFAULT_WIDTH;
         y = W * ENGINE.INI.SPRITESHEET_DEFAULT_HEIGHT;
         let NTX = ENGINE.extractImg(x, y, CTX);
-        newName = obj.name + "_" + tag[W] + "_" + q;
+        newName = `${obj.name}_${tag[W]}_${q}`;
         ASSET[obj.name][tag[W]].push(ENGINE.contextToSprite(newName, NTX));
       }
     }
@@ -868,7 +844,7 @@ var ENGINE = {
     for (var q = 0; q < obj.count; q++) {
       x = q * ENGINE.INI.SPRITESHEET_DEFAULT_WIDTH;
       let NTX = ENGINE.extractImg(x, 0, CTX);
-      newName = obj.name + "_" + q;
+      newName = `${obj.name}_${q}`;
       ASSET[obj.parent][obj.tag].push(ENGINE.contextToSprite(newName, NTX));
     }
   },
@@ -1366,12 +1342,12 @@ var ENGINE = {
           toLoad.map((img) => loadImage(img, "RotSeq"))
         )
           .then(function (obj) {
-
+            let ready;
             obj.forEach(function (el) {
               let assetNames = ENGINE.seqToSprite(el);
               let createdSprites = ASSET[el.name].linear;
 
-              const ready = Promise.all(createdSprites.map((sprite) => isReady(sprite)))
+              ready = Promise.all(createdSprites.map((sprite) => isReady(sprite)))
                 .then(
                   (obj) => {
                     obj.forEach((S, i) => {
@@ -1383,11 +1359,7 @@ var ENGINE = {
                   }
                 );
             });
-
-            return new Promise((resolve, reject) => {
-              setTimeout(() => resolve(1), 1000);
-            });
-
+            return ready;
           });
         return temp;
       }
@@ -1542,12 +1514,7 @@ var ENGINE = {
   FRAME_COUNTERS: {
     STACK: [],
     display() {
-      console.table(ENGINE.FRAME_COUNTERS.STACK, [
-        "id",
-        "count",
-        "onFrame",
-        "onEnd"
-      ]);
+      console.table(ENGINE.FRAME_COUNTERS.STACK, ["id", "count", "onFrame", "onEnd"]);
     },
     update() {
       ENGINE.FRAME_COUNTERS.STACK.forEach((counter) => counter.update());
@@ -1605,14 +1572,7 @@ var ENGINE = {
       ENGINE.TIMERS.STACK.forEach((timer) => timer.update());
     },
     display() {
-      console.table(ENGINE.TIMERS.STACK, [
-        "id",
-        "delta",
-        "now",
-        "kwargs",
-        "func",
-        "value"
-      ]);
+      console.table(ENGINE.TIMERS.STACK, ["id", "delta", "now", "kwargs", "func", "value"]);
     },
     clear() {
       ENGINE.TIMERS.STACK.clear();
@@ -1849,10 +1809,7 @@ var ENGINE = {
         }
       }
       if (ENGINE.verbose)
-        console.log(
-          `%cBLOCKGRID draw ${performance.now() - t0} ms`,
-          ENGINE.CSS
-        );
+        console.log(`%cBLOCKGRID draw ${performance.now() - t0} ms`, ENGINE.CSS);
     },
     wall(x, y, CTX, value) {
       let FS;
@@ -2497,9 +2454,7 @@ class Form {
     this.y = y;
     this.w = w;
     this.h = h;
-    $(FORM.INI.DIV).append(
-      `<div id = 'FORM' class = 'form'><h1>${this.name}</h1><hr></div>`
-    );
+    $(FORM.INI.DIV).append(`<div id = 'FORM' class = 'form'><h1>${this.name}</h1><hr></div>`);
     $("#FORM").css({
       top: this.y,
       left: this.x,
