@@ -64,7 +64,7 @@ var INI = {
     final_level: 8,
 };
 var PRG = {
-    VERSION: "0.14.02",
+    VERSION: "0.14.03",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -1109,15 +1109,12 @@ var GAME = {
         ENGINE.TIMERS.clear();
     },
     setup() {
-        console.time("gameSetup");
-        console.group("setup");
         console.log("GAME SETUP started");
         $("#buttons").prepend("<input type='button' id='startGame' value='Start Game'>");
         $("#startGame").prop("disabled", true);
         GAME.planes = ["foreplane", "backplane1", "backplane2"];
         $("#conv").remove();
-        console.timeEnd("gameSetup");
-        console.groupEnd("setup");
+
     },
     setTitle() {
         const text = GAME.generateTitleText();

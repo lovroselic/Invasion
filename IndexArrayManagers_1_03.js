@@ -5,7 +5,7 @@
 "use strict";
 
 var IAM = {
-    version: "1.03.DEV",
+    version: "1.03",
     POOL: null,
     draw() {
         for (let obj of this.POOL) {

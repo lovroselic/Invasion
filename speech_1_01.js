@@ -1,6 +1,6 @@
 //////////////////speech.js/////////////////////////
 //                                                //
-//       SPEECH version 1.00  by LS               //
+//       SPEECH version 1.01  by LS               //
 //                                                //
 ////////////////////////////////////////////////////
 /*  
@@ -30,10 +30,7 @@ var SPEECH = {
   init() {
     if (!("speechSynthesis" in window)) {
       SPEECH.browserSupport = false;
-      console.log(
-        `%cInitializing SPEECH failed. Browser not supported!`,
-        "color: #F00"
-      );
+      console.log(`%cInitializing SPEECH failed. Browser not supported!`, "color: #F00");
       return;
     }
     let ready = Promise.all([SPEECH.getVoices()]).then(function () {
@@ -41,17 +38,17 @@ var SPEECH = {
       console.log(`%cSPEECH ${SPEECH.VERSION}: ready`, SPEECH.CSS);
       SPEECH.voice = SPEECH.voices[0];
     });
-    
+
     let def = new VoiceSetting(1, 1, 1);
     SPEECH.settings = def;
     SPEECH.wait();
   },
   speak(txt) {
-    if (!SPEECH.ready){
+    if (!SPEECH.ready) {
       console.log(`%cSPEECH not ready ....`, "color: #A00");
       return;
     }
-    
+
     let msg = new SpeechSynthesisUtterance();
     msg.text = txt;
     msg.pitch = SPEECH.settings.pitch;
@@ -81,10 +78,7 @@ var SPEECH = {
       });
     } else {
       SPEECH.browserSupport = false;
-      console.log(
-        `%cInitializing SPEECH failed. Browser not supported!`,
-        "color: #F00"
-      );
+      console.log(`%cInitializing SPEECH failed. Browser not supported!`, "color: #F00");
     }
   },
   ready: false

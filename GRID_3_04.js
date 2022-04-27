@@ -5,7 +5,7 @@
 "use strict";
 
 //////////////////////////////////////
-// GRID v 3.03       by LS          //
+// GRID v 3.04       by LS          //
 //////////////////////////////////////
 
 /*
@@ -509,9 +509,7 @@ var MAPDICT = {
 class GridArray {
   constructor(sizeX, sizeY, byte = 1, fill = 0) {
     if (byte !== 1 && byte !== 2 && byte !== 4) {
-      console.error(
-        "GridArray set up with wrong size. Reset to default 8 bit!"
-      );
+      console.error("GridArray set up with wrong size. Reset to default 8 bit!");
       byte = 1;
     }
     let buffer = new ArrayBuffer(sizeX * sizeY * byte);
@@ -791,9 +789,7 @@ class GridArray {
         }
       }
     }
-    /*for (let grid of block) {
-      map[grid.x][grid.y] = null;
-    }*/
+
     block.forEach((obj) => (map[obj.x][obj.y] = null));
     this[where] = map;
     return map;
