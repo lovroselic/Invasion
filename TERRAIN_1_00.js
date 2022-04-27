@@ -181,7 +181,7 @@ var PERLIN = {
     }
 };
 var TERRAIN = {
-    VERSION: "0.90.1.DEV",
+    VERSION: "1.00",
     CSS: "color: #2ACBE8",
     NAME: "TerrainGenerator 1D",
     INI: {
@@ -194,6 +194,10 @@ var TERRAIN = {
         octaves: [1, 4, 3]
     },
     createClassic(W, H, plane_layers, textures, colors) {
+        //colors default
+        if (!colors){
+            colors = ["#0E0", '#444', '#888'];
+        }
         let planes = [];
         for (let i = 0; i < TERRAIN.INI.planes; i++) {
             let PL = new PlaneLimits(W, TERRAIN.INI.WL[i], TERRAIN.INI.planes_max[i] * H, TERRAIN.INI.planes_min[i] * H, TERRAIN.INI.open[0]);
