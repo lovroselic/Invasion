@@ -123,12 +123,12 @@ var SPAWN = {
     spawn(level) {
         this.spawnTrees(level);
         this.spawnHuts(level);
-        this.spawnHelp();
         let wait = new CountDown('spawnDelay', 3, SPAWN.spawnEnemy);
     },
     spawnEnemy() {
         SPAWN.spawnTank();
         SPAWN.spawnPlane();
+        SPAWN.spawnHelp();
     },
     spawnHuts(level) {
         let map = MAP[level].map;

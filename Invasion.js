@@ -8,16 +8,14 @@
 /*
       
 TODO:
-    End LEvel
-    levels
 
 known bugs: 
-    asset not ready for rotation
+
  */
 ////////////////////////////////////////////////////
 
 var DEBUG = {
-    FPS: true,
+    FPS: false,
     BUTTONS: false,
     SETTING: true,
     VERBOSE: false,
@@ -64,7 +62,7 @@ var INI = {
     final_level: 8,
 };
 var PRG = {
-    VERSION: "0.15.00",
+    VERSION: "0.90.00",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -759,7 +757,6 @@ var HERO = {
         this.dead = false;
         this.release();
         this.friendly = false;
-        //console.log("HERO", HERO);
     },
     release() {
         this.canShoot = true;
@@ -824,7 +821,6 @@ var HERO = {
         HERO.canonY = Math.round(canonY);
         HERO.canonRootX = Math.round(HERO.canonRootX + planePosition);
         HERO.canonRootY = Math.round(HERO.canonRootY);
-
         HERO.collisionToActors(planePosition);
     },
     collisionToActors() {
@@ -843,7 +839,6 @@ var HERO = {
                         PROFILE_ACTORS.remove(id);
                         obj.explode();
                         GAME.addScore(obj.score);
-                        //HERO.die();
                         HERO.explode(obj.damage);
                     }
                 }
@@ -863,7 +858,7 @@ var HERO = {
             AUDIO.FailShoot.play();
             return;
         }
-        //
+        
         HERO.ammunition -= ammoConsuption;
         TITLE.ammo();
         this.canShoot = false;
@@ -891,7 +886,9 @@ var HERO = {
             "Another tank bites the dust.",
             "You died because you are hopeless.",
             "You are just bad. Perhaps you should stop playing.",
-            "You died. You should aim better. You suck."
+            "You died. You should aim better. You suck.",
+            "Oh how clumsy you were.",
+            "You should avoid getting hit so much."
         ];
         SPEECH.speak(texts.chooseRandom());
     },
@@ -998,7 +995,6 @@ var GAME = {
         ENGINE.GAME.start(16);
         GAME.won = false;
         GAME.level = 1;
-        //GAME.level = 8;
         GAME.score = 0;
         GAME.lives = 3;
         GAME.fps = new FPS_measurement();
@@ -1006,7 +1002,6 @@ var GAME = {
     },
     levelStart() {
         console.log("starting level", GAME.level);
-        //HERO.startInit();
         GAME.levelFinished = false;
         GAME.prepareForRestart();
         GAME.initLevel(GAME.level);
@@ -1044,7 +1039,7 @@ var GAME = {
         SPEECH.speak("Good job!");
         GAME.levelFinished = true;
         ENGINE.TEXT.centeredText("LEVEL COMPLETED", ENGINE.gameWIDTH, ENGINE.gameHEIGHT / 4);
-        let bonus = Math.min(100000, 10000 * (2 ** (GAME.level - 1)));
+        let bonus = Math.min(100000, 2500 * (2 ** (GAME.level - 1)));
         GAME.addScore(bonus);
         ENGINE.TEXT.centeredText(`Bonus: ${bonus}`, ENGINE.gameWIDTH, ENGINE.gameHEIGHT * 0.5);
         ENGINE.TEXT.centeredText("Press <ENTER> to continue", ENGINE.gameWIDTH, ENGINE.gameHEIGHT * 0.75);
@@ -1052,9 +1047,6 @@ var GAME = {
     },
     nextLevel() {
         GAME.level++;
-        //check MAP
-
-        //
         ENGINE.GAME.ANIMATION.waitThen(GAME.levelStart, 2);
     },
     checkIfProcessesComplete() {
@@ -1084,13 +1076,11 @@ var GAME = {
         ENGINE.clearLayerStack();
         TERRAIN.drawParallaxSlice(MAP[GAME.level].map, ENGINE.gameWIDTH);
         GAME.planes.forEach(ENGINE.layersToClear.add, ENGINE.layersToClear);
-
         DECOR.draw();
         PROFILE_ACTORS.draw();
         PROFILE_BALLISTIC.draw();
         HERO.draw();
         DESTRUCTION_ANIMATION.draw(lapsedTime);
-
         TITLE.canon_load();
 
         if (DEBUG.FPS) {
@@ -1114,7 +1104,6 @@ var GAME = {
         $("#startGame").prop("disabled", true);
         GAME.planes = ["foreplane", "backplane1", "backplane2"];
         $("#conv").remove();
-
     },
     setTitle() {
         const text = GAME.generateTitleText();
@@ -1182,7 +1171,6 @@ var GAME = {
             ENGINE.GAME.keymap[ENGINE.KEY.map.F4] = false;
         }
         if (map[ENGINE.KEY.map.F9]) {
-            //if (DEBUG.BUTTONS) DEBUG.finishLevel();
         }
         if (map[ENGINE.KEY.map.ctrl]) {
             HERO.shoot();
