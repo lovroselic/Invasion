@@ -19,6 +19,7 @@ as used by LS
 
 changelog:
 3.00: new fresh version
+3.04: updates for Invasion
 */
 
 (function () {
