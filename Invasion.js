@@ -17,7 +17,7 @@ known bugs:
 var DEBUG = {
     FPS: false,
     BUTTONS: false,
-    SETTING: true,
+    SETTING: false,
     VERBOSE: false,
     invincible: false,
     INF_LIVES: false,
@@ -62,7 +62,7 @@ var INI = {
     final_level: 8,
 };
 var PRG = {
-    VERSION: "0.90.01",
+    VERSION: "1.00",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
