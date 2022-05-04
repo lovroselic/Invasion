@@ -1009,8 +1009,7 @@ var ENGINE = {
       }
     },
     start(interval) {
-      //$("#bottom")[0].scrollIntoView();
-      $("#DOWN")[0].scrollIntoView();
+      $(window).scrollTop($("#game").offset().top);
       ENGINE.GAME.stopAnimation = false;
       ENGINE.GAME.started = Date.now();
       ENGINE.GAME.frame = {};
@@ -2659,7 +2658,7 @@ var CONSOLE = {
   print(text) {
     $(`#${CONSOLE.id}`).append(`<p>${text}</p>`);
     $(`#${CONSOLE.id}`).children().last()[0].scrollIntoView();
-    $("#DOWN")[0].scrollIntoView();
+    $(window).scrollTop($("#game").offset().top);
   }
 };
 class RenderData {

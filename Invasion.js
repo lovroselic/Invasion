@@ -858,7 +858,7 @@ var HERO = {
             AUDIO.FailShoot.play();
             return;
         }
-        
+
         HERO.ammunition -= ammoConsuption;
         TITLE.ammo();
         this.canShoot = false;
@@ -1277,7 +1277,7 @@ var TITLE = {
         TITLE.clearAllLayers();
         TITLE.blackBackgrounds();
         TITLE.mainTitle();
-        $("#DOWN")[0].scrollIntoView();
+        $(window).scrollTop($("#game").offset().top);
         ENGINE.topCanvas = ENGINE.getCanvasName("ROOM");
         TITLE.drawButtons();
         GAME.setTitle();
