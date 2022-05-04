@@ -1009,7 +1009,8 @@ var ENGINE = {
       }
     },
     start(interval) {
-      $("#bottom")[0].scrollIntoView();
+      //$("#bottom")[0].scrollIntoView();
+      $("#DOWN")[0].scrollIntoView();
       ENGINE.GAME.stopAnimation = false;
       ENGINE.GAME.started = Date.now();
       ENGINE.GAME.frame = {};
