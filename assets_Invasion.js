@@ -1,7 +1,7 @@
 //Assets for Invasion
 console.log("Assets for INVASION ready.");
 
-var LoadTextures = [
+const LoadTextures = [
     { srcName: "grass1.png", name: "Grass" },
     { srcName: "GreyRock.jpg", name: "GreyRock" },
     { srcName: "DarkRock.png", name: "DarkRock" },
@@ -9,7 +9,7 @@ var LoadTextures = [
     { srcName: "sand.png", name: "Sand" },
     { srcName: "snow.jpg", name: "Snow" },
 ];
-var LoadSprites = [
+const LoadSprites = [
     { srcName: "Cannonball12-2.png", name: "Cannonball" },
     { srcName: "SmallHut.png", name: "Hut" },
     { srcName: "spruce.png", name: "tree1" },
@@ -29,15 +29,15 @@ var LoadSprites = [
 for (let i = 1; i <= 11; i++) {
     LoadSprites.push({ srcName: `plane${i}.png`, name: `Plane${i}` });
 }
-var LoadSequences = [];
-var LoadSheets = [];
-var LoadRotated = [
+const LoadSequences = [];
+const LoadSheets = [];
+const LoadRotated = [
     { srcName: "cevSilver.png", name: "Cev", rotate: { first: -150, last: 90, step: 1 } },
     { srcName: "cevSilverLeft.png", name: "CevLeft", rotate: { first: -90, last: 150, step: 1 } },
 ];
-var LoadPacks = [];
-var LoadExtWasm = [];
-var LoadAudio = [
+const LoadPacks = [];
+const LoadExtWasm = [];
+const LoadAudio = [
     { srcName: "Explosion1.mp3", name: "Explosion" },
     { srcName: "UseScroll.mp3", name: "PickBox" },
     { srcName: "Fuse.mp3", name: "FailShoot" },
@@ -45,16 +45,16 @@ var LoadAudio = [
     { srcName: "Failed magic.mp3", name: "PowerEnd" },
     { srcName: "Black Dog's Chain - LaugingSkull.mp3", name: "Title" }
 ];
-var ExtendSheetTag = [];
-var LoadSheetSequences = [
+const ExtendSheetTag = [];
+const LoadSheetSequences = [
     { srcName: "Explosion2.png", name: "Explosion", type: "png", count: 23 },
 ];
-var LoadRotatedSheetSequences = [
+const LoadRotatedSheetSequences = [
     { srcName: "tank.png", count: 3, name: "Tank", rotate: { first: -90, last: 90, step: 1 } },
     { srcName: "BlueTank.png", count: 3, name: "BlueTank", rotate: { first: -90, last: 90, step: 1 } },
     { srcName: "bomb1.png", count: 1,name: "Bomb", rotate: { first: 0, last: 180, step: 1 } },
 ];
-var LoadFonts = [
+const LoadFonts = [
     { srcName: "C64_Pro-STYLE.ttf", name: "C64" },
     { srcName: "CosmicAlien.ttf", name: "Alien" },
 ];

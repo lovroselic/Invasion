@@ -6,7 +6,7 @@
 console.clear();
 
 var LIB = {
-  VERSION: "3.04",
+  VERSION: "3.05",
   CSS: "color: #EFE",
   log: function () {
     console.log(`%cPrototype LIB ${LIB.VERSION} loaded`, LIB.CSS);
@@ -20,11 +20,16 @@ as used by LS
 changelog:
 3.00: new fresh version
 3.04: updates for Invasion
+3.05: RNDF, updates for RUN, Set prototypes, substr -> substring updates;
 */
 
 (function () {
   function RND(start, end) {
     return Math.floor(Math.random() * (++end - start) + start);
+  }
+
+  function RNDF(start, end) {
+    return (Math.random() * (end + 0.01 - start) * 100 + start * 100) / 100;
   }
 
   function coinFlip() {
@@ -45,10 +50,10 @@ changelog:
     return Math.round(x / N) * N;
   }
   function round10(x) {
-    return Math.round(x / 10) * 10;
+    return roundN(x, 10);
   }
   function round5(x) {
-    return Math.round(x / 5) * 5;
+    return roundN(x, 5);
   }
   function weightedRnd(_json) {
     let json = $.extend(true, {}, _json);
@@ -72,7 +77,9 @@ changelog:
       }
     }
   }
+
   window.RND = RND;
+  window.RNDF = RNDF;
   window.coinFlip = coinFlip;
   window.probable = probable;
   window.roundN = roundN;
@@ -90,13 +97,15 @@ Math.radians = function (degrees) {
 Math.degrees = function (radians) {
   return (radians * 180) / Math.PI;
 };
+Math.roundFloat = function (number, precision) {
+  number = (number * 10 ** precision) * (1 + Number.EPSILON);
+  return Math.round(number) / 10 ** precision;
+};
 
-CanvasRenderingContext2D.prototype.pixelAt = function (x, y, size) {
-  size = size || 1; // default
+CanvasRenderingContext2D.prototype.pixelAt = function (x, y, size = 1) {
   this.fillRect(x, y, size, size);
 };
-CanvasRenderingContext2D.prototype.pixelAtPoint = function (point, size) {
-  size = size || 1; // default
+CanvasRenderingContext2D.prototype.pixelAtPoint = function (point, size = 1) {
   this.fillRect(point.x, point.y, size, size);
 };
 CanvasRenderingContext2D.prototype.roundRect = function (
@@ -197,12 +206,19 @@ Array.prototype.compare = function (array) {
   }
   return true;
 };
+Array.prototype.removeIfInArray = function (arr) {
+  for (var x = this.length - 1; x >= 0; x--) {
+    if (arr.includes(this[x])) {
+      this.splice(x, 1);
+    }
+  }
+};
+
 Array.prototype.remove = function (value) {
   var LN = this.length;
-  for (var x = 0; x < LN; x++) {
+  for (var x = this.length - 1; x >= 0; x--) {
     if (this[x] === value) {
       this.splice(x, 1);
-      this.remove(value);
     }
   }
 };
@@ -283,7 +299,7 @@ Array.prototype.removeValueOnce = function (value) {
   }
 };
 String.prototype.capitalize = function () {
-  return this.charAt(0).toUpperCase() + this.substr(1).toLowerCase();
+  return this.charAt(0).toUpperCase() + this.substring(1).toLowerCase();
 };
 String.prototype.trimSpace = function () {
   let temp = this.split(" ");
@@ -300,7 +316,7 @@ String.prototype.changeChar = function (at, char) {
 String.prototype.splitByN = function (N) {
   let result = [];
   for (let i = 0, LN = this.length; i < LN; i += N) {
-    result.push(this.substr(i, N));
+    result.push(this.substring(i, N));
   }
   return result;
 };
@@ -314,6 +330,29 @@ String.prototype.fill = function (stringy, howMany) {
   }
   return s;
 };
+Set.prototype.moveFrom = function (s) {
+  s.forEach(e => {
+    this.add(e);
+    s.delete(e);
+  });
+};
+Set.prototype.first = function () {
+  if (this.entries().next().value) {
+    return this.entries().next().value[0];
+  } else {
+    return null;
+  }
+};
+Set.prototype.addArray = function (arr) {
+  arr.forEach(el => this.add(el));
+};
+Set.prototype.removeArray = function (arr) {
+  arr.forEach(el => this.delete(el));
+};
+Set.prototype.intersect = function (x) {
+  return new Set([...this].filter(el => x.has(el)));
+};
+
 
 class Grid {
   constructor(x = 0, y = 0) {
@@ -414,11 +453,11 @@ class FP_Grid {
     let D = this.EuclidianDistance(grid);
     return new FP_Vector(dx / D, dy / D);
   }
-  add(vector) {
-    return new FP_Grid(this.x + vector.x, this.y + vector.y);
+  add(vector, factor = 1.0) {
+    return new FP_Grid(this.x + vector.x * factor, this.y + vector.y * factor);
   }
-  sub(grid) {
-    return new FP_Grid(this.x - grid.x, this.y - grid.y);
+  sub(vector, factor = 1.0) {
+    return new FP_Grid(this.x - vector.x * factor, this.y - vector.y * factor);
   }
 }
 class FP_Vector {
@@ -459,6 +498,9 @@ class FP_Vector {
       this.x - vector.x * factor,
       this.y - vector.y * factor
     );
+  }
+  mul(vector, num = 1) {
+    return new FP_Vector(this.x + num * vector.x, this.y + num * vector.y);
   }
   ortoAlign() {
     let dim = ["x", "y"];
@@ -606,6 +648,13 @@ class Vector {
       return "y";
     } else throw ("error getting direction axis from", this);
   }
+  getDirectionProperty() {
+    if (this.x !== 0) {
+      return "width";
+    } else if (this.y !== 0) {
+      return "height";
+    } else throw ("error getting direction property from", this);
+  }
   trimMirror(dirArray) {
     let axis = this.getDirectionAxis();
     let LN = dirArray.length;
@@ -692,8 +741,12 @@ class Point {
     this.x = this.x - ENGINE.VIEWPORT.vx;
     this.y = this.y - ENGINE.VIEWPORT.vy;
   }
-  add(vector) {
-    return new Point(this.x + vector.x, this.y + vector.y);
+  toAbsolute() {
+    this.x = this.x + ENGINE.VIEWPORT.vx;
+    this.y = this.y + ENGINE.VIEWPORT.vy;
+  }
+  add(vector, len = 1) {
+    return new Point(this.x + vector.x * len, this.y + vector.y * len);
   }
 }
 class Pointer {
@@ -702,12 +755,17 @@ class Pointer {
     this.vector = Vector.toClass(vector);
   }
 }
-class Square {
+class RectArea {
   constructor(x, y, w, h) {
     this.x = x;
     this.y = y;
     this.w = w;
     this.h = h;
+  }
+  overlap(area) {
+    let condX = Math.max(this.x, area.x) < Math.min(this.x + this.w, area.x + area.w);
+    let condY = Math.max(this.y, area.y) < Math.min(this.y + this.h, area.y + area.h);
+    return condX && condY;
   }
 }
 class Angle {

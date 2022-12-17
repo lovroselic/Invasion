@@ -62,7 +62,7 @@ var INI = {
     final_level: 8,
 };
 var PRG = {
-    VERSION: "1.00",
+    VERSION: "1.02",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -111,7 +111,6 @@ var PRG = {
         ENGINE.scoreHEIGHT = 64;
         ENGINE.checkProximity = false;
         ENGINE.checkIntersection = false;
-        ENGINE.setCollisionsafe(49);
 
         $("#bottom").css("margin-top", ENGINE.gameHEIGHT + ENGINE.titleHEIGHT + ENGINE.bottomHEIGHT + ENGINE.scoreHEIGHT);
 
@@ -1108,7 +1107,7 @@ var GAME = {
     setTitle() {
         const text = GAME.generateTitleText();
         const RD = new RenderData("Alien", 16, "#0E0", "bottomText");
-        const SQ = new Square(0, 0, LAYER.bottomText.canvas.width, LAYER.bottomText.canvas.height);
+        const SQ = new RectArea(0, 0, LAYER.bottomText.canvas.width, LAYER.bottomText.canvas.height);
         GAME.movingText = new MovingText(text, 4, RD, SQ);
     },
     generateTitleText() {
@@ -1625,7 +1624,7 @@ var TITLE = {
 // -- main --
 $(function () {
     PRG.INIT();
-    SPEECH.init();
+    SPEECH.init(0.95);
     PRG.setup();
     ENGINE.LOAD.preload();
     SCORE.init("SC", "GhostRun", 10, 2500);

@@ -6,7 +6,7 @@
 
 //////////////////engine.js/////////////////////////
 //                                                //
-//      ENGINE version 3.10        by LS          //
+//      ENGINE version 3.12        by LS          //
 //                                                //
 ////////////////////////////////////////////////////
 
@@ -19,18 +19,18 @@ TODO:
 ////////////////////////////////////////////////////
 
 //vector definitions
-var UP = new Vector(0, -1);
-var DOWN = new Vector(0, 1);
-var LEFT = new Vector(-1, 0);
-var RIGHT = new Vector(1, 0);
-var NOWAY = new Vector(0, 0);
-var UpRight = new Vector(1, -1);
-var UpLeft = new Vector(-1, -1);
-var DownRight = new Vector(1, 1);
-var DownLeft = new Vector(-1, 1);
+const UP = new Vector(0, -1);
+const DOWN = new Vector(0, 1);
+const LEFT = new Vector(-1, 0);
+const RIGHT = new Vector(1, 0);
+const NOWAY = new Vector(0, 0);
+const UpRight = new Vector(1, -1);
+const UpLeft = new Vector(-1, -1);
+const DownRight = new Vector(1, 1);
+const DownLeft = new Vector(-1, 1);
 
-var ENGINE = {
-  VERSION: "3.10",
+const ENGINE = {
+  VERSION: "3.14",
   CSS: "color: #0FA",
   INI: {
     ANIMATION_INTERVAL: 16,
@@ -41,10 +41,10 @@ var ENGINE = {
     sprite_maxH: 100,
     GRIDPIX: 48,
     FADE_FRAMES: 50,
-    COLLISION_SAFE: 48,
     PATH_ROUNDS: 1999,
     MAX_PATH: 999,
-    MOUSE_IDLE: 3000
+    MOUSE_IDLE: 3000,
+    OVERLAP_TOLERANCE: 4
   },
   verbose: true,
   setGridSize(size = 48) {
@@ -54,15 +54,16 @@ var ENGINE = {
     ENGINE.INI.SPRITESHEET_DEFAULT_WIDTH = size;
     ENGINE.INI.SPRITESHEET_DEFAULT_HEIGHT = size;
   },
+  setCollisionTolerance(def = 4) {
+    ENGINE.INI.OVERLAP_TOLERANCE = def;
+  },
   readyCall: null,
   start: null,
   SOURCE: "https://www.c00lsch00l.eu/Games/AA/",
   WASM_SOURCE: "https://www.c00lsch00l.eu/WASM/",
   AUDIO_SOURCE: "https://www.c00lsch00l.eu/Mp3/",
   FONT_SOURCE: "https://www.c00lsch00l.eu/Fonts/",
-  checkIntersection: false, //use linear intersection collision method after pixelperfect collision; set to false to exclude
   checkProximity: true, //check proximity before pixel perfect evaluation of collision to background
-  pixelPerfectCollision: false, //false by default
   LOAD_W: 160,
   LOAD_H: 22,
   autostart: false,
@@ -255,22 +256,27 @@ var ENGINE = {
     let CTX = LAYER[layer];
     CTX.drawImage(image, X - image.width / 2, Y - image.height);
   },
-  drawPart(layer, X, Y, image, line) {
+  spriteDrawPart(layer, X, Y, image, top = 0, left = 0, right = 0, bottom = 0) {
+    let CX = Math.floor(X - Math.floor(image.width / 2));
+    let CY = Math.floor(Y - Math.floor(image.height / 2));
+    this.drawPart(layer, CX, CY, image, top, left, right, bottom);
+  },
+  drawPart(layer, X, Y, image, top = 0, left = 0, right = 0, bottom = 0) {
     let CTX = LAYER[layer];
     CTX.drawImage(
       image,
-      0,
-      line,
-      image.width,
-      image.height - line,
-      X,
-      Y,
-      image.width,
-      image.height - line
+      left,
+      top,
+      image.width - left - right,
+      image.height - top - bottom,
+      X + left,
+      Y + top,
+      image.width - left - right,
+      image.height - top - bottom,
     );
   },
   drawPool(layer, pool, sprite) {
-    let CTX = LAYER[layer];
+    //let CTX = LAYER[layer];
     let PL = pool.length;
     if (PL === 0) return;
     for (let i = 0; i < PL; i++) {
@@ -286,8 +292,7 @@ var ENGINE = {
     while (top < bottom && rowBlank(data, width, top)) ++top;
     while (bottom - 1 > top && rowBlank(data, width, bottom - 1)) --bottom;
     while (left < right && columnBlank(data, width, left, top, bottom)) ++left;
-    while (right - 1 > left && columnBlank(data, width, right - 1, top, bottom))
-      --right;
+    while (right - 1 > left && columnBlank(data, width, right - 1, top, bottom)) --right;
 
     return { left: left, top: top, right: right, bottom: bottom };
 
@@ -333,24 +338,7 @@ var ENGINE = {
     sprite.onload = ENGINE.creationSpriteCount;
     return sprite;
   },
-  setCollisionsafe(safe) {
-    if (safe !== undefined) {
-      ENGINE.INI.COLLISION_SAFE = safe;
-    } else {
-      for (let sprite in SPRITE) {
-        if (SPRITE[sprite].width > ENGINE.INI.COLLISION_SAFE) {
-          ENGINE.INI.COLLISION_SAFE = SPRITE[sprite].width;
-        }
-        if (SPRITE[sprite].height > ENGINE.INI.COLLISION_SAFE) {
-          ENGINE.INI.COLLISION_SAFE = SPRITE[sprite].height;
-        }
-      }
-      ENGINE.INI.COLLISION_SAFE++;
-    }
-    console.log(`%cENGINE.INI.COLLISION_SAFE set to: ${ENGINE.INI.COLLISION_SAFE}`, ENGINE.CSS);
-  },
   ready() {
-    ENGINE.setCollisionsafe();
     console.log("%cENGINE ready!", ENGINE.CSS);
     $("#load").addClass("hidden");
     ENGINE.readyCall.call();
@@ -398,16 +386,7 @@ var ENGINE = {
           break;
       }
     }
-    return ENGINE.lineIntersects(
-      line1.x1,
-      line1.y1,
-      line1.x2,
-      line1.y2,
-      line2.x1,
-      line2.y1,
-      line2.x2,
-      line2.y2
-    );
+    return ENGINE.lineIntersects(line1.x1, line1.y1, line1.x2, line1.y2, line2.x1, line2.y1, line2.x2, line2.y2);
   },
   lineIntersects(a, b, c, d, p, q, r, s) {
     //https://stackoverflow.com/a/24392281/4154250
@@ -421,61 +400,33 @@ var ENGINE = {
       return 0 < lambda && lambda < 1 && 0 < gamma && gamma < 1;
     }
   },
-  pixPerfectCollision(actor1, actor2) {
-    var w1 = parseInt(actor1.width / 2, 10);
-    var w2 = parseInt(actor2.width / 2, 10);
-    var h1 = parseInt(actor1.height / 2, 10);
-    var h2 = parseInt(actor2.height / 2, 10);
-    var act1 = new Vector(actor1.x, actor1.y);
-    var act2 = new Vector(actor2.x, actor2.y);
-    var SQ1 = new Square(act1.x - w1, act1.y - h1, w1 * 2, h1 * 2);
-    var SQ2 = new Square(act2.x - w2, act2.y - h2, w2 * 2, h2 * 2);
-    var x = parseInt(Math.max(SQ1.x, SQ2.x), 10) - 1;
-    var y = parseInt(Math.max(SQ1.y, SQ2.y), 10) - 1;
-    var w = parseInt(Math.min(SQ1.x + SQ1.w - x, SQ2.x + SQ2.w - x), 10) + 1;
-    var h = parseInt(Math.min(SQ1.y + SQ1.h - y, SQ2.y + SQ2.h - y), 10) + 1;
-    if (w === 0 || h === 0) return false;
-    var area = new Square(x, y, w, h);
-    var area1 = new Square(area.x - SQ1.x, area.y - SQ1.y, area.w, area.h);
-    var area2 = new Square(area.x - SQ2.x, area.y - SQ2.y, area.w, area.h);
-    var CTX1 = LAYER.temp;
-    var CTX2 = LAYER.temp2;
-    CTX1.canvas.width = ENGINE.INI.sprite_maxW;
-    CTX1.canvas.height = ENGINE.INI.sprite_maxH;
-    CTX2.canvas.width = ENGINE.INI.sprite_maxW;
-    CTX2.canvas.height = ENGINE.INI.sprite_maxH;
-    ENGINE.draw("temp", 0, 0, SPRITE[actor1.name]);
-    ENGINE.draw("temp2", 0, 0, SPRITE[actor2.name]);
-    var data1 = CTX1.getImageData(area1.x, area1.y, area1.w, area1.h);
-    var data2 = CTX2.getImageData(area2.x, area2.y, area2.w, area2.h);
-    var DL = data1.data.length;
-    var index;
-    for (index = 3; index < DL; index += 4) {
-      if (data1.data[index] > 0 && data2.data[index] > 0) {
+  collisionFuzyArea(actor1, actor2) {
+    let area = ENGINE.collisionArea(actor1, actor2);
+    if (area) {
+      if (area.w >= ENGINE.INI.OVERLAP_TOLERANCE && area.h >= ENGINE.INI.OVERLAP_TOLERANCE) {
         return true;
       }
     }
-    if (ENGINE.checkIntersection) {
-      return ENGINE.intersectionCollision(actor1, actor2);
-    } else return false;
+    return false;
   },
-  collision(actor1, actor2) {
-    var X = Math.abs(actor1.x - actor2.x);
-    var Y = Math.abs(actor1.y - actor2.y);
-    if (Y >= ENGINE.INI.COLLISION_SAFE) return false;
-    if (X >= ENGINE.INI.COLLISION_SAFE) return false;
-    var w1 = parseInt(actor1.width / 2, 10);
-    var w2 = parseInt(actor2.width / 2, 10);
-    var h1 = parseInt(actor1.height / 2, 10);
-    var h2 = parseInt(actor2.height / 2, 10);
-
-    if (X >= w1 + w2 || Y >= h1 + h2) return false;
-
-    if (ENGINE.pixelPerfectCollision) {
-      return ENGINE.pixPerfectCollision(actor1, actor2);
-    } else return true;
+  collisionRectangles(actor1, actor2) {
+    actor1.setArea();
+    actor2.setArea();
+    return actor1.area.overlap(actor2.area);
+  },
+  collisionArea(actor1, actor2) {
+    actor1.setArea();
+    actor2.setArea();
+    let x = Math.min(actor1.area.x + actor1.area.w, actor2.area.x + actor2.area.w);
+    let W = x - Math.max(actor1.area.x, actor2.area.x);
+    let y = Math.min(actor1.area.y + actor1.area.h, actor2.area.y + actor2.area.h);
+    let H = y - Math.max(actor1.area.y, actor2.area.y);
+    if (W > 0 && H > 0) {
+      return new RectArea(x, y, W, H);
+    } else return null;
   },
   collisionToBackground(actor, layer) {
+    //deprecated - redesign required
     var CTX = layer;
     var maxSq = Math.max(actor.width, actor.height);
     var R = Math.ceil(0.5 * Math.sqrt(2 * Math.pow(maxSq, 2)));
@@ -538,12 +489,7 @@ var ENGINE = {
     CTX.closePath();
     CTX.stroke();
     CTX.fillStyle = "#999";
-    CTX.fillRect(
-      1,
-      1,
-      Math.floor((ENGINE.LOAD_W - 2) * (percent / 100)),
-      ENGINE.LOAD_H - 2
-    );
+    CTX.fillRect(1, 1, Math.floor((ENGINE.LOAD_W - 2) * (percent / 100)), ENGINE.LOAD_H - 2);
     CTX.fillStyle = "black";
     CTX.font = "10px Verdana";
     CTX.fillText(
@@ -553,7 +499,29 @@ var ENGINE = {
     );
     return;
   },
-  statusBar(CTX, x, y, w, h, value, max, color) {
+  percentBar(percent, y, CTX, panelSize, colors, H) {
+    let pad = panelSize / 12;
+    CTX.beginPath();
+    CTX.lineWidth = "1";
+    CTX.strokeStyle = colors[0];
+    var Width = panelSize - 2 * pad;
+    CTX.rect(pad, y, Width, H);
+    CTX.closePath();
+    CTX.stroke();
+    CTX.shadowColor = "transparent";
+    CTX.shadowOffsetX = 0;
+    CTX.shadowOffsetY = 0;
+    CTX.shadowBlur = 0;
+
+    CTX.fillStyle = colors[0];
+    if (percent < 0.2 && percent > 0.1) {
+      CTX.fillStyle = colors[1];
+    } else if (percent <= 0.1) {
+      CTX.fillStyle = colors[2];
+    }
+    CTX.fillRect(pad + 1, y + 1, Math.max(0, Math.round(Width * percent) - 2), H - 2);
+  },
+  statusBar(CTX, x, y, w, h, value, max, color, annotate = true) {
     CTX.save();
     ENGINE.resetShadow(CTX);
     let fs = h / 2;
@@ -567,11 +535,13 @@ var ENGINE = {
     CTX.stroke();
     let fraction = value / max;
     CTX.fillRect(x, y, Math.round(fraction * w), h);
-    CTX.fillStyle = "#FFF";
-    CTX.textAlign = "center";
-    let tx = x + w / 2 + fs / 2;
-    let ty = y + h / 2 + fs / 2;
-    CTX.fillText(`${value}/${max}`, tx, ty);
+    if (annotate) {
+      CTX.fillStyle = "#FFF";
+      CTX.textAlign = "center";
+      let tx = x + w / 2 + fs / 2;
+      let ty = y + h / 2 + fs / 2;
+      CTX.fillText(`${value}/${max}`, tx, ty);
+    }
     CTX.restore();
   },
   resetShadow(CTX) {
@@ -616,20 +586,7 @@ var ENGINE = {
     CTX.shadowOffsetY = 0;
     CTX.shadowBlur = 0;
     CTX.globalAlpha = 0.8;
-    CTX.roundRect(
-      x,
-      y,
-      width,
-      height,
-      {
-        upperLeft: 15,
-        upperRight: 15,
-        lowerLeft: 15,
-        lowerRight: 15
-      },
-      true,
-      true
-    );
+    CTX.roundRect(x, y, width, height, { upperLeft: 15, upperRight: 15, lowerLeft: 15, lowerRight: 15 }, true, true);
     CTX.restore();
     return new Point(x, y);
   },
@@ -697,12 +654,7 @@ var ENGINE = {
   },
   cutManyGrids(layer, point, N) {
     var CTX = layer;
-    CTX.clearRect(
-      point.x,
-      point.y,
-      N * ENGINE.INI.GRIDPIX,
-      N * ENGINE.INI.GRIDPIX
-    );
+    CTX.clearRect(point.x, point.y, N * ENGINE.INI.GRIDPIX, N * ENGINE.INI.GRIDPIX);
     return;
   },
   spreadAroundCenter(toDo, x, delta) {
@@ -778,19 +730,21 @@ var ENGINE = {
     const ctx = canvas.getContext("2d");
     return ctx.getImageData(offX, offY, canvas.width, canvas.height);
   },
-  extractImg(x, y, CTX) {
+  extractImg(x, y, CTX, trim = true) {
     var data, imgDATA;
     var NTX = LAYER.temp2;
     data = CTX.getImageData(x, y, ENGINE.INI.SPRITESHEET_DEFAULT_WIDTH, ENGINE.INI.SPRITESHEET_DEFAULT_HEIGHT);
     NTX.canvas.width = ENGINE.INI.SPRITESHEET_DEFAULT_WIDTH;
     NTX.canvas.height = ENGINE.INI.SPRITESHEET_DEFAULT_HEIGHT;
     NTX.putImageData(data, 0, 0);
-    imgDATA = NTX.getImageData(0, 0, ENGINE.INI.SPRITESHEET_DEFAULT_WIDTH, ENGINE.INI.SPRITESHEET_DEFAULT_HEIGHT);
-    var TRIM = ENGINE.trimCanvas(imgDATA);
-    var trimmed = NTX.getImageData(TRIM.left, TRIM.top, TRIM.right - TRIM.left, TRIM.bottom - TRIM.top);
-    NTX.canvas.width = TRIM.right - TRIM.left;
-    NTX.canvas.height = TRIM.bottom - TRIM.top;
-    NTX.putImageData(trimmed, 0, 0);
+    if (trim) {
+      imgDATA = NTX.getImageData(0, 0, ENGINE.INI.SPRITESHEET_DEFAULT_WIDTH, ENGINE.INI.SPRITESHEET_DEFAULT_HEIGHT);
+      var TRIM = ENGINE.trimCanvas(imgDATA);
+      var trimmed = NTX.getImageData(TRIM.left, TRIM.top, TRIM.right - TRIM.left, TRIM.bottom - TRIM.top);
+      NTX.canvas.width = TRIM.right - TRIM.left;
+      NTX.canvas.height = TRIM.bottom - TRIM.top;
+      NTX.putImageData(trimmed, 0, 0);
+    }
     return NTX;
   },
   drawSheet(spriteSheet) {
@@ -809,7 +763,8 @@ var ENGINE = {
     return SPRITE[newName];
   },
   packToSprite(obj) {
-    var tag = ["left", "right", "front", "back"];
+    var tags = ["left", "right", "front", "back"];
+    var tag = tags.slice(0, obj.dimension);
     var CTX = ENGINE.drawSheet(obj.img);
     let x, y;
     let newName;
@@ -830,7 +785,7 @@ var ENGINE = {
     let names = [];
     for (var q = 0; q < obj.count; q++) {
       x = q * ENGINE.INI.SPRITESHEET_DEFAULT_WIDTH;
-      let NTX = ENGINE.extractImg(x, 0, CTX);
+      let NTX = ENGINE.extractImg(x, 0, CTX, obj.trim);
       newName = obj.name + "_" + q.toString().padStart(2, "0");
       ASSET[obj.name].linear.push(ENGINE.contextToSprite(newName, NTX));
       names.push(newName);
@@ -986,10 +941,7 @@ var ENGINE = {
       if (ENGINE.GAME.frame.delta >= ENGINE.INI.ANIMATION_INTERVAL) {
         if (ENGINE.GAME.stopAnimation) {
           if (nextFunct) nextFunct.call();
-          console.log(
-            `%cAnimation stopped BEFORE execution ${func.name}`,
-            "color: #f00"
-          );
+          console.log(`%cAnimation stopped BEFORE execution ${func.name}`, "color: #f00");
           ENGINE.GAME.running = false;
           return;
         }
@@ -1000,15 +952,12 @@ var ENGINE = {
         requestAnimationFrame(ENGINE.GAME.run.bind(null, func, nextFunct));
       } else {
         if (nextFunct) nextFunct.call();
-        console.log(
-          `%cAnimation stopped AFTER execution ${func.name}`,
-          "color: #f00"
-        );
+        console.log(`%cAnimation stopped AFTER execution ${func.name}`, "color: #f00");
         ENGINE.GAME.running = false;
         return;
       }
     },
-    start(interval) {
+    start(interval = 16) {
       $(window).scrollTop($("#game").offset().top);
       ENGINE.GAME.stopAnimation = false;
       ENGINE.GAME.started = Date.now();
@@ -1019,10 +968,7 @@ var ENGINE = {
     },
     ANIMATION: {
       start(wrapper) {
-        console.log(
-          `%cENGINE.GAME.ANIMATION.start --> ${wrapper.name}`,
-          "color: #0F0"
-        );
+        console.log(`%cENGINE.GAME.ANIMATION.start --> ${wrapper.name}`, "color: #0F0");
         ENGINE.GAME.stopAnimation = false;
         ENGINE.GAME.run(wrapper, ENGINE.GAME.ANIMATION.queue);
       },
@@ -1049,10 +995,7 @@ var ENGINE = {
             console.log(`%c..... animation queue: ${next.name}`, ENGINE.CSS);
             ENGINE.GAME.ANIMATION.start(next);
           } else {
-            console.log(
-              "%cAnimation STACK EMPTY! Game stopped running.",
-              ENGINE.CSS
-            );
+            console.log("%cAnimation STACK EMPTY! Game stopped running.", ENGINE.CSS);
           }
         }, ENGINE.INI.ANIMATION_INTERVAL);
       },
@@ -1245,11 +1188,15 @@ var ENGINE = {
         console.log(`%c ...loading ${arrPath.length} packs`, ENGINE.CSS);
         var toLoad = [];
         arrPath.forEach(function (el) {
-          ASSET[el.name] = new LiveSPRITE("4D", [], [], [], []);
+          if (!el.dimension) {
+            el.dimension = 4;
+          }
+          ASSET[el.name] = new LiveSPRITE(`${el.dimension}D`);
           toLoad.push({
             srcName: el.srcName,
             name: el.name,
-            count: el.count
+            count: el.count,
+            dimension: el.dimension
           });
         });
         ENGINE.LOAD.HMPacks = toLoad.length;
@@ -1266,9 +1213,13 @@ var ENGINE = {
       function loadSheets(arrPath = LoadSheets, addTag = ExtendSheetTag) {
         console.log(`%c ...loading ${arrPath.length} sheets`, ENGINE.CSS);
         var toLoad = [];
-        var tag = ["left", "right", "front", "back", ...addTag];
+        var all_tags = ["left", "right", "front", "back", ...addTag];
         arrPath.forEach(function (el) {
-          ASSET[el.name] = new LiveSPRITE("4D", [], [], [], []);
+          if (!el.dimension) {
+            el.dimension = 4;
+          }
+          ASSET[el.name] = new LiveSPRITE(`${el.dimension}D`);
+          let tag = all_tags.slice(0, el.dimension);
           for (let q = 0, TL = tag.length; q < TL; q++) {
             toLoad.push({
               srcName: el.srcName + "_" + tag[q] + "." + el.type,
@@ -1295,11 +1246,12 @@ var ENGINE = {
         console.log(`%c ...loading ${arrPath.length} sheet sequences`, ENGINE.CSS);
         var toLoad = [];
         arrPath.forEach(function (el) {
-          ASSET[el.name] = new LiveSPRITE("1D", []);
+          ASSET[el.name] = new LiveSPRITE("1D");
           toLoad.push({
             srcName: el.srcName,
             name: el.name,
-            count: el.count
+            count: el.count,
+            trim: el.trim
           });
         });
         ENGINE.LOAD.HMSheetSequences = toLoad.length;
@@ -1415,7 +1367,7 @@ var ENGINE = {
       }
 
       function loadImage(srcData, counter, dir = ENGINE.SOURCE) {
-        var srcName, name, count, tag, parent, rotate, asset;
+        var srcName, name, count, tag, parent, rotate, asset, trim, dimension;
         switch (typeof srcData) {
           case "string":
             srcName = srcData;
@@ -1429,6 +1381,9 @@ var ENGINE = {
             parent = srcData.parent || null;
             rotate = srcData.rotate || null;
             asset = srcData.asset || null;
+            trim = srcData.trim;
+            dimension = srcData.dimension;
+            if (trim === undefined) trim = true;
             break;
           default:
             console.error(`ENGINE: loadImage srcData ERROR: ${typeof srcData}`);
@@ -1444,7 +1399,9 @@ var ENGINE = {
             tag: tag,
             parent: parent,
             rotate: rotate,
-            asset: asset
+            asset: asset,
+            trim: trim,
+            dimension: dimension
           };
           img.onload = function () {
             ENGINE.LOAD[counter]++;
@@ -1587,6 +1544,10 @@ var ENGINE = {
     floorTextureString: null,
     wallTexture: null,
     wallTextureString: null,
+    _3D_asset: null,
+    _3D: true,
+    _dynamic: true,
+    dynamicAssets: { door: null, trapdoor: null, blockwall: null },
     configure(floorLayer, wallLayer, floorTexture, wallTexture) {
       ENGINE.TEXTUREGRID.setLayers(floorLayer, wallLayer);
       ENGINE.TEXTUREGRID.setTextures(floorTexture, wallTexture);
@@ -1597,18 +1558,24 @@ var ENGINE = {
       ENGINE.TEXTUREGRID.wallLayer = LAYER[wallLayer];
       ENGINE.TEXTUREGRID.wallLayerString = wallLayer;
     },
+    set3D(asset, flag = true) {
+      ENGINE.TEXTUREGRID._3D = flag;
+      ENGINE.TEXTUREGRID._3D_asset = asset;
+    },
     setTextures(floorTexture, wallTexture) {
       ENGINE.TEXTUREGRID.floorTexture = TEXTURE[floorTexture];
       ENGINE.TEXTUREGRID.floorTextureString = floorTexture;
       ENGINE.TEXTUREGRID.wallTexture = TEXTURE[wallTexture];
       ENGINE.TEXTUREGRID.wallTextureString = wallTexture;
     },
+    corr(CTX, point) {
+      CTX.setLineDash([1, 1]);
+      CTX.strokeStyle = "#EEE";
+      CTX.strokeRect(point.x, point.y, ENGINE.INI.GRIDPIX, ENGINE.INI.GRIDPIX);
+    },
     draw(maze, corr = false) {
       let t0 = performance.now();
-      ENGINE.fill(
-        ENGINE.TEXTUREGRID.floorLayer,
-        ENGINE.TEXTUREGRID.floorTexture
-      );
+      ENGINE.fill(ENGINE.TEXTUREGRID.floorLayer, ENGINE.TEXTUREGRID.floorTexture);
       ENGINE.fill(ENGINE.TEXTUREGRID.wallLayer, ENGINE.TEXTUREGRID.wallTexture);
 
       for (let x = 0; x < maze.width; x++) {
@@ -1617,23 +1584,66 @@ var ENGINE = {
           if (maze.GA.isEmpty(grid)) {
             let point = GRID.gridToCoord(grid);
             ENGINE.cutGrid(ENGINE.TEXTUREGRID.wallLayer, point);
-            if (corr) {
-              let CTX = ENGINE.TEXTUREGRID.wallLayer;
-              CTX.setLineDash([1, 1]);
-              CTX.strokeStyle = "#EEE";
-              CTX.strokeRect(
-                point.x,
-                point.y,
-                ENGINE.INI.GRIDPIX,
-                ENGINE.INI.GRIDPIX
-              );
-            }
+            if (corr) ENGINE.TEXTUREGRID.corr(ENGINE.TEXTUREGRID.wallLayer, point);
           }
         }
       }
       ENGINE.flattenLayers(ENGINE.TEXTUREGRID.wallLayerString, ENGINE.TEXTUREGRID.floorLayerString);
       if (ENGINE.verbose) {
         console.log(`%cTEXTUREGRID draw ${performance.now() - t0} ms`, ENGINE.CSS);
+      }
+    },
+    drawTiles(maze, corr = false) {
+      let t0 = performance.now();
+      for (let x = 0; x < maze.width; x++) {
+        for (let y = 0; y < maze.height; y++) {
+          let grid = new Grid(x, y);
+          if (maze.GA.isWall(grid)) {
+            ENGINE.drawToGrid(ENGINE.TEXTUREGRID.floorLayerString, grid, ASSET[ENGINE.TEXTUREGRID.wallTextureString].linear.chooseRandom());
+          } else {
+            ENGINE.drawToGrid(ENGINE.TEXTUREGRID.floorLayerString, grid, ASSET[ENGINE.TEXTUREGRID.floorTextureString].linear.chooseRandom());
+            //3d embelish
+            if (ENGINE.TEXTUREGRID._3D) {
+              //
+              if (maze.GA.isWall(grid.add(DOWN)) && maze.GA.isWall(grid.add(LEFT))) {
+                ENGINE.drawToGrid(ENGINE.TEXTUREGRID.floorLayerString, grid, ASSET[ENGINE.TEXTUREGRID._3D_asset].linear[4]);
+              }
+              else if (maze.GA.isWall(grid.add(DOWN))) {
+                if (maze.GA.isWall(grid.add(DownLeft))) {
+                  ENGINE.drawToGrid(ENGINE.TEXTUREGRID.floorLayerString, grid, ASSET[ENGINE.TEXTUREGRID._3D_asset].linear[0]);
+                } else {
+                  ENGINE.drawToGrid(ENGINE.TEXTUREGRID.floorLayerString, grid, ASSET[ENGINE.TEXTUREGRID._3D_asset].linear[1]);
+                }
+              }
+              else if (maze.GA.isWall(grid.add(DownLeft)) && maze.GA.notWall(grid.add(LEFT)) && maze.GA.notWall(grid.add(DOWN))) {
+                ENGINE.drawToGrid(ENGINE.TEXTUREGRID.floorLayerString, grid, ASSET[ENGINE.TEXTUREGRID._3D_asset].linear[5]);
+              }
+              else if (maze.GA.isWall(grid.add(LEFT))) {
+                if (maze.GA.isWall(grid.add(DownLeft))) {
+                  ENGINE.drawToGrid(ENGINE.TEXTUREGRID.floorLayerString, grid, ASSET[ENGINE.TEXTUREGRID._3D_asset].linear[2]);
+                } else {
+                  ENGINE.drawToGrid(ENGINE.TEXTUREGRID.floorLayerString, grid, ASSET[ENGINE.TEXTUREGRID._3D_asset].linear[3]);
+                }
+              }
+            }
+            //dynamic
+            if (ENGINE.TEXTUREGRID._dynamic) {
+              if (maze.GA.isDoor(grid)) {
+                ENGINE.drawToGrid(ENGINE.TEXTUREGRID.wallLayerString, grid, ASSET[ENGINE.TEXTUREGRID.dynamicAssets.door].linear.chooseRandom());
+              }
+              if (maze.GA.isTrapDoor(grid)) {
+                ENGINE.drawToGrid(ENGINE.TEXTUREGRID.wallLayerString, grid, ASSET[ENGINE.TEXTUREGRID.dynamicAssets.trapdoor].linear.chooseRandom());
+              }
+              if (maze.GA.isBlockWall(grid)) {
+                ENGINE.drawToGrid(ENGINE.TEXTUREGRID.wallLayerString, grid, ASSET[ENGINE.TEXTUREGRID.dynamicAssets.blockwall].linear.chooseRandom());
+              }
+            }
+          }
+          if (corr && maze.GA.notWall(grid)) ENGINE.TEXTUREGRID.corr(ENGINE.TEXTUREGRID.wallLayer, GRID.gridToCoord(grid));
+        }
+      }
+      if (ENGINE.verbose) {
+        console.log(`%cTEXTUREGRID tileDraw ${performance.now() - t0} ms`, ENGINE.CSS);
       }
     }
   },
@@ -1724,20 +1734,7 @@ var ENGINE = {
         let px = x * ENGINE.INI.GRIDPIX + ENGINE.INI.GRIDPIX / 4;
         let py = y * ENGINE.INI.GRIDPIX + ENGINE.INI.GRIDPIX / 4;
         const round = ENGINE.PACGRID.round;
-        CTX.roundRect(
-          px,
-          py,
-          ENGINE.INI.GRIDPIX / 2,
-          ENGINE.INI.GRIDPIX / 2,
-          {
-            upperLeft: round,
-            upperRight: round,
-            lowerLeft: round,
-            lowerRight: round
-          },
-          false,
-          true
-        );
+        CTX.roundRect(px, py, ENGINE.INI.GRIDPIX / 2, ENGINE.INI.GRIDPIX / 2, { upperLeft: round, upperRight: round, lowerLeft: round, lowerRight: round }, false, true);
       }
       function line(x1, y1, x2, y2) {
         CTX.beginPath();
@@ -1790,17 +1787,12 @@ var ENGINE = {
         for (let y = 0; y < sizeY; y++) {
           let grid = new Grid(x, y);
           let value = maze.GA.getValue(grid);
-          value &=
-            2 ** maze.GA.gridSizeBit - 1 - MAPDICT.FOG - MAPDICT.RESERVED;
+          value &= 2 ** maze.GA.gridSizeBit - 1 - MAPDICT.FOG - MAPDICT.RESERVED;
           if (maze.GA.isMazeWall(grid)) {
             value &= 2 ** maze.GA.gridSizeBit - 1 - MAPDICT.WALL;
             ENGINE.BLOCKGRID.wall(x, y, CTX, value);
           } else {
-            value &=
-              2 ** maze.GA.gridSizeBit -
-              1 -
-              MAPDICT.RESERVED -
-              MAPDICT.START_POSITION;
+            value &= 2 ** maze.GA.gridSizeBit - 1 - MAPDICT.RESERVED - MAPDICT.START_POSITION;
             if (value & MAPDICT.STAIR) {
               value = MAPDICT.STAIR;
             }
@@ -1911,14 +1903,8 @@ var ENGINE = {
       CTX.lineWidth = 1;
       let point = monster.moveState.pos.toPoint();
       let dir = monster.moveState.dir;
-      let x =
-        point.x -
-        (monster.actor.frontWidth / 2) * Math.abs(dir.y) -
-        (monster.actor.sideWidth / 2) * Math.abs(dir.x);
-      let y =
-        point.y -
-        (monster.actor.frontWidth / 2) * Math.abs(dir.x) -
-        (monster.actor.sideWidth / 2) * Math.abs(dir.y);
+      let x = point.x - (monster.actor.frontWidth / 2) * Math.abs(dir.y) - (monster.actor.sideWidth / 2) * Math.abs(dir.x);
+      let y = point.y - (monster.actor.frontWidth / 2) * Math.abs(dir.x) - (monster.actor.sideWidth / 2) * Math.abs(dir.y);
 
       CTX.beginPath();
       CTX.rect(x, y, monster.actor.orientationW, monster.actor.orientationH);
@@ -1927,9 +1913,7 @@ var ENGINE = {
         CTX.rect(x, y, 5, 5);
       }
       CTX.moveTo(point.x, point.y);
-      let r =
-        (monster.actor.orientationH / 2) * Math.abs(dir.y) +
-        (monster.actor.orientationW / 2) * Math.abs(dir.x);
+      //let r = (monster.actor.orientationH / 2) * Math.abs(dir.y) + (monster.actor.orientationW / 2) * Math.abs(dir.x);
       let end = point.translate(dir, monster.r * ENGINE.INI.GRIDPIX);
       CTX.lineTo(end.x, end.y);
       CTX.stroke();
@@ -1974,6 +1958,7 @@ var LAYER = {
 };
 var SPRITE = {};
 var AUDIO = {};
+var TILE = {};
 var ASSET = {
   convertToGrayScale(original, target, howmany = 1) {
     ASSET[target] = {};
@@ -2007,13 +1992,17 @@ class LiveSPRITE {
     this.type = type || null;
     switch (type) {
       case "1D":
-        this.linear = left;
+        this.linear = left || [];
+        break;
+      case "2D":
+        this.left = left || [];
+        this.right = right || [];
         break;
       case "4D":
-        this.left = left || null;
-        this.right = right || null;
-        this.front = front || null;
-        this.back = back || null;
+        this.left = left || [];
+        this.right = right || [];
+        this.front = front || [];
+        this.back = back || [];
         break;
       default:
         throw "LiveSPRITE type ERROR";
@@ -2037,6 +2026,7 @@ class ACTOR {
     this.animationThrough = false;
     this.drawX = null;
     this.drawY = null;
+    this.area = null;
   }
   simplify(name) {
     this.class = name;
@@ -2056,6 +2046,7 @@ class ACTOR {
     } else {
       switch (this.asset.type) {
         case "4D":
+        case "2D":
           this.name = `${this.class}_${this.orientation}_${this[this.orientation + "_index"]}`;
           break;
         case "1D":
@@ -2133,6 +2124,21 @@ class ACTOR {
   getDraw() {
     return new Grid(this.drawX, this.drawY);
   }
+  setCoord(point) {
+    this.x = point.x;
+    this.y = point.y;
+  }
+  setArea() {
+    this.area = new RectArea(this.x - Math.floor(this.width / 2), this.y - Math.floor(this.height / 2), this.width, this.height);
+  }
+}
+class Gravity_ACTOR extends ACTOR {
+  constructor(sprite_class, x, y, fps, orientation = 'left') {
+    super(sprite_class, x, y, orientation, ASSET[sprite_class], fps);
+  }
+  setArea() {
+    this.area = new RectArea(this.x - Math.floor(this.width / 2), this.y - this.height, this.width, this.height);
+  }
 }
 class Rotating_ACTOR extends ACTOR {
   constructor(sprite_class, x, y, fps) {
@@ -2158,6 +2164,10 @@ class Static_ACTOR {
     this.name = spriteClass;
     this.width = this._sprite.width;
     this.height = this._sprite.height;
+    this.x = 0;
+    this.y = 0;
+    this.vx = 0;
+    this.vy = 0;
   }
   sprite() {
     return this._sprite;
@@ -2351,6 +2361,16 @@ class MoveState {
     this.moving = false;
   }
 }
+class _2D_MoveState {
+  constructor(pos, dir, parent) {
+    this.pos = pos;
+    this.dir = dir || null;
+    this.parent = parent || null;
+  }
+  posToCoord() {
+    this.parent.actor.setCoord(GRID.gridToCoord(this.parent.moveState.pos));
+  }
+}
 class _3D_MoveState {
   constructor(pos, dir) {
     this.pos = pos;
@@ -2392,10 +2412,8 @@ var VIEW = {
     VIEW.actor.y += VIEW.speed * ENGINE.INI.GRIDPIX * dir.y;
     if (VIEW.actor.x < 0) VIEW.actor.x = 0;
     if (VIEW.actor.y < 0) VIEW.actor.y = 0;
-    if (VIEW.actor.x > ENGINE.VIEWPORT.max.x)
-      VIEW.actor.x = ENGINE.VIEWPORT.max.x;
-    if (VIEW.actor.y > ENGINE.VIEWPORT.max.y)
-      VIEW.actor.y = ENGINE.VIEWPORT.max.y;
+    if (VIEW.actor.x > ENGINE.VIEWPORT.max.x) VIEW.actor.x = ENGINE.VIEWPORT.max.x;
+    if (VIEW.actor.y > ENGINE.VIEWPORT.max.y) VIEW.actor.y = ENGINE.VIEWPORT.max.y;
     ENGINE.VIEWPORT.check(VIEW.actor);
     ENGINE.VIEWPORT.alignTo(VIEW.actor);
   }
@@ -2455,12 +2473,7 @@ class Form {
     this.w = w;
     this.h = h;
     $(FORM.INI.DIV).append(`<div id = 'FORM' class = 'form'><h1>${this.name}</h1><hr></div>`);
-    $("#FORM").css({
-      top: this.y,
-      left: this.x,
-      width: this.w,
-      height: this.h
-    });
+    $("#FORM").css({ top: this.y, left: this.x, width: this.w, height: this.h });
     $("#FORM").append(wedge);
     ENGINE.showMouse();
   }
@@ -2782,12 +2795,7 @@ class MovingText {
       }
     }
     if (this.last < this.length - 1) {
-      while (
-        this.cursor +
-        (this.nodes[this.last].offset - this.nodes[this.first].offset) +
-        this.nodes[this.last].width <
-        this.right
-      ) {
+      while (this.cursor + (this.nodes[this.last].offset - this.nodes[this.first].offset) + this.nodes[this.last].width < this.right) {
         this.last++;
       }
     }
@@ -2857,11 +2865,7 @@ class Button {
     CTX.font = `${this.colInfo.fontSize}px ${FORM.INI.FONT}`;
     CTX.fillStyle = this.colInfo.ink;
     let x = FORM.INI.lettButtonPad + this.area.x;
-    let y =
-      this.area.y +
-      this.colInfo.fontSize +
-      Math.round((this.area.h - this.colInfo.fontSize) / 2) -
-      1;
+    let y = this.area.y + this.colInfo.fontSize + Math.round((this.area.h - this.colInfo.fontSize) / 2) - 1;
     if (this.colInfo.inkShadow) {
       CTX.shadowColor = this.colInfo.inkShadow;
       CTX.shadowOffsetX = 1;
@@ -2936,6 +2940,23 @@ class FPS_measurement {
   }
   getFps() {
     return this.average.toFixed(1);
+  }
+}
+class FPS_short_term_measurement extends FPS_measurement {
+  constructor(len = 100) {
+    super();
+    this.len = len;
+  }
+  reset() {
+    this.data = [];
+    this.average = 0;
+  }
+  update(fps) {
+    this.data.push(fps);
+    if (this.data.length > this.len) {
+      this.data.shift();
+    }
+    this.average = this.data.average();
   }
 }
 var FILTER = {

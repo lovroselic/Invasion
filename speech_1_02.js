@@ -1,6 +1,6 @@
 //////////////////speech.js/////////////////////////
 //                                                //
-//       SPEECH version 1.01  by LS               //
+//       SPEECH version 1.02  by LS               //
 //                                                //
 ////////////////////////////////////////////////////
 /*  
@@ -11,7 +11,7 @@ TODO:
 ////////////////////////////////////////////////////
 
 var SPEECH = {
-  VERSION: "1.01",
+  VERSION: "1.02",
   CSS: "color: #0A0",
   interval: 20,
   browserSupport: true,
@@ -27,7 +27,7 @@ var SPEECH = {
       setTimeout(SPEECH.wait, SPEECH.inteval);
     }
   },
-  init() {
+  init(rate = 0.5, pitch = 0.9, volume = 1) {
     if (!("speechSynthesis" in window)) {
       SPEECH.browserSupport = false;
       console.log(`%cInitializing SPEECH failed. Browser not supported!`, "color: #F00");
@@ -36,10 +36,10 @@ var SPEECH = {
     let ready = Promise.all([SPEECH.getVoices()]).then(function () {
       SPEECH.ready = true;
       console.log(`%cSPEECH ${SPEECH.VERSION}: ready`, SPEECH.CSS);
-      SPEECH.voice = SPEECH.voices[0];
+      SPEECH.voice = SPEECH.voices[1];
     });
 
-    let def = new VoiceSetting(1, 1, 1);
+    let def = new VoiceSetting(rate, pitch, volume);
     SPEECH.settings = def;
     SPEECH.wait();
   },
