@@ -52,7 +52,7 @@ const LoadSheetSequences = [
 const LoadRotatedSheetSequences = [
     { srcName: "tank.png", count: 3, name: "Tank", rotate: { first: -90, last: 90, step: 1 } },
     { srcName: "BlueTank.png", count: 3, name: "BlueTank", rotate: { first: -90, last: 90, step: 1 } },
-    { srcName: "bomb1.png", count: 1,name: "Bomb", rotate: { first: 0, last: 180, step: 1 } },
+    { srcName: "bomb1.png", count: 1, name: "Bomb", rotate: { first: 0, last: 180, step: 1 } },
 ];
 const LoadFonts = [
     { srcName: "C64_Pro-STYLE.ttf", name: "C64" },

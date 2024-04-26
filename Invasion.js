@@ -62,7 +62,7 @@ var INI = {
     final_level: 8,
 };
 var PRG = {
-    VERSION: "1.02",
+    VERSION: "1.03",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",

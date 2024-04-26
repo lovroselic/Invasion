@@ -1242,86 +1242,85 @@ const ENGINE = {
         });
         return temp;
       }
-      function loadSheetSequences(arrPath = LoadSheetSequences) {
+
+      async function loadSheetSequences(arrPath = LoadSheetSequences) {
         console.log(`%c ...loading ${arrPath.length} sheet sequences`, ENGINE.CSS);
-        var toLoad = [];
-        arrPath.forEach(function (el) {
-          ASSET[el.name] = new LiveSPRITE("1D");
-          toLoad.push({
-            srcName: el.srcName,
-            name: el.name,
-            count: el.count,
-            trim: el.trim
-          });
+        const toLoad = arrPath.map(({ name, srcName, count, trim }) => {
+          ASSET[name] = new LiveSPRITE("1D");
+          return { name, srcName, count, trim };
         });
+
         ENGINE.LOAD.HMSheetSequences = toLoad.length;
         if (ENGINE.LOAD.HMSheetSequences) appendCanvas("SheetSequences");
-        const temp = Promise.all(
-          toLoad.map((img) => loadImage(img, "SheetSequences"))
-        ).then(function (obj) {
-          obj.forEach(function (el) {
-            ENGINE.seqToSprite(el);
-          });
-        });
-        return temp;
+        const sequences = await Promise.all(toLoad.map((img) => loadImage(img, "SheetSequences")));
+        sequences.forEach((el) => ENGINE.seqToSprite(el));
+        return true;
       }
-      function loadRotated(arrPath = LoadRotated) {
-        console.log(`%c ...loading ${arrPath.length} rotated sprites`, ENGINE.CSS);
-        ENGINE.LOAD.HMRotated = arrPath.length;
-        if (ENGINE.LOAD.HMRotated) appendCanvas("Rotated");
 
-        const temp = Promise.all(
-          arrPath.map((img) => loadImage(img, "Rotated"))
-        ).then(function (obj) {
-          obj.forEach(function (el) {
-            for (let q = el.rotate.first; q <= el.rotate.last; q += el.rotate.step) {
-              ENGINE.rotateImage(el.img, q, el.name + "_" + q);
+      async function loadRotated(arrPath = LoadRotated) {
+        try {
+          console.log(`%c ...loading ${arrPath.length} rotated sprites`, ENGINE.CSS);
+          ENGINE.LOAD.HMRotated = arrPath.length;
+          if (ENGINE.LOAD.HMRotated) appendCanvas("Rotated");
+
+          const images = await Promise.all(arrPath.map(img => loadImage(img, "Rotated")));
+
+          for (const { img, rotate, name } of images) {
+            for (let q = rotate.first; q <= rotate.last; q += rotate.step) {
+              ENGINE.rotateImage(img, q, name + "_" + q);
             }
-          });
-        });
-        return temp;
-      }
-      function loadRotatedSheetSequences(arrPath = LoadRotatedSheetSequences) {
-        console.log(`%c ...loading ${arrPath.length} rotated sheet sequences`, ENGINE.CSS);
-        var toLoad = [];
-        arrPath.forEach(function (el) {
-          ASSET[el.name] = new LiveSPRITE("1D", []);
-          toLoad.push({ srcName: el.srcName, name: el.name, count: el.count, rotate: el.rotate });
-        });
-        ENGINE.LOAD.HMRotSeq = toLoad.length;
-        if (ENGINE.LOAD.HMRotSeq) appendCanvas("RotSeq");
-        const temp = Promise.all(
-          toLoad.map((img) => loadImage(img, "RotSeq"))
-        )
-          .then(function (obj) {
-            let ready;
-            obj.forEach(function (el) {
-              let assetNames = ENGINE.seqToSprite(el);
-              let createdSprites = ASSET[el.name].linear;
+          }
 
-              ready = Promise.all(createdSprites.map((sprite) => isReady(sprite)))
-                .then(
-                  (obj) => {
-                    obj.forEach((S, i) => {
-                      for (let angle = el.rotate.first; angle <= el.rotate.last; angle += el.rotate.step) {
-                        let name = `${assetNames[i]}_${angle}`;
-                        ENGINE.rotateImage(S, angle, name);
-                      }
-                    });
-                  }
-                );
-            });
-            return ready;
+          return true;
+        } catch (error) {
+          console.error(`Failed to load rotated sprites: ${error}`);
+          return false;
+        }
+      }
+
+      async function loadRotatedSheetSequences(arrPath = LoadRotatedSheetSequences) {
+        try {
+          if (!arrPath) return true;
+          console.log(`%c ...loading ${arrPath.length} rotated sheet sequences`, ENGINE.CSS);
+
+          const toLoad = arrPath.map(({ name, srcName, count, rotate }) => {
+            ASSET[name] = new LiveSPRITE("1D", []);
+            return { name, srcName, count, rotate };
           });
-        return temp;
+
+          ENGINE.LOAD.HMRotSeq = toLoad.length;
+          if (ENGINE.LOAD.HMRotSeq) appendCanvas("RotSeq");
+
+          const sequences = await Promise.all(toLoad.map((img) => loadImage(img, "RotSeq")));
+
+          await Promise.all(
+            sequences.map(async (el) => {
+              const assetNames = ENGINE.seqToSprite(el);
+              const createdSprites = ASSET[el.name].linear;
+
+              for (const sprite of createdSprites) {
+                await new Promise((resolve) => {
+                  sprite.onload = () => resolve();
+                });
+              }
+
+              for (let i = 0; i < createdSprites.length; i++) {
+                for (let angle = el.rotate.first; angle <= el.rotate.last; angle += el.rotate.step) {
+                  const name = `${assetNames[i]}_${angle}`;
+                  ENGINE.rotateImage(createdSprites[i], angle, name);
+                }
+              }
+
+            })
+          );
+
+          return true;
+        } catch (error) {
+          console.error(`Failed to load rotated sheet sequences: ${error}`);
+          return false;
+        }
       }
-      function isReady(sprite) {
-        return new Promise((resolve, reject) => {
-          sprite.onload = () => {
-            resolve(sprite);
-          };
-        });
-      }
+
       function loadWASM(arrPath = LoadExtWasm) {
         var LoadIntWasm = []; //internal hard coded ENGINE requirements
         var toLoad = [...arrPath, ...LoadIntWasm];
