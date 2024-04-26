@@ -17,7 +17,7 @@ known bugs:
 var DEBUG = {
     FPS: false,
     BUTTONS: false,
-    SETTING: false,
+    SETTING: true,
     VERBOSE: false,
     invincible: false,
     INF_LIVES: false,
@@ -62,16 +62,16 @@ var INI = {
     final_level: 8,
 };
 var PRG = {
-    VERSION: "1.03",
+    VERSION: "1.03.01",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
     INIT() {
         console.log("%c**************************************************************************************************************************************", PRG.CSS);
-        console.log(`${PRG.NAME} ${PRG.VERSION} by Lovro Selic, (c) C00lSch00l ${PRG.YEAR} on ${navigator.userAgent}`);
+        console.log(`${PRG.NAME} ${PRG.VERSION} by Lovro Selic, (c) LaughingSkull ${PRG.YEAR} on ${navigator.userAgent}`);
         console.log("%c**************************************************************************************************************************************", PRG.CSS);
         $("#title").html(PRG.NAME);
-        $("#version").html(`${PRG.NAME} V${PRG.VERSION} <span style='font-size:14px'>&copy</span> C00lSch00l ${PRG.YEAR}`);
+        $("#version").html(`${PRG.NAME} V${PRG.VERSION} <span style='font-size:14px'>&copy</span> LaughingSkull ${PRG.YEAR}`);
         $("input#toggleAbout").val("About " + PRG.NAME);
         $("#about fieldset legend").append(" " + PRG.NAME + " ");
 
@@ -83,14 +83,12 @@ var PRG = {
     },
     setup() {
         console.log("PRG.setup");
-        if (DEBUG.SETTING) {
-            $('#debug').show();
-        } else $('#debug').hide();
+
         $("#engine_version").html(ENGINE.VERSION);
         $("#grid_version").html(GRID.VERSION);
         $("#terrain_version").html(TERRAIN.VERSION);
         $("#lib_version").html(LIB.VERSION);
-        $("#IA_version").html(IAM.version);
+        $("#iam_version").html(IndexArrayManagers.VERSION);
         $("#speech_version").html(SPEECH.VERSION);
 
         $("#toggleHelp").click(function () {
@@ -98,6 +96,10 @@ var PRG = {
         });
         $("#toggleAbout").click(function () {
             $("#about").toggle(400);
+        });
+
+        $("#toggleVersion").click(function () {
+            $("#debug").toggle(400);
         });
 
         //boxes

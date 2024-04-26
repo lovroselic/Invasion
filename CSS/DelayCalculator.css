@@ -1,0 +1,25 @@
+table.LS_table {
+    border-collapse: collapse;
+    table-layout:fixed;
+    background: linear-gradient(90deg, #444, #777);
+}
+table th.LS_table {
+    text-align: center;
+    padding: 5px;
+    background: linear-gradient(90deg, #444, #777);
+}
+table tr:nth-child(1) th.LS_table{
+    box-shadow:3px 2px 1px 0px #666;
+}
+table tr:nth-child(2) th.LS_table{
+    border-bottom: 3px solid black;
+    padding-bottom: 8px;
+    box-shadow:3px 2px 1px 0px #666;
+}
+
+table td.LS_table {
+    font-size:18px;
+    border: 1px solid #666;
+    padding: 4px;
+    box-shadow:3px 2px 1px 0px #666;
+}

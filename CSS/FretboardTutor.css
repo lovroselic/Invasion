@@ -1,0 +1,16 @@
+.button_small {
+    border-radius: 5px;
+    border: 1px solid black;
+    width: 60px;
+    cursor: pointer;
+    margin: 1px;
+    background-color: #d9d9b3;
+    font-size: 12px;
+    font-family: Verdana;
+}
+
+.f20 {
+    font-size:20px;
+    position: relative;
+    top: 30px;
+}
