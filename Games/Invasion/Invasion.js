@@ -14,15 +14,15 @@ known bugs:
  */
 ////////////////////////////////////////////////////
 
-var DEBUG = {
+const DEBUG = {
     FPS: false,
     BUTTONS: false,
     SETTING: true,
     VERBOSE: false,
-    invincible: false,
+    invincible: true,
     INF_LIVES: false,
 };
-var INI = {
+const INI = {
     base_speed: 128.0,
     max_speed: 200.0,
     min_speed: 0.0,
@@ -62,7 +62,7 @@ var INI = {
     final_level: 8,
 };
 const PRG = {
-    VERSION: "1.03.02",
+    VERSION: "1.04.0",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -730,7 +730,7 @@ class FiringSolution {
         return solutions[index];
     }
 }
-var HERO = {
+const HERO = {
     startInit() {
         this.name = "HERO";
         this.LEFT = 32;
@@ -974,7 +974,7 @@ var HERO = {
     rates: [1, 0.5, 0.1],
     yields: [0.5, 0.75, 1.0]
 };
-var GAME = {
+const GAME = {
     start() {
         console.log("GAME started");
         if (AUDIO.Title) {
@@ -1254,7 +1254,7 @@ var GAME = {
         ENGINE.GAME.ANIMATION.next(ENGINE.KEY.waitFor.bind(null, TITLE.startTitle, "enter"));
     }
 };
-var TITLE = {
+const TITLE = {
     firstFrame() {
         TITLE.clearAllLayers();
         TITLE.topBackground();
