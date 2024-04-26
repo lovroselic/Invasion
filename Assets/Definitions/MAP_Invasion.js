@@ -5,7 +5,7 @@ class StaticPoint {
         this.midHeight = midHeight;
     }
 }
-var MAP = {
+const MAP = {
     createNewLevel(level) {
         if (!MAP.hasOwnProperty(level)) {
             MAP[level] = $.extend(true, {}, MAP[INI.final_level]);
@@ -118,7 +118,7 @@ var MAP = {
         return staticPoints;
     }
 };
-var SPAWN = {
+const SPAWN = {
     tankTimer: null,
     spawn(level) {
         this.spawnTrees(level);

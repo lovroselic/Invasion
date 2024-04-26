@@ -12,7 +12,7 @@ TODO:
 */
 
 const IndexArrayManagers = {
-    VERSION: "3.03",
+    VERSION: "3.05",
     VERBOSE: false,
     DEAD_LAPSED_TIME: 5,
 };
@@ -124,6 +124,7 @@ class Profile_Ballistic extends IAM {
     constructor() {
         super();
         this.IA = "ballistic_IA";
+        this.reIndexRequired = true;
     }
     poolToIA(IA) {
         return;
@@ -146,6 +147,7 @@ class Profile_Actors extends IAM {
     constructor() {
         super();
         this.IA = "profile_actor_IA";
+        this.reIndexRequired = true;
     }
     poolToIA(IA) {
         for (const obj of this.POOL) {

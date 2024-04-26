@@ -61,8 +61,8 @@ var INI = {
     },
     final_level: 8,
 };
-var PRG = {
-    VERSION: "1.03.01",
+const PRG = {
+    VERSION: "1.03.02",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
@@ -1629,7 +1629,7 @@ $(function () {
     SPEECH.init(0.95);
     PRG.setup();
     ENGINE.LOAD.preload();
-    SCORE.init("SC", "GhostRun", 10, 2500);
+    SCORE.init("SC", "Invasion", 10, 2500);
     SCORE.loadHS();
     SCORE.hiScore();
     SCORE.extraLife = [10000, 20000, 30000, 40000, 50000, 60000, 70000, 80000, 90000, 100000, Infinity];

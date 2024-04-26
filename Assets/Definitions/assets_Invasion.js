@@ -26,6 +26,7 @@ const LoadSprites = [
     { srcName: "BrokenTank.png", name: "BrokenTank" },
     { srcName: "LittleTank.png", name: "LittleTank" },
 ];
+
 for (let i = 1; i <= 11; i++) {
     LoadSprites.push({ srcName: `plane${i}.png`, name: `Plane${i}` });
 }
@@ -46,6 +47,7 @@ const LoadAudio = [
     { srcName: "Black Dog's Chain - LaugingSkull.mp3", name: "Title" }
 ];
 const ExtendSheetTag = [];
+
 const LoadSheetSequences = [
     { srcName: "Explosion2.png", name: "Explosion", type: "png", count: 23 },
 ];
