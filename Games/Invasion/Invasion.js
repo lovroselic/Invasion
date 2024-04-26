@@ -62,7 +62,7 @@ const INI = {
     final_level: 8,
 };
 const PRG = {
-    VERSION: "1.04.0",
+    VERSION: "1.04",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
