@@ -1114,7 +1114,7 @@ const GAME = {
     },
     generateTitleText() {
         let text = `${PRG.NAME} ${PRG.VERSION
-            }, a game by Lovro Selic, ${"\u00A9"} C00LSch00L ${PRG.YEAR
+            }, a game by Lovro Selic, ${"\u00A9"} LaughingSkull ${PRG.YEAR
             }. Music: 'Black Dog's Chain' written and performed by LaughingSkull, ${"\u00A9"
             } 2018 Lovro Selic. `;
         text += "     ENGINE, SPEECH, GRID, TERRAIN, IAM libraries and GAME code by Lovro Selic using JavaScript. ";
