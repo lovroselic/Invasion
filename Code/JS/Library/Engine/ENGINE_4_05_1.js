@@ -43,7 +43,7 @@ const DownRight = new Vector(1, 1);
 const DownLeft = new Vector(-1, 1);
 
 const ENGINE = {
-  VERSION: "4.05",
+  VERSION: "4.05.1",
   CSS: "color: #0FA",
   INI: {
     ANIMATION_INTERVAL: 16,
@@ -3801,34 +3801,6 @@ class MovingText {
       x += this.nodes[now].width;
       now++;
     }
-  }
-}
-class Area {
-  constructor(x, y, w, h) {
-    this.x = x;
-    this.y = y;
-    this.w = w;
-    this.h = h;
-  }
-  gridWithin(grid) {
-    return this.within(grid.x, grid.y);
-  }
-  within(X, Y) {
-    if (
-      X >= this.x &&
-      X < this.x + this.w &&
-      Y >= this.y &&
-      Y < this.y + this.h
-    ) {
-      return true;
-    } else return false;
-  }
-  overlap(area) {
-    if (this.x > area.x + area.w) return false;
-    if (this.x + this.w < area.x) return false;
-    if (this.y > area.y + area.h) return false;
-    if (this.y + this.h < area.y) return false;
-    return true;
   }
 }
 class Button {

@@ -19,7 +19,7 @@ const DEBUG = {
     BUTTONS: false,
     SETTING: true,
     VERBOSE: false,
-    invincible: true,
+    invincible: false,
     INF_LIVES: false,
 };
 const INI = {
@@ -62,7 +62,7 @@ const INI = {
     final_level: 8,
 };
 const PRG = {
-    VERSION: "1.04",
+    VERSION: "1.05",
     NAME: "Invasion",
     YEAR: "2022",
     CSS: "color: #239AFF;",
